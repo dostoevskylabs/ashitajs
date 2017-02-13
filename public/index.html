@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>ashitajs</title>
+	<meta charset="UTF-8"/>
+	<link rel="stylesheet" href="./css/style.css"/>
+</head>
+<body>
+	<template id="tab-template">
+		<li><a href="#" :id="tab" @click="selectTab(tab)">{{ tab }}</a></li>
+	</template>
+	<template id="msg-template">
+			<div v-if="getState() === msg.channel" class="uiMessage" v-bind:class="{whoSys: msg.isSystem, whoErr: msg.isError}">
+				<time class="when" v-bind:datetime="msg.date()">{{ msg.date().format('hh:mm:ss') }}</time>
+				<div class="where">{{ msg.channel }}</div>
+				<div class="who">{{ msg.username }}</div>
+				<div class="what">{{ msg.message }}</div>
+			</div>
+	</template>
+<div id="container">
+	<header>
+		<nav>
+			<ul id="tabs">
+				<tab v-for="tab in tabs" :tab="tab"></tab>
+			</ul>
+		</nav>
+	</header>
+	<section id="content"  style="overflow:auto;">
+		<div v-for="tab in tabs"  v-show="getTab(tab)" :tab="tab">
+			<div>
+				<div>
+					<div id="uiOutput">
+						<msg v-for="message in messages" :msg="message"></msg>
+					</div>
+		        </div>
+			</div>
+		</div>
+	</section>
+	<section id="uiRight">
+
+	</section>
+	<div id="uiBottom">
+		<input id="uiInput" type="text" placeholder="..."/>
+	</div>
+</div>
+	<script type="text/javascript">
+		function getIP(json) {
+			ipAddr = json.ip;
+		}
+	</script>
+	<script src="https://api.ipify.org?format=jsonp&callback=getIP"></script>
+	<script type="text/javascript" src="https://unpkg.com/vue/dist/vue.js"></script>
+	<script type="text/javascript" src="https://unpkg.com/moment/min/moment.min.js"></script>
+	<script type="text/javascript" src="./sys/ashitajs/index.js"></script>
+</body>
+</html>
