@@ -7,17 +7,9 @@
  */
 process.env.mode = "development";
 switch ( process.env.mode ) {
-	case "dev1":
-		process.env.ipaddr = "192.168.1.186";
-	break;
-
 	case "development":
-		process.env.ipaddr = "192.168.0.160";
+		process.env.ipaddr = "10.0.1.2";
 	break;
-	case "production":
-		process.env.ipaddr = "192.99.238.137";
-	break;
-	default:
 }
 var WebSocketServer=require('uws').Server;
 var https=require('https');
