@@ -8,13 +8,13 @@
 var ashita = (function(){
     return {
 		mode: "production",
-		nodeIp: "71.120.133.154",
+		nodeIp: "10.0.1.2",
 		ipAddr: this.ipAddr,
-        version: "1.0.0"
+	    	version: "1.0.0"
     };
 })();
 /**
- * Partially stolen from a StackOverflow post
+ * Stolen from a StackOverflow post
  * will likely be rewritten soon, but for now
  * this will work
  *
@@ -22,10 +22,8 @@ var ashita = (function(){
  * @author	 recursiveoverflow
  * @author   mido (http://stackoverflow.com/users/3074768/mido)
 **/
-switch ( ashita.mode )
-{
+switch ( ashita.mode ) {
 	case "dev":
-		ashita.nodeIp = "192.168.1.186";
 		//#ashita.nodeIp = "192.168.0.160";
 		window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection;
 		var pc = new RTCPeerConnection({iceServers:[]}), noop = function(){};
@@ -39,12 +37,6 @@ switch ( ashita.mode )
 			pc.onicecandidate = noop;
 		};
 	break;
-	case "production":
-		ashita.nodeIp = "71.120.133.154";
-		ashita.ipAddr = ashita.ipAddr;
-	break;
-	default:
-		console.log("How did you get here?");
 }
 /**
  * ui
