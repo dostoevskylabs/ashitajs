@@ -5,247 +5,86 @@
  * @author     recursiveoverflow
  * @version    1.0.0
  */
-process.env.mode = "development";
-switch ( process.env.mode ) {
-	case "development":
-		process.env.ipaddr = "10.0.1.2";
-	break;
-}
+var os=require('os');
+var interfaces=os.networkInterfaces();
+var nodeIp = interfaces["Wi-Fi"][1].address;
 var WebSocketServer=require('uws').Server;
 var https=require('https');
 var fs=require('fs');
 var express=require('express');
 var path=require('path');
+var crypto=require('crypto');
+var util=require('util');
+var validator=require('validator');
+var assert=require('assert');
+var moment=require('moment');
+var controllers=require('./controllers.js');
+var functions=require('./functions.js');
 var app=express();
 var server=https.createServer({
-    key:fs.readFileSync('./.ssl/server.key'),
-    cert:fs.readFileSync('./.ssl/server.crt'),
-    ca:fs.readFileSync('./.ssl/ca.crt'),
+    key:fs.readFileSync('./ssl/server.key'),
+    cert:fs.readFileSync('./ssl/server.crt'),
+    ca:fs.readFileSync('./ssl/ca.crt'),
     requestCert: true,
     rejectUnauthorized: false
 }, app).listen(443);
 var ashita=new WebSocketServer({
 	server: server,
-	origin:"https://" + process.env.ipaddr
+	origin:"https://"+nodeIp
 });
-//var mongodb=require('mongodb').MongoClient;
-//var mongourl='mongodb://localhost:27017/ashita';
-var util=require('util');
-var crypto=require('crypto');
-var validator=require('validator');
-var assert=require('assert');
-var moment=require('moment');
 /**
- * Console Controller
+ * Setup our controllers
  */
-var consoleCtl = {
-	printMessage:function printMessage( usr, msg ) {
-		var timestamp = moment().format("HH:mm:ss");
-		console.log("["+timestamp+"] <" + usr + ">: " + msg );
-	},
-	printSystem:function printSystem( str )	{
-		var timestamp = moment().format("HH:mm:ss");
-		console.log("["+timestamp+"] @System: " + str);
-	},
-	printError:function printError( str ) {
-		var timestamp = moment().format("HH:mm:ss");
-		console.log("["+timestamp+"] !!! Error !!!: " + str);
-	}
-};
+controllers.sessionCtl.init();
+controllers.channelCtl.init();
+controllers.peerCtl.init();
 /**
- * Session Controller
+ * Tell Express where our client lives
  */
-var sessionCtl = {
-	init:function init() {
-		this.activeSessions = new Object();
-	},
-	generateId:function generateId() {
-		return crypto.randomBytes(8).toString('hex');
-	},
-	getValue:function getValue( sessionid, field ) {
-		if (  this.activeSessions[sessionid] ) {
-			return this.activeSessions[sessionid][field];
-		}
-		return false;
-	},
-	setValue:function setValue( sessionid, field, value) {
-		if ( this.activeSessions[sessionid] ) {
-			this.activeSessions[sessionid][field] = value;
-			return true;
-		}
-		return false;
-	},
-	getObject:function getObject( sessionid ) {
-		if ( this.activeSessions[sessionid] ) {
-			return this.activeSessions[sessionid];
-		}
-		return false;
-	},
-	setObject:function setObject( sessionData )	{
-		if ( !this.activeSessions[sessionData.sessionid] ) {
-			this.activeSessions[sessionData.sessionid] = {
-				"username":sessionData.username,
-				"ipaddr":sessionData.ipaddr,
-				"channels":sessionData.channels,
-				"authenticated":sessionData.authenticated
-			};
-			return true;
-		}
-		return false;
-	},
-	destroyObject:function( sessionid )	{
-		if ( this.activeSessions[sessionid] ) {
-			delete this.activeSessions[sessionid];
-			return true;
-		}
-		return false;
-	}
-};
-/**
- * Channel Controller
- */
-var channelCtl = {
-	init:function init() {
-		this.activeChannels = new Object();
-		this.activeChannels["System"] = {
-			"userlist":['System'],
-			"owner":"System",
-			"groups":['System']
-		};
-	},
-	getValue:function getValue( channel, field ) {
-		if ( this.activeChannels[channel] ) {
-			return this.activeChannels[channel][field];
-		}
-		return false;
-	},
-	setValue:function setValue( channel, field, value ) {
-		if ( this.activeChannels[chanenl] ) {
-			this.activeChannels[channel][field] = value;
-			return true;
-		}
-		return false;
-	},
-	getObject:function getObject( channel )	{
-		if ( this.activeChannels[channel] ) {
-			return this.activeChannels[channel];
-		}
-		return false;
-	},
-	setObject:function setObject( channelData )	{
-		if ( !this.activeChannels[channelData.name] ) {
-			this.activeChannels[channelData.name] = {
-				"userlist":channelData.userlist,
-				"owner":channelData.owner,
-				"groups":channelData.groups,
-				"messages":channelData.messages
-			};
-			consoleCtl.printSystem("created channel " + channelData.name);
-			return true;
-		}
-		return false;
-	},
-	destroyObject:function destroyObject( channelData )	{
-		if ( this.activeChannels[channelData.name] ) {
-			delete this.activeChannels[channelData.name];
-			consoleCtl.printSystem("deleted channel " + channelData.name);
-			return true;
-		}
-		return false;
-	},
-	join:function join( channelData ) {
-		if ( this.activeChannels[channelData.name]['userlist'].indexOf( channelData.username ) !== -1 ) {
-			consoleCtl.printSystem(channelData.username + " joined " + channelData.name);
-			return true;
-		}
-		return false;
-	},
-	exit:function exit( channelData ) {
-		if ( this.activeChannels[channelData]['userlist'].indexOf( channelData.username ) === -1 ) {
-			consoleCtl.printSystem(channelData.username + " exited " + channelData.name);
-			return true;
-		}
-		return false;
-	},
-	message:function message( channelData )	{
-		if ( this.activeChannels[channelData.name] ) {
-			this.activeChannels[channelData.name]['messages'].push( channelData );
-			consoleCtl.printMessage(channelData.username, channelData.message);
-			return true;
-		}
-		return false;
-	}
-};
-/**
- * Peer Controller
- */
- var peerCtl = {
- 		init:function init() {
- 			this.activePeers = new Object();
- 		},
-		getPeers:function getPeers() {
-			return this.activePeers;
-		},
- 		addPeer:function addPeer( peerIp, username ) {
- 			this.activePeers[peerIp] = username;
- 		},
-		checkPeer:function checkPeer( peerIp ) {
-			if ( this.activePeers[peerIp] ) {
-				return true;
-			}
-			return false;
-		},
- 		removePeer:function addPeer( peerIp ) {
- 			delete this.activePeers[peerIp];
- 		}
- };
-sessionCtl.init();
-channelCtl.init();
-peerCtl.init();
 app.use(express.static(path.join(__dirname, '/public')));
 /**
- * Peer Connection
+ * Listening on:
  */
-ashita.on('connection', function( socket ){
-	discoverPeers( socket );
-	/**
-	 * Data received
-	 */
+controllers.consoleCtl.printSystem("Listening on: " + nodeIp);
+/**
+ * On Connection
+ */
+ashita.on('connection', function( socket ) {
+  /**
+   * Get our client's IP address
+   */
+  socket.ipaddr = socket._socket.remoteAddress.substr(7);
+  /**
+   * Loop Through Nodes
+   */
+	functions.discoverPeers( socket );
+  /**
+   * On Message
+   */
 	socket.on('message', function( data ) {
+    /**
+     * Parse our data
+     */
 		var data = JSON.parse( data );
-		socket.ipaddr = data.ipaddr;
+    /**
+     * Setup our Signal Object
+     */
 		var signal = {
-			auth : function( data ){
+      /**
+       * Auth Signal
+       */
+			auth : function( data ) {
 				try {
-					data.sid = data.sid ? data.sid : sessionCtl.generateId();
-					doSession( socket, data.sid, data.ipaddr );
+					data.sid = data.sid ? data.sid : controllers.sessionCtl.generateId();
+					functions.doSession( ashita, socket, data.sid, nodeIp, socket.ipaddr );
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			},
-			register : function( data ){
-				try {
-					var username = data.content.username ? data.content.username : "";
-					var password = data.content.password ? data.content.password : "";
-					assert.equal( validator.isEmpty( username ), false);
-					assert.equal( validator.isAlphanumeric( username ), true);
-					assert.equal( validator.isEmpty( password ), false);
-					assert.equal( validator.isAlphanumeric( password ), true);
-					if ( sessionCtl.getValue(data.sid, "authenticated") === false ) {
-						doRegister( socket, username, password );
-					} else {
-						var payload = {
-							"type":"permissionDenied",
-							"content":{}
-						};
-						payload = JSON.stringify( payload );
-						socket.send( payload );
-					}
-				} catch ( e ) {
-					consoleCtl.printError( e );
-				}
-			},
-			login : function( data ){
+      /**
+       * Register Signal
+       */
+			register : function( data ) {
 				try {
 					var username = data.content.username ? data.content.username : "";
 					var password = data.content.password ? data.content.password : "";
@@ -253,24 +92,52 @@ ashita.on('connection', function( socket ){
 					assert.equal( validator.isAlphanumeric( username ), true);
 					assert.equal( validator.isEmpty( password ), false);
 					assert.equal( validator.isAlphanumeric( password ), true);
-					if ( sessionCtl.getValue(data.sid, "authenticated") === true ) {
+					if ( controllers.sessionCtl.getValue(data.sid, "authenticated") === false ) {
+						functions.doRegister( socket, username, password );
+					} else {
 						var payload = {
 							"type":"permissionDenied",
 							"content":{}
 						};
 						payload = JSON.stringify( payload );
 						socket.send( payload );
-					} else {
-						doLogin( socket, data.sid, data.ipaddr, username, password );
 					}
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			},
-			logout : function( data ){
+      /**
+       * Login Signal
+       */
+			login : function( data ) {
 				try {
-					if ( sessionCtl.getValue(data.sid, "authenticated") === true ) {
-						doLogout( socket, data.sid, data.ipaddr );
+					var username = data.content.username ? data.content.username : "";
+					var password = data.content.password ? data.content.password : "";
+					assert.equal( validator.isEmpty( username ), false);
+					assert.equal( validator.isAlphanumeric( username ), true);
+					assert.equal( validator.isEmpty( password ), false);
+					assert.equal( validator.isAlphanumeric( password ), true);
+					if ( controllers.sessionCtl.getValue(data.sid, "authenticated") === true ) {
+						var payload = {
+							"type":"permissionDenied",
+							"content":{}
+						};
+						payload = JSON.stringify( payload );
+						socket.send( payload );
+					} else {
+						functions.doLogin( ashita, socket, data.sid, socket.ipaddr, username, password );
+					}
+				} catch ( e ) {
+					controllers.consoleCtl.printError( e );
+				}
+			},
+      /**
+       * Logout Signal
+       */
+			logout : function( data ) {
+				try {
+					if ( controllers.sessionCtl.getValue(data.sid, "authenticated") === true ) {
+						functions.doLogout( socket, data.sid, socket.ipaddr );
 					} else {
 						var payload = {
 							"type":"permissionDenied",
@@ -280,23 +147,28 @@ ashita.on('connection', function( socket ){
 						socket.send( payload );
 					}
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			},
-			userlist : function( data ){
+      /**
+       * UserList Signal
+       */
+			userlist : function( data ) {
 				try {
 					var channel = data.content.channel ? data.content.channel : "";
 					assert.equal( validator.isEmpty( channel ), false);
 					//assert.equal( validator.isAlphanumeric( channel ), true);
-					getUserlist( socket, channel );
+					functions.getUserlist( socket, channel );
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			},
-			private : function (data) {
-				this.username = sessionCtl.getValue(data.sid, "username");
+      /**
+       * Private Signal
+       */
+			private : function( data ) {
+				this.username = controllers.sessionCtl.getValue(data.sid, "username");
 				this.recepient = data.content.user;
-				console.log(this.username + " opened a private chat with " + this.recepient);
 				var payload = {
 					"type":"privateSubscribeSuccessful",
 					"content":{
@@ -307,18 +179,24 @@ ashita.on('connection', function( socket ){
 				socket.send(payload);
 				// setup event to open private message with end user
 			},
-			privateMessage : function(data){
+      /**
+       * PrivateMessage Signal
+       */
+			privateMessage : function( data ) {
 				this.username = sessionCtl.getValue(data.sid, "username");
 				this.recepient = data.content.user;
-				doPrivate(this.username, this.recepient);
+				functions.doPrivate(this.username, this.recepient);
 			},
-			subscribe : function( data ){
+      /**
+       * Subscribe Signal
+       */
+			subscribe : function( data ) {
 				try {
-					if ( sessionCtl.getValue(data.sid, "authenticated") === true ) {
+					if ( controllers.sessionCtl.getValue(data.sid, "authenticated") === true ) {
 						var channel = data.content.channel ? data.content.channel : "";
 						assert.equal(validator.isEmpty(channel), false);
 						//assert.equal(validator.isAlphanumeric(channel), true);
-						doSubscribe( socket, data.sid, channel );
+						functions.doSubscribe( socket, data.sid, channel );
 					} else {
 						var payload = {
 							"type":"permissionDenied",
@@ -328,16 +206,19 @@ ashita.on('connection', function( socket ){
 						socket.send( payload );
 					}
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			},
-			unsubscribe : function( data ){
+      /**
+       * Unsubscribe Signal
+       */
+			unsubscribe : function( data ) {
 				try {
 					var channel = data.content.channel ? data.content.channel : "";
 					assert.equal( validator.isEmpty( channel ), false);
 					//assert.equal( validator.isAlphanumeric( channel ), true);
-					if ( sessionCtl.getValue(data.sid, "authenticated") === true ) {
-						doUnsubscribe( socket, data.sid, channel, sessionCtl.getValue(data.sid, "username") );
+					if ( controllers.sessionCtl.getValue(data.sid, "authenticated") === true ) {
+						functions.doUnsubscribe( socket, data.sid, channel, sessionCtl.getValue(data.sid, "username") );
 					} else {
 						var payload = {
 							"type":"permissionDenied",
@@ -347,315 +228,50 @@ ashita.on('connection', function( socket ){
 						socket.send( payload );
 					}
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			},
-			purge : function( data ){
+      /**
+       * Purge Signal
+       */
+			purge : function( data ) {
 				//pass
 			},
-			message : function( data ){
-				data.sid = data.sid ? data.sid : sessionCtl.generateId();
+      /**
+       * Message Signal
+       */
+			message : function( data ) {
+				data.sid = data.sid ? data.sid : controllers.sessionCtl.generateId();
 				var channel = data.content.channel ? data.content.channel : "";
 				var text = data.content.text ? data.content.text : "";
 				assert.equal( validator.isEmpty( channel ), false );
-				//assert.equal( validator.isAlphanumeric( channel ), true );
 				assert.equal( validator.isEmpty( text ), false );
 				assert.equal( validator.isAscii( text ), true );
 				try {
-					doMessage( socket, data.sid, channel, data.ipaddr, sessionCtl.getValue(data.sid, "username"), text );
+					functions.doMessage( ashita, socket, data.sid, channel, socket.ipaddr, controllers.sessionCtl.getValue(data.sid, "username"), text );
 				} catch ( e ) {
-					consoleCtl.printError( e );
+					controllers.consoleCtl.printError( e );
 				}
 			}
 		};
-		if (typeof signal[data.type] !== "function" ) {
-			consoleCtl.printError("Invalid Signal");
+		if ( typeof signal[data.type] !== "function" ) {
+			controllers.consoleCtl.printError("Invalid Signal");
 		}
 		return signal[data.type](data);
 	});
+  /**
+   * On Error
+   */
 	socket.on('error', function( e ) {
 		// pass
 	});
+  /**
+   * On Close
+   */
 	socket.on('close', function() {
-		peerCtl.removePeer(socket.ipaddr);
+    /**
+     * Get Rid of our defunct peers
+     */
+		controllers.peerCtl.removePeer(socket.ipaddr);
 	});
 });
-/**
- * Loop through known peers
- * and broadcast to new peers
- */
-function discoverPeers( socket ) {
-	for ( var peer in peerCtl.getPeers() ) {
-		var payload = {
- 		   "type":"newPeerDiscovered",
- 		   "ipaddr": peer
- 	   };
- 	   payload = JSON.stringify( payload );
- 	   socket.send( payload );
-	}
-}
-function doSession( socket, sessionid, ipaddr ) {
-	this.socket = socket;
-	this.sessionid = sessionid;
-	this.ipaddr = ipaddr;
-	var sessionObject = sessionCtl.getObject(this.sessionid);
-	if ( sessionObject ) {
-		sessionCtl.setObject({
-			sessionid:this.sessionid,
-			ipaddr:this.ipaddr,
-			username:sessionObject.username,
-			channels:sessionObject.channels,
-			authenticated:true
-		});
-		if ( peerCtl.checkPeer(this.ipaddr) ) {
-			return this.socket.close();
-		} else {
-			peerCtl.addPeer(this.ipaddr, sessionObject.username);
-			ashita.clients.forEach(function( client ) {
-				var payload = {
-					"type":"newPeerDiscovered",
-					"ipaddr": this.ipaddr
-				};
-				payload = JSON.stringify( payload );
-				client.send( payload );
-			});
-		}
-		consoleCtl.printSystem("New Authenticated Connection: " + this.sessionid);
-		var payload = {
-			"type":"newAuthedConnection",
-			"sid":this.sessionid,
-			"channels":sessionObject.channels
-		};
-		payload = JSON.stringify(payload);
-		this.socket.send(payload);
-		var channels = sessionCtl.getValue(this.sessionid, "channels");
-		if ( channels ) {
-				 for (var i = 0; i < channels.length; ++i ) {
-					 consoleCtl.printSystem(sessionCtl.getValue(this.sessionid, "username") + " subscribing to " + channels[i]);
-					 var payload = {
-						 "type":"subscribeSuccessful",
-						 "content":{
-							 "channel":channels[i]
-						 }
-					 };
-					 payload = JSON.stringify( payload );
-					 this.socket.send( payload );
-					 var channelObject = channelCtl.getObject(channels[i]);
-					 for ( var j = 0; j < channelObject['messages'].length ; ++j ) {
-						 var payload = {
-							 "type":"messageSuccessful",
-							 "content":{
-								 "nodeIpaddr":process.env.ipaddr,
-								 "ipaddr":this.ipaddr,
-								 "channel":channelObject['messages'][j].name,
-								 "username":channelObject['messages'][j].username,
-								 "text":channelObject['messages'][j].message
-							 }
-						 };
-						 payload = JSON.stringify( payload );
-						 this.socket.send( payload );
-					}
-				}
-		}
-		return true;
-	} else {
-		var sessionObject = sessionCtl.setObject({
-			sessionid:this.sessionid,
-			ipaddr:this.ipaddr,
-			username:"Anonymous",
-			channels:[],
-			authenticated:false
-		});
-		if ( sessionObject ) {
-			consoleCtl.printSystem("New Anonymous Connection: " + this.sessionid);
-			var payload = {
-				"type":"newAnonymousConnection",
-				"sid":this.sessionid
-			};
-			payload = JSON.stringify(payload);
-			this.socket.send(payload);
-		}
-		return true;
-	}
-	return false;
-}
-function doLogin( socket, sessionid, ipaddr, username, password ) {
-	this.sessionid = sessionCtl.generateId();
-	this.ipaddr = ipaddr;
-	this.username = username;
-	this.password = password;
-	var encryptedPassword = crypto.createHmac( 'sha512', password ).digest( 'hex' );
-	var sessionObject = sessionCtl.setObject({
-		sessionid:this.sessionid,
-		ipaddr:this.ipaddr,
-		username:this.username,
-		channels:[],
-		authenticated:true
-	});
-	if ( sessionObject ) {
-		if ( peerCtl.checkPeer(this.ipaddr) ) {
-			return this.socket.close();
-		} else {
-			peerCtl.addPeer(this.ipaddr, this.username);
-			ashita.clients.forEach(function( client ) {
-				var payload = {
-					"type":"newPeerDiscovered",
-					"ipaddr": this.ipaddr
-				};
-				payload = JSON.stringify( payload );
-				client.send( payload );
-			});
-		}
-		consoleCtl.printSystem(this.username + " logged in");
-		var payload = {
-			"type":"loginSuccessful",
-			"sid":this.sessionid
-		};
-		payload = JSON.stringify( payload );
-		socket.send( payload );
-		return true;
-	}
-	return false;
-}
-function getUserlist( socket, channel ) {
-	var channelObject = channelCtl.getObject(channel);
-	if ( channelObject ) {
-		var activeUsers = new Object();
-		for ( session in sessionCtl.activeSessions ) {
-			var usr = sessionCtl.getValue(session, "username");
-			if ( channelObject.userlist.indexOf(usr) !== -1 ) {
-				activeUsers[usr] = sessionCtl.getValue(session, "ipaddr");
-			}
-		}
-		var payload = {
-			"type":"userList",
-			"content":{
-					"channel" : channel,
-					"users" : channelObject.userlist
-			}
-		};
-		payload = JSON.stringify( payload );
-		socket.send( payload );
-	}
-}
-function doLogout( socket, sessionid, ipaddr ) {
-	this.sessionid = sessionid;
-	this.ipaddr = ipaddr;
-	this.username = sessionCtl.getValue(this.sessionid, "username");
-	// pass
-}
-function doRegister( socket, username, password ) {
-	this.username = username;
-	this.password = password;
-	var encryptedPassword = crypto.createHmac( 'sha512', this.password ).digest( 'hex' );
-	// pass
-}
-function doUnsubscribe( socket, sessionid, channel, username ) {
-	this.sessionid = sessionid;
-	this.channel = channel;
-	this.username = username;
-	// pass
-}
-/**
- * uhh
- */
-function doSubscribe( socket, sessionid, channel )
- {
-	 this.socket = socket;
-	 this.sessionid = sessionid;
-	 this.ipaddr = "0.0.0.0";
-	 this.channel = channel;
-	 this.username = sessionCtl.getValue(this.sessionid, "username");
-	 var channelObject = channelCtl.getObject(this.channel);
-	 if ( channelObject ) {
-		var activeChannels = sessionCtl.getValue(this.sessionid, "channels");
-		activeChannels.push(this.channel);
-		sessionCtl.setValue(this.sessionid, "channels", activeChannels );
-		consoleCtl.printSystem(this.username + " subscribing to " + this.channel);
-		var payload = {
-			"type":"subscribeSuccessful",
-			"content":{
-				"channel":this.channel
-			}
-		};
-		payload = JSON.stringify( payload );
-		this.socket.send( payload );
-		for ( var j = 0; j < channelObject['messages'].length ; ++j ) {
-			var payload = {
-				"type":"messageSuccessful",
-				"content":{
-					"nodeIpaddr":process.env.ipaddr,
-					"ipaddr":this.ipaddr,
-					"channel":channelObject['messages'][j].channel,
-					"username":channelObject['messages'][j].username,
-					"text":channelObject['messages'][j].text
-				}
-			};
-			payload = JSON.stringify( payload );
-			this.socket.send( payload );
-		}
-	 } else {
-		 channelCtl.setObject({
-			 "name":this.channel,
-			 "userlist":[this.username],
-			 "owner":this.username,
-			 "groups":[this.username],
-			 "messages":[]
-		 });
-		 var activeChannels = sessionCtl.getValue(this.sessionid, "channels");
-		 activeChannels.push(this.channel);
-		 sessionCtl.setValue(this.sessionid, "channels", activeChannels );
-		 var payload = {
-		   "type":"subscribeNewSuccessful",
-		   "content":{
-			   "channel":this.channel
-		   }
-		 };
-		 payload = JSON.stringify( payload );
-		 this.socket.send( payload );
-	 }
- }
- function doPrivate(username, recepient) {
-	 // pass
-	 console.log(username + " sent a private message to " + recepient);
- }
- function doMessage( socket, sessionid, channel, ipaddr, username, text ) {
-	this.sessionid = sessionid;
-	this.channel = channel;
-	this.ipaddr = ipaddr;
-	this.username = username;
-	this.text = text;
-	if ( this.channel !== "System" ) {
-		var payload = {
-			"type":"messageSuccessful",
-			"content":{
-				"nodeIpaddr":process.env.ipaddr,
-				"channel":this.channel,
-				"ipaddr":this.ipaddr,
-				"username":this.username,
-				"text":this.text
-			}
-		};
-		channelCtl.message({
-			"name":this.channel,
-			"type":"channelMessage",
-			"nodeIpaddr":process.env.ipaddr,
-			"ipaddr":this.ipaddr,
-			"username":this.username,
-			"timestamp":0,
-			"message":this.text
-		});
-		payload = JSON.stringify( payload );
-		ashita.clients.forEach(
-		function( client )
-		{
-			client.send( payload );
-		});
-	} else if ( this.channel === 'System' ) {
-		var payload = {
-			"type":"permissionDenied",
-		};
-		payload = JSON.stringify( payload );
-		socket.send(payload);
-	}
-}

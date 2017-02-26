@@ -5,11 +5,11 @@ ashitajs intends to be a fully decentralized P2P network  (though not there yet)
 
 First we need to generate an SSL bundle to use with node.js
 ```bash
-mkdir .ssl
+mkdir ssl
 ```
 
 ```bash
-cd .ssl
+cd ssl
 ```
 
 ```bash

@@ -6,7 +6,6 @@
   "dependencies": {
     "https": "^1.0.0",
     "express": "^4.14.0",
-    "mongodb": "^2.2.12",
     "uws": "^0.11.2",
     "vue": "^2.1.4",
     "crypto": "^0.0.3",
@@ -23,8 +22,8 @@
     "type": "git",
     "url": "git+https://github.com/recursiveoverflow/ashitajs.git"
   },
-  "author": "recursiveoverflow, mooglesonthecob",
-  "license": "ISC",
+  "author": "recursiveoverflow",
+  "license": "GNU",
   "bugs": {
     "url": "https://github.com/recursiveoverflow/ashitajs/issues"
   },
