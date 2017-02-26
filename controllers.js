@@ -1,17 +1,25 @@
-var crypto=require('crypto');
-  /**
-  * Console Controller
-  */
+/**
+ * ashita/core/controllers
+ *
+ * @package    ashita/core/controllers
+ * @author     recursiveoverflow
+ */
+
+/**
+* Console Controller
+*/
 exports.consoleCtl = {
     printMessage:function printMessage( usr, msg ) {
-      //var timestamp = moment().format("HH:mm:ss");
-      console.log("<" + usr + ">: " + msg );
+      var timestamp = moment().format("HH:mm:ss");
+      console.log("["+ timestamp +"] <" + usr + ">: " + msg );
     },
     printSystem:function printSystem( str )	{
-      console.log("@System: " + str);
+      var timestamp = moment().format("HH:mm:ss");
+      console.log("["+ timestamp +"] @System: " + str);
     },
     printError:function printError( str ) {
-      console.log("!!! Error !!!: " + str);
+      var timestamp = moment().format("HH:mm:ss");
+      console.log("["+ timestamp +"] !!! Error !!!: " + str);
     }
   };
   /**
