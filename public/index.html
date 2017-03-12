@@ -13,7 +13,7 @@
 			<div v-if="getState() === msg.channel" class="uiMessage" v-bind:class="{whoSys: msg.isSystem, whoErr: msg.isError}">
 				<time class="when" v-bind:datetime="msg.date()">{{ msg.date().format('hh:mm:ss') }}</time>
 				<div class="where">{{ msg.channel }}</div>
-				<div class="who">{{ msg.username }}</div>
+				<div class="who">{{ msg.ipaddr }}</div>
 				<div class="what">{{ msg.message }}</div>
 			</div>
 	</template>

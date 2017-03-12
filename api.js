@@ -25,6 +25,29 @@ module.exports = {
     }
   },
   /**
+   * ACL Controller
+   */
+  aclCtl:{
+    init:function init() {
+      this.ACL = new Array();
+    },
+    getACL:function getACL() {
+      return this.ACL;
+    },
+    addEntry:function addEntry( peerIp ) {
+      this.ACL.push(peerIp);
+    },
+    checkEntry:function checkEntry( peerIp ) {
+      if ( this.ACL.indexOf(peerIp) !== -1 ) {
+        return true;
+      }
+      return false;
+    },
+    removeEntry:function removeEntry( peerIp ) {
+      delete this.ACL[peerIp];
+    }
+  },
+  /**
   * Session Controller
   */
   sessionCtl:{
@@ -162,7 +185,7 @@ module.exports = {
         }
         return false;
       },
-      removePeer:function addPeer( peerIp ) {
+      removePeer:function removePeer( peerIp ) {
         delete this.activePeers[peerIp];
       }
   }

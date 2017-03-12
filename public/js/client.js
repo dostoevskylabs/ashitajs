@@ -57,7 +57,7 @@ var vm = new Vue({
           isError:false,
           date:moment,
           channel:data.channel,
-          username:data.username,
+          ipaddr:data.ipaddr,
           message:data.text
         });
         return true;
@@ -71,7 +71,7 @@ var vm = new Vue({
           isError:false,
           date:moment,
           channel:"System",
-          username:"SYSTEM",
+          ipaddr:"SYSTEM",
           message:data
         });
         return true;
@@ -84,7 +84,7 @@ var vm = new Vue({
           isSystem:false,
           isError:true,
           date:moment,
-          username:"ERROR",
+          ipaddr:"ERROR",
           message:msg
         });
         return true;
@@ -196,20 +196,11 @@ ashita.ui = {
             }
             var args = message.split(" ");
             switch ( args[0] ) {
-              case "subscribe":
-              ashita.transmit.subscribe("#"+args[1]);
+              case "join":
+              ashita.transmit.join("#"+args[1]);
               break;
-              case "unsubscribe":
-              ashita.transmit.unsubscribe(args[1]);
-              break;
-              case "register":
-              ashita.transmit.register(args[1], args[2]);
-              break;
-              case "login":
-              ashita.transmit.login(args[1], args[2]);
-              break;
-              case "logout":
-              ashita.transmit.logout();
+              case "part":
+              ashita.transmit.part(args[1]);
               break;
               default:
               vm.printError("invalid command");
@@ -253,86 +244,60 @@ ashita.socket = {
       if ( ws.readyState === 1 ) {
         switch ( payload.type ) {
           case "newPeerDiscovered":
-          vm.printSystem(payload.ipaddr + " is now a node");
-          vm.printSystem("New Peer Discovered: " + payload.ipaddr);
+            vm.printSystem(payload.ipaddr + " is now a node");
+            vm.printSystem("New Peer Discovered: " + payload.ipaddr);
           break;
           case "newAuthedConnection":
-          vm.printSystem("Welcome Back");
-          if ( !document.cookie ) {
-          document.cookie = payload.sid;
-          }
+            vm.printSystem("Welcome Back");
+            if ( !document.cookie ) {
+              document.cookie = payload.sid;
+            }
           break;
           case "newAnonymousConnection":
-          vm.printSystem("Who goes there?");
-          break;
-          case "registerSuccessful":
-          vm.printSystem("Registration Complete");
-          break;
-          case "registerFailed":
-          vm.printError("Registration Failed");
-          break;
-          case "loginSuccessful":
-          document.cookie = payload.sid;
-          console.log(document.cookie);
-          vm.printSystem("Login Successful");
-          break;
-          case "loginFailed":
-          vm.printError("Login Failed");
-          break;
-          case "logoutSuccessful":
-          document.cookie = "";
-          vm.printSystem("Logout Successful");
-          break;
-          case "logoutFailed":
-          vm.printError("Logout Failed");
+            vm.printSystem("Who goes there?");
+            document.cookie = payload.sid;
           break;
           case "privateSubscribeSuccessful":
-          vm.addTab("@"+payload.content.user);
-          vm.selectTab("@"+payload.content.user);
+            vm.addTab("@"+payload.content.ipaddr);
+            vm.selectTab("@"+payload.content.ipaddr);
           break;
           case "subscribeNewSuccessful":
-          vm.addTab(payload.content.channel);
-          vm.selectTab(payload.content.channel);
-          vm.userlist =  payload.content.userlist;
-          vm.printSystem("Created channel #" + payload.content.channel);
+            vm.addTab(payload.content.channel);
+            vm.selectTab(payload.content.channel);
+            vm.userlist =  payload.content.userlist;
+            vm.printSystem("Created channel " + payload.content.channel);
           break;
           case "subscribeNewFailed":
-          vm.printError("Channel already exists");
+            vm.printError("Channel already exists");
           break;
           case "subscribeSuccessful":
-          vm.addTab(payload.content.channel);
-          vm.selectTab(payload.content.channel);
-          vm.printSystem("Subscribed to " + payload.content.channel);
+            vm.addTab(payload.content.channel);
+            vm.selectTab(payload.content.channel);
+            vm.printSystem("Subscribed to " + payload.content.channel);
           break;
           case "subscribeFailed":
-          vm.printError("Couldn't subscribe to channel");
+            vm.printError("Couldn't subscribe to channel");
           break;
           case "unsubscribeSuccessful":
-          vm.selectTab("System");
-          vm.removeTab(payload.content.channel);
-          vm.printSystem("Unsubscribed to channel");
+            vm.selectTab("System");
+            vm.removeTab(payload.content.channel);
+            vm.printSystem("Unsubscribed to channel");
           break;
           case "unsubscribeFailed":
-          vm.printError("Unsubscribe failed");
+            vm.printError("Unsubscribe failed");
           break;
           case "userList":
-          vm.printUsers(payload.content);
-          break;
-          case "purgeSuccessful":
-          vm.printSystem("Purge Successful");
-          break;
-          case "purgeFailed":
-          vm.printError("Purge Failed");
+            vm.printUsers(payload.content);
           break;
           case "messageSuccessful":
-          vm.selectTab(payload.content.channel);
-          vm.printMessage(payload.content);
+            vm.selectTab(payload.content.channel);
+            vm.printMessage(payload.content);
           break;
           case "signalFault":
-          vm.printError("SIGFAULT");
+            vm.printError("SIGFAULT");
           break;
           case "permissionDenied":
-          vm.printSystem("Permission Denied");
+            vm.printSystem("Permission Denied");
           break;
         }
       }
@@ -387,72 +352,36 @@ ashita.transmit = {
       }
     });
   },
-  register:function( username, password ) {
-    ashita.socket.send({
-      type:"register",
-      sid:document.cookie,
-      content:{
-        username:username,
-        password:password
-      }
-    });
-  },
-  login:function( username, password ) {
-    ashita.socket.send({
-      type:"login",
-      sid:document.cookie,
-      content:{
-        username:username,
-        password:password
-      }
-    });
-  },
-  logout:function() {
-    ashita.socket.send({
-      type:"logout",
-      sid:document.cookie,
-      content:{}
-    });
-  },
-  private:function( user ) {
+  private:function( ipaddr ) {
     ashita.socket.send({
       type:"private",
       sid:document.cookie,
       content:{
-        user:user
+        ipaddr:ipaddr
       }
     });
   },
-  privateMessage:function( user ) {
+  privateMessage:function( ipaddr ) {
     ashita.socket.send({
       type:"privateMessage",
       sid:document.cookie,
       content:{
-        user:user
+        ipaddr:ipaddr
       }
     });
   },
-  subscribe:function( channel ) {
+  join:function( channel ) {
     ashita.socket.send({
-      type:"subscribe",
+      type:"join",
       sid:document.cookie,
       content:{
         channel:channel
       }
     });
   },
-  unsubscribe:function( channel ) {
+  part:function( channel ) {
     ashita.socket.send({
-      type:"unsubscribe",
-      sid:document.cookie,
-      content:{
-        channel:channel
-      }
-    });
-  },
-  purge:function( channel ) {
-    ashita.socket.send({
-      type:"purge",
+      type:"part",
       sid:document.cookie,
       content:{
         channel:channel
