@@ -2,7 +2,7 @@
 * ashita/client
 *
 * @package    ashita/client
-* @author     recursiveoverflow
+* @author     evolretsinis
 */
 var ashita = (function(){
   return {
@@ -22,7 +22,7 @@ var ashita = (function(){
 var tabComponent = {
   template: "#tab-template",
   methods: {
-    selectTab : function(name){
+    selectTab:function(name){
       vm.selectTab(name);
     }
   },
@@ -31,7 +31,7 @@ var tabComponent = {
 var msgComponent = {
   template: "#msg-template",
   methods: {
-    getState : function(){
+    getState:function(){
       return vm.state;
     }
   },
@@ -39,9 +39,9 @@ var msgComponent = {
 };
 var vm = new Vue({
   el: "#container",
-  components : {
-    "tab" : tabComponent,
-    "msg" : msgComponent
+  components:{
+    "tab":tabComponent,
+    "msg":msgComponent
   },
   data: {
     messages: [],
@@ -49,56 +49,56 @@ var vm = new Vue({
     tabs: ['System'],
     state: "System",
   },
-  methods : {
-    printMessage : function( data = "" ) {
+  methods:{
+    printMessage:function( data = "" ) {
       if ( typeof data === "object" ) {
         this.messages.push({
-          isSystem : false,
-          isError : false,
-          date : moment,
-          channel : data.channel,
-          username : data.username,
-          message : data.text
+          isSystem:false,
+          isError:false,
+          date:moment,
+          channel:data.channel,
+          username:data.username,
+          message:data.text
         });
         return true;
       }
       return false;
     },
-    printSystem : function( data = "" ) {
+    printSystem:function( data = "" ) {
       if ( typeof data === "string" ) {
         this.messages.push({
-          isSystem : true,
-          isError : false,
-          date : moment,
-          channel : "System",
-          username : "SYSTEM",
-          message : data
+          isSystem:true,
+          isError:false,
+          date:moment,
+          channel:"System",
+          username:"SYSTEM",
+          message:data
         });
         return true;
       }
       return false;
     },
-    printError : function( data = "" ) {
+    printError:function( data = "" ) {
       if ( typeof data === "string" ) {
         this.messages.push({
-          isSystem : false,
-          isError : true,
-          date : moment,
-          username : "ERROR",
-          message : msg
+          isSystem:false,
+          isError:true,
+          date:moment,
+          username:"ERROR",
+          message:msg
         });
         return true;
       }
       return false;
     },
-    addTab : function( name = "System" ) {
+    addTab:function( name = "System" ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) === -1 ) {
         this.tabs.push(name);
         return true;
       }
       return false;
     },
-    removeTab : function( name = "System" ) {
+    removeTab:function( name = "System" ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) !== -1 ) {
         this.tabs.splice(this.tabs.indexOf(name), 1);
         console.log("unsubscribed->" + name);
@@ -106,7 +106,7 @@ var vm = new Vue({
       }
       return false;
     },
-    printUsers : function( data ) {
+    printUsers:function( data ) {
       console.log(data);
       if ( this.state === data.channel ) {
         this.userlist = data.users;
@@ -118,7 +118,7 @@ var vm = new Vue({
         el.innerHTML = users;
       }
     },
-    selectTab : function( name = "System" ) {
+    selectTab:function( name = "System" ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) !== -1 ) {
         if ( this.state !== name ) {
           document.getElementById(this.state).className = "";
@@ -137,7 +137,7 @@ var vm = new Vue({
       }
       return false;
     },
-    getTab : function( name = "System" ) {
+    getTab:function( name = "System" ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) !== -1 ) {
         if ( this.state === name ) {
           var queryTab = document.getElementById(this.state);
@@ -178,15 +178,15 @@ var vm = new Vue({
   }
 });
 ashita.ui = {
-  elements : {
+  elements:{
     output: document.getElementById('uiOutput'),
     input: document.getElementById('uiInput')
   },
-  events : {
+  events:{
     domready: function() {
       ashita.ui.elements.input.addEventListener('keydown', ashita.ui.events.input);
     },
-    input : function( e ) {
+    input:function( e ) {
       var message = ashita.ui.elements.input.value;
       if ( message.length > 0 ) {
         if ( e.key === "Enter" ) {
@@ -244,7 +244,7 @@ document.addEventListener("DOMContentLoaded", ashita.ui.events.domready);
 */
 var ws = new WebSocket("wss://" + ashita.nodeIp + ":443");
 ashita.socket = {
-  events : {
+  events:{
     open:function( event ) {
       ashita.transmit.auth();
     },

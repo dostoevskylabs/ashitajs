@@ -48,9 +48,9 @@ Next we need to install our modules from the main directory with server.js
 npm install
 ```
 
-Now we need to make sure MongoDB is installed on our System, and make sure the daemon is running, once thats done we are ready to start
+Now we are ready to start
 ```bash
-npm start
+npm start Wi-Fi
 ```
 
 ##Server Controllers
