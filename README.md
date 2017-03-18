@@ -139,10 +139,24 @@ ashita.socket.send({
 ```
 Server Events
 ================================
+```bash
 newPeerDiscovered - new peer event
+```
+```bash
 newAuthedConnection - new authenticated peer event
+```
+```bash
 newAnonymousConnection - new anonymous peer event
+```
+```bash
 subscribeNewSuccessful - create new channel successful event
+```
+```bash
 subscribeSuccessful - subscribe to channel successful event
+```
+```bash
 messageSuccessful - message to channel successful event
+```
+```bash
 userList - retreived userlist event
+```
