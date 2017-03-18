@@ -100,7 +100,8 @@ module.exports = {
         this.activeChannels["System"] = {
           "userlist":['System'],
           "owner":"System",
-          "groups":['System']
+          "groups":['System'],
+          "messages":[]
         };
       },
       getValue:function getValue( channel, field ) {
@@ -110,7 +111,7 @@ module.exports = {
         return false;
       },
       setValue:function setValue( channel, field, value ) {
-        if ( this.activeChannels[chanenl] ) {
+        if ( this.activeChannels[channel] ) {
           this.activeChannels[channel][field] = value;
           return true;
         }

@@ -127,7 +127,6 @@ var vm = new Vue({
           if( typeof queryTab !== 'undefined' && queryTab !== null ) {
             queryTab.className = "selected";
             console.log("selected->" + this.state);
-            ashita.transmit.userlist(this.state);
           } else if ( this.state[0] === "@" ) {
             document.getElementById("uiRight").innerHTML = "No files shared.";
             console.log("selected->" + this.state);
@@ -151,7 +150,6 @@ var vm = new Vue({
             if ( queryTab.className !== "selected" ) {
               queryTab.className = "selected";
               console.log("selected->" + this.state);
-              ashita.transmit.userlist(this.state);
             }
           } else {
             this.$watch('tabs', function() {
@@ -166,7 +164,6 @@ var vm = new Vue({
                 queryTab.className = "";
                 document.getElementById(this.state).className = "selected";
                 console.log("selected->" + this.state);
-                ashita.transmit.userlist(this.state);
               }
             });
           }
@@ -270,6 +267,9 @@ ashita.socket = {
             vm.selectTab(payload.content.channel.name);
             vm.printMessage(payload.content);
           break;
+          case "debug":
+            console.log(payload.content.object);
+          break;
         }
       }
     },
@@ -298,6 +298,14 @@ ws.addEventListener("error", ashita.socket.events.onerror);
  * @author   recursiveoverflow
  */
 ashita.transmit = {
+  debug:function( controller ) {
+    ashita.socket.send({
+      type:"debug",
+      content:{
+        "controller":controller
+      }
+    });
+  },
   auth:function() {
     ashita.socket.send({
       type:"auth",

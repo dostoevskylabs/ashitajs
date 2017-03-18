@@ -89,34 +89,8 @@ if ( cluster.isMaster ) {
     if ( API.aclCtl.checkEntry(socket.ipaddr) === false ) {
       socket.close();
     }
-    if ( API.peerCtl.checkPeer(socket.ipaddr) ) {
-      socket.close();
-    } else {
-      API.peerCtl.addPeer(socket.ipaddr);
-      ashita.clients.forEach(function( client ) {
-        var payload = {
-          "type":"newPeerDiscovered",
-          "content":{
-            "ipaddr": socket.ipaddr
-          }
-        };
-        payload = JSON.stringify( payload );
-        client.send( payload );
-      });
-    }
-    /**
-     * Loop Through Nodes
-     */
-    for ( var peer in API.peerCtl.getPeers() ) {
-      var payload = {
-        "type":"newPeerDiscovered",
-        "content":{
-          "ipaddr": peer
-        }
-      };
-      payload = JSON.stringify( payload );
-      socket.send( payload );
-    }
+
+
     /**
      * On Message
      */
@@ -129,6 +103,31 @@ if ( cluster.isMaster ) {
        * Setup our Signal Object
        */
   		var signal = {
+        debug:function( data ) {
+          this.controller = data.controller;
+          switch ( this.controller ) {
+            case "channel":
+              var payload = {
+                "type":"debug",
+                "content":{
+                  "object":API.channelCtl.activeChannels
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            break;
+            case "session":
+              var payload = {
+                "type":"debug",
+                "content":{
+                  "object":API.sessionCtl.activeSessions
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            break;
+          }
+        },
         /**
          * Auth Signal
          */
@@ -137,6 +136,32 @@ if ( cluster.isMaster ) {
           this.nodeIp         = nodeIp;
           this.ipaddr         = socket.ipaddr;
           try {
+            if ( API.peerCtl.checkPeer(socket.ipaddr) === false ) {
+              var peers = API.peerCtl.getPeers();
+              for ( var i = 0; i < peers.length; ++i ) {
+                var payload = {
+                  "type":"newPeerDiscovered",
+                  "content":{
+                    "ipaddr": peers[i]
+                  }
+                };
+                payload = JSON.stringify( payload );
+                socket.send( payload );
+              }
+            }
+            API.peerCtl.addPeer(socket.ipaddr);
+            ashita.clients.forEach(function( client ) {
+              if ( socket !== client ) {
+                var payload = {
+                  "type":"newPeerDiscovered",
+                  "content":{
+                    "ipaddr": socket.ipaddr
+                  }
+                };
+                payload = JSON.stringify( payload );
+                client.send( payload );
+              }
+            });
             var sessionObject = API.sessionCtl.getObject(this.sessionid);
             /**
              * Session exists
@@ -170,7 +195,8 @@ if ( cluster.isMaster ) {
               var payload = {
                 "type":"newAnonymousConnection",
                 "content":{
-                  "sid":this.sessionid
+                  "sid":this.sessionid,
+                  "channels":['System']
                 }
               };
               payload = JSON.stringify( payload );
@@ -184,18 +210,19 @@ if ( cluster.isMaster ) {
          * Subscribe Signal
          */
   			channelJoin:function( data ) {
-          var channel = data.channel.name ? data.channel.name : "";
-          assert.equal(validator.isEmpty(channel), false);
+          this.sessionid  = data.sid;
+          this.ipaddr     = socket.ipaddr;
+          this.channel    = data.channel.name;
           try {
-            this.sessionid = data.sid;
-            this.ipaddr = socket.ipaddr;
-            this.channel = channel;
+            API.consoleCtl.printMessage("SYSTEM", this.ipaddr + " subscribing to", this.channel);
             var channelObject = API.channelCtl.getObject(this.channel);
             if ( channelObject ) {
               var activeChannels = API.sessionCtl.getValue(this.sessionid, "channels");
               activeChannels.push(this.channel);
               API.sessionCtl.setValue(this.sessionid, "channels", activeChannels );
-              API.consoleCtl.printMessage("SYSTEM", this.ipaddr + " subscribing to", this.channel);
+              var userList = API.channelCtl.getValue(this.channel, "userlist");
+              userList.push(this.ipaddr);
+              API.channelCtl.setValue(this.channel, "userlist", userList);
               var payload = {
                 "type":"subscribeSuccessful",
                 "content":{
@@ -206,14 +233,15 @@ if ( cluster.isMaster ) {
               };
               payload = JSON.stringify( payload );
               socket.send( payload );
-              for ( var j = 0; j < channelObject['messages'].length ; ++j ) {
+              for ( var i = 0; i < channelObject['messages'].length ; ++i ) {
                 var payload = {
                   "type":"messageSuccessful",
                   "content":{
-                    "nodeIpaddr":nodeIp,
-                    "ipaddr":this.ipaddr,
-                    "channel":channelObject['messages'][j].channel,
-                    "text":channelObject['messages'][j].text
+                    "channel":{
+                      "name":channelObject['messages'][i].channel,
+                      "ipaddr":this.ipaddr,
+                      "message":channelObject['messages'][i].message
+                    }
                   }
                 };
                 payload = JSON.stringify( payload );
@@ -234,7 +262,8 @@ if ( cluster.isMaster ) {
                 "type":"subscribeNewSuccessful",
                 "content":{
                   "channel":{
-                    "name":this.channel
+                    "name":this.channel,
+                    "ipaddr":this.ipaddr
                   }
                 }
               };
@@ -253,7 +282,7 @@ if ( cluster.isMaster ) {
       				var payload = {
       					"type":"userList",
       					"content":{
-      							"channel" : channel,
+      							"channel" : this.channel,
       							"users" : channelObject.userlist
       					}
       				};
@@ -275,47 +304,33 @@ if ( cluster.isMaster ) {
          */
   			channelMessage:function( data ) {
   				data.sid = data.sid ? data.sid : API.sessionCtl.generateId();
-  				var channel = data.channel.name ? data.channel.name : "";
-  				var message = data.channel.message ? data.channel.message : "";
-  				assert.equal( validator.isEmpty( channel ), false );
-  				assert.equal( validator.isEmpty( message ), false );
-  				assert.equal( validator.isAscii( message ), true );
+          this.sessionid = data.sid;
+          this.channel = data.channel.name;
+          this.ipaddr = socket.ipaddr;
+          this.message = data.channel.message;
           try {
-     			 this.sessionid = data.sid;
-     			 this.channel = channel;
-     			 this.ipaddr = socket.ipaddr;
-     			 this.message = message;
-     			 if ( this.channel !== "System" ) {
-            var payload = {
-            	"type":"messageSuccessful",
-            	"content":{
-                "sid":this.sessionid,
-            		"channel":{
-                  "name":this.channel,
-                  "ipaddr":this.ipaddr,
-                  "message":this.message
-                }
-            	}
-            };
-            API.channelCtl.message({
-            	"name":this.channel,
-            	"type":"channelMessage",
-            	"ipaddr":this.ipaddr,
-            	"timestamp":0,
-            	"message":this.message
-            });
-            payload = JSON.stringify( payload );
-            API.consoleCtl.printMessage(this.channel, this.ipaddr, this.message);
-            ashita.clients.forEach(function( client )	{
-            	client.send( payload );
-            });
-     			 } else if ( this.channel === 'System' ) {
-     			 	var payload = {
-     			 		"type":"permissionDenied",
-     			 	};
-     			 	payload = JSON.stringify( payload );
-     			 	socket.send( payload );
-     			 }
+           API.channelCtl.message({
+           	"name":this.channel,
+           	"ipaddr":this.ipaddr,
+           	"timestamp":0,
+           	"message":this.message
+           });
+           var payload = {
+          	"type":"messageSuccessful",
+          	"content":{
+              "sid":this.sessionid,
+          		"channel":{
+                "name":this.channel,
+                "ipaddr":this.ipaddr,
+                "message":this.message
+              }
+          	}
+          };
+          payload = JSON.stringify( payload );
+          API.consoleCtl.printMessage(this.channel, this.ipaddr, this.message);
+          ashita.clients.forEach(function( client )	{
+          	client.send( payload );
+          });
      		 } catch ( e ) {
      			 API.consoleCtl.printError( e );
      		 }
