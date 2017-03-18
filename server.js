@@ -38,17 +38,16 @@ if ( cluster.isMaster ) {
   /**
    * Listening on:
    */
-  API.consoleCtl.printSystem("Process running: " + process.pid);
-  API.consoleCtl.printSystem("Listening on: " + nodeIp + ":443");
-  API.consoleCtl.printSystem("Starting " + forks + " workers.");
+  API.consoleCtl.printMessage("SYSTEM", "Master Process running on", process.pid);
+  API.consoleCtl.printMessage("SYSTEM", "Starting Workers", forks);
   cluster.on('online', function(worker){
-    API.consoleCtl.printSystem("Worker " + worker.process.pid + " Dispatched");
+    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Dispatched");
   });
   cluster.on('message', function(worker, message){
-    API.consoleCtl.printMessage("Worker " + worker.process.pid, message);
+    API.consoleCtl.printMessage("Worker", worker.process.pid, message);
   });
   cluster.on('exit', function(worker, code, signal){
-    API.consoleCtl.printSystem("Worker " + worker.process.pid + " Stopped");
+    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Stopped");
   });
   /*for ( var i = 1; i <= Object.keys(cluster.workers).length; ++i ) {
     cluster.workers[i].process.send("test");
@@ -77,19 +76,33 @@ if ( cluster.isMaster ) {
   process.on('message', function(message){
     API.consoleCtl.printMessage("Master", message);
   });
-  process.send("Listening");
-
+  process.send("Listening on: " + nodeIp + ":443");
   /**
    * On Connection
    */
   ashita.on('connection', function( socket ) {
-    API.consoleCtl.printSystem("Using Worker: " + process.pid);
+    API.consoleCtl.printMessage("SYSTEM", "Using Worker", process.pid);
     /**
      * Get our client's IP address
      */
     socket.ipaddr = socket._socket.remoteAddress.substr(7);
     if ( API.aclCtl.checkEntry(socket.ipaddr) === false ) {
-        socket.close();
+      socket.close();
+    }
+    if ( API.peerCtl.checkPeer(socket.ipaddr) ) {
+      socket.close();
+    } else {
+      API.peerCtl.addPeer(socket.ipaddr);
+      ashita.clients.forEach(function( client ) {
+        var payload = {
+          "type":"newPeerDiscovered",
+          "content":{
+            "ipaddr": socket.ipaddr
+          }
+        };
+        payload = JSON.stringify( payload );
+        client.send( payload );
+      });
     }
     /**
      * Loop Through Nodes
@@ -97,7 +110,9 @@ if ( cluster.isMaster ) {
     for ( var peer in API.peerCtl.getPeers() ) {
       var payload = {
         "type":"newPeerDiscovered",
-        "ipaddr": peer
+        "content":{
+          "ipaddr": peer
+        }
       };
       payload = JSON.stringify( payload );
       socket.send( payload );
@@ -118,148 +133,58 @@ if ( cluster.isMaster ) {
          * Auth Signal
          */
   			auth:function( data ) {
-          this.sessionid = data.sid ? data.sid : API.sessionCtl.generateId();
-          this.nodeIp = nodeIp;
-          this.ipaddr = socket.ipaddr;
-          if ( API.peerCtl.checkPeer(this.ipaddr) ) {
-            return socket.close();
-          } else {
-            API.peerCtl.addPeer(this.ipaddr);
-            ashita.clients.forEach(function( client ) {
-              var payload = {
-                "type":"newPeerDiscovered",
-                "ipaddr": this.ipaddr
-              };
-              payload = JSON.stringify( payload );
-              client.send( payload );
-            });
-          }
+          this.sessionid      = data.sid ? data.sid : API.sessionCtl.generateId();
+          this.nodeIp         = nodeIp;
+          this.ipaddr         = socket.ipaddr;
           try {
             var sessionObject = API.sessionCtl.getObject(this.sessionid);
+            /**
+             * Session exists
+             */
             if ( sessionObject ) {
               API.sessionCtl.setObject({
                 sessionid:this.sessionid,
                 ipaddr:this.ipaddr,
                 channels:sessionObject.channels,
               });
-              API.consoleCtl.printSystem("New Authenticated Connection: " + this.sessionid);
+              API.consoleCtl.printMessage("SYSTEM", "New Authenticated Connection", this.sessionid);
               var payload = {
                 "type":"newAuthedConnection",
-                "sid":this.sessionid,
-                "channels":sessionObject.channels
+                "content":{
+                  "sid":this.sessionid,
+                  "channels":sessionObject.channels
+                }
               };
-              payload = JSON.stringify(payload);
-              socket.send(payload);
-              var channels = API.sessionCtl.getValue(this.sessionid, "channels");
-              if ( channels ) {
-                   for (var i = 0; i < channels.length; ++i ) {
-                     API.consoleCtl.printSystem(API.sessionCtl.getValue(this.sessionid, "ipaddr") + " subscribing to " + channels[i]);
-                     var payload = {
-                       "type":"subscribeSuccessful",
-                       "content":{
-                         "channel":channels[i]
-                       }
-                     };
-                     payload = JSON.stringify( payload );
-                     socket.send( payload );
-                     var channelObject = API.channelCtl.getObject(channels[i]);
-                     for ( var j = 0; j < channelObject['messages'].length ; ++j ) {
-                       var payload = {
-                         "type":"messageSuccessful",
-                         "content":{
-                           "nodeIpaddr":this.nodeIp,
-                           "ipaddr":this.ipaddr,
-                           "channel":channelObject['messages'][j].name,
-                           "text":channelObject['messages'][j].message
-                         }
-                       };
-                       payload = JSON.stringify( payload );
-                       socket.send( payload );
-                    }
-                  }
-              }
-              return true;
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            /**
+             * Session doesn't exist
+             */
             } else {
-              var sessionObject = API.sessionCtl.setObject({
+              API.sessionCtl.setObject({
                 sessionid:this.sessionid,
                 ipaddr:this.ipaddr,
                 channels:[],
               });
-              if ( sessionObject ) {
-                API.consoleCtl.printSystem("New Anonymous Connection: " + this.sessionid);
-                var payload = {
-                  "type":"newAnonymousConnection",
+              API.consoleCtl.printMessage("SYSTEM", "New Anonymous Connection", this.sessionid);
+              var payload = {
+                "type":"newAnonymousConnection",
+                "content":{
                   "sid":this.sessionid
-                };
-                payload = JSON.stringify(payload);
-                socket.send(payload);
-              }
-              return true;
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
             }
-            return false;
           } catch ( e ) {
             API.consoleCtl.printError( e );
           }
   			},
         /**
-         * UserList Signal
-         */
-  			userlist:function( data ) {
-          var channel = data.content.channel ? data.content.channel:"";
-          assert.equal( validator.isEmpty( channel ), false);
-          try {
-      			var channelObject = API.channelCtl.getObject(channel);
-      			if ( channelObject ) {
-      				var activeUsers = new Object();
-      				for ( session in API.sessionCtl.activeSessions ) {
-      					var usr = API.sessionCtl.getValue(session, "username");
-      					if ( channelObject.userlist.indexOf(usr) !== -1 ) {
-      						activeUsers[usr] = API.sessionCtl.getValue(session, "ipaddr");
-      					}
-      				}
-      				var payload = {
-      					"type":"userList",
-      					"content":{
-      							"channel" : channel,
-      							"users" : channelObject.userlist
-      					}
-      				};
-      				payload = JSON.stringify( payload );
-      				socket.send( payload );
-      			}
-      		} catch ( e ) {
-      			API.consoleCtl.printError( e );
-      		}
-  			},
-        /**
-         * Private Signal
-         */
-  			private:function( data ) {
-  				this.ipaddr = API.sessionCtl.getValue(data.sid, "ipaddr");
-  				this.recepient = data.content.ipaddr;
-  				var payload = {
-  					"type":"privateSubscribeSuccessful",
-  					"content":{
-  						ipaddr:data.content.ipaddr
-  					}
-  				};
-  				payload = JSON.stringify( payload );
-  				socket.send( payload );
-  				// setup event to open private message with end user
-  			},
-        /**
-         * PrivateMessage Signal
-         */
-  			privateMessage:function( data ) {
-  				this.ipaddr = API.sessionCtl.getValue(data.sid, "ipaddr");
-  				this.recepient = data.content.ipaddr;
-  				console.log(this.ipaddr, this.recepient);
-  			},
-        /**
          * Subscribe Signal
          */
-  			join:function( data ) {
-          var channel = data.content.channel ? data.content.channel:"";
+  			channelJoin:function( data ) {
+          var channel = data.channel.name ? data.channel.name : "";
           assert.equal(validator.isEmpty(channel), false);
           try {
             this.sessionid = data.sid;
@@ -270,11 +195,13 @@ if ( cluster.isMaster ) {
               var activeChannels = API.sessionCtl.getValue(this.sessionid, "channels");
               activeChannels.push(this.channel);
               API.sessionCtl.setValue(this.sessionid, "channels", activeChannels );
-              API.consoleCtl.printSystem(this.ipaddr + " subscribing to " + this.channel);
+              API.consoleCtl.printMessage("SYSTEM", this.ipaddr + " subscribing to", this.channel);
               var payload = {
                 "type":"subscribeSuccessful",
                 "content":{
-                  "channel":this.channel
+                  "channel":{
+                    "name":this.channel
+                  }
                 }
               };
               payload = JSON.stringify( payload );
@@ -306,12 +233,33 @@ if ( cluster.isMaster ) {
               var payload = {
                 "type":"subscribeNewSuccessful",
                 "content":{
-                  "channel":this.channel
+                  "channel":{
+                    "name":this.channel
+                  }
                 }
               };
               payload = JSON.stringify( payload );
               socket.send( payload );
             }
+            var channelObject = API.channelCtl.getObject(this.channel);
+      			if ( channelObject ) {
+      				var activeUsers = new Object();
+      				for ( session in API.sessionCtl.activeSessions ) {
+      					var usr = API.sessionCtl.getValue(session, "username");
+      					if ( channelObject.userlist.indexOf(usr) !== -1 ) {
+      						activeUsers[usr] = API.sessionCtl.getValue(session, "ipaddr");
+      					}
+      				}
+      				var payload = {
+      					"type":"userList",
+      					"content":{
+      							"channel" : channel,
+      							"users" : channelObject.userlist
+      					}
+      				};
+      				payload = JSON.stringify( payload );
+      				socket.send( payload );
+      			}
       		} catch ( e ) {
       			API.consoleCtl.printError( e );
       		}
@@ -319,64 +267,76 @@ if ( cluster.isMaster ) {
         /**
          * Unsubscribe Signal
          */
-  			part:function( data ) {
-          var channel = data.content.channel ? data.content.channel:"";
-          assert.equal( validator.isEmpty( channel ), false);
-          //return functions.doUnsubscribe( socket, data.sid, channel, sessionCtl.getValue(data.sid, "username") );
+  			channelPart:function( data ) {
+          // pass
   			},
         /**
          * Message Signal
          */
-  			message:function( data ) {
-  				data.sid = data.sid ? data.sid:API.sessionCtl.generateId();
-  				var channel = data.content.channel ? data.content.channel:"";
-  				var text = data.content.text ? data.content.text:"";
+  			channelMessage:function( data ) {
+  				data.sid = data.sid ? data.sid : API.sessionCtl.generateId();
+  				var channel = data.channel.name ? data.channel.name : "";
+  				var message = data.channel.message ? data.channel.message : "";
   				assert.equal( validator.isEmpty( channel ), false );
-  				assert.equal( validator.isEmpty( text ), false );
-  				assert.equal( validator.isAscii( text ), true );
+  				assert.equal( validator.isEmpty( message ), false );
+  				assert.equal( validator.isAscii( message ), true );
           try {
      			 this.sessionid = data.sid;
      			 this.channel = channel;
      			 this.ipaddr = socket.ipaddr;
-     			 this.text = text;
+     			 this.message = message;
      			 if ( this.channel !== "System" ) {
-     			 	var payload = {
-     			 		"type":"messageSuccessful",
-     			 		"content":{
-     			 			"nodeIpaddr":process.env.ipaddr,
-     			 			"channel":this.channel,
-     			 			"ipaddr":this.ipaddr,
-     			 			"text":this.text
-     			 		}
-     			 	};
-     			 	API.channelCtl.message({
-     			 		"name":this.channel,
-     			 		"type":"channelMessage",
-     			 		"nodeIpaddr":nodeIp,
-     			 		"ipaddr":this.ipaddr,
-     			 		"timestamp":0,
-     			 		"message":this.text
-     			 	});
-     			 	payload = JSON.stringify( payload );
-     			 	ashita.clients.forEach(function( client )	{
-     			 		client.send( payload );
-     			 	});
+            var payload = {
+            	"type":"messageSuccessful",
+            	"content":{
+                "sid":this.sessionid,
+            		"channel":{
+                  "name":this.channel,
+                  "ipaddr":this.ipaddr,
+                  "message":this.message
+                }
+            	}
+            };
+            API.channelCtl.message({
+            	"name":this.channel,
+            	"type":"channelMessage",
+            	"ipaddr":this.ipaddr,
+            	"timestamp":0,
+            	"message":this.message
+            });
+            payload = JSON.stringify( payload );
+            API.consoleCtl.printMessage(this.channel, this.ipaddr, this.message);
+            ashita.clients.forEach(function( client )	{
+            	client.send( payload );
+            });
      			 } else if ( this.channel === 'System' ) {
      			 	var payload = {
      			 		"type":"permissionDenied",
      			 	};
      			 	payload = JSON.stringify( payload );
-     			 	socket.send(payload);
+     			 	socket.send( payload );
      			 }
      		 } catch ( e ) {
      			 API.consoleCtl.printError( e );
      		 }
-     	 }
+     	 },
+        /**
+         * Private Signal
+         */
+  			private:function( data ) {
+  				// pass
+  			},
+        /**
+         * PrivateMessage Signal
+         */
+  			privateMessage:function( data ) {
+  				// pass
+  			}
   		};
   		if ( typeof signal[data.type] !== "function" ) {
-  			API.consoleCtl.printError("Invalid Signal");
+  			API.consoleCtl.printError("SIGFAULT");
   		}
-  		return signal[data.type](data);
+  		return signal[data.type](data.content);
   	});
     /**
      * On Error

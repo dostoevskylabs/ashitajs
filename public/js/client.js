@@ -50,21 +50,21 @@ var vm = new Vue({
     state: "System",
   },
   methods:{
-    printMessage:function( data = "" ) {
+    printMessage:function printMessage( data ) {
       if ( typeof data === "object" ) {
         this.messages.push({
           isSystem:false,
           isError:false,
           date:moment,
-          channel:data.channel,
-          ipaddr:data.ipaddr,
-          message:data.text
+          channel:data.channel.name,
+          ipaddr:data.channel.ipaddr,
+          message:data.channel.message
         });
         return true;
       }
       return false;
     },
-    printSystem:function( data = "" ) {
+    printSystem:function printSystem( data ) {
       if ( typeof data === "string" ) {
         this.messages.push({
           isSystem:true,
@@ -78,27 +78,28 @@ var vm = new Vue({
       }
       return false;
     },
-    printError:function( data = "" ) {
+    printError:function printError( data ) {
       if ( typeof data === "string" ) {
         this.messages.push({
           isSystem:false,
           isError:true,
           date:moment,
+          channel:"System",
           ipaddr:"ERROR",
-          message:msg
+          message:data
         });
         return true;
       }
       return false;
     },
-    addTab:function( name = "System" ) {
+    addTab:function addTab( name ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) === -1 ) {
         this.tabs.push(name);
         return true;
       }
       return false;
     },
-    removeTab:function( name = "System" ) {
+    removeTab:function removeTab( name ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) !== -1 ) {
         this.tabs.splice(this.tabs.indexOf(name), 1);
         console.log("unsubscribed->" + name);
@@ -106,8 +107,7 @@ var vm = new Vue({
       }
       return false;
     },
-    printUsers:function( data ) {
-      console.log(data);
+    printUsers:function printUsers( data ) {
       if ( this.state === data.channel ) {
         this.userlist = data.users;
         var users = "";
@@ -118,7 +118,7 @@ var vm = new Vue({
         el.innerHTML = users;
       }
     },
-    selectTab:function( name = "System" ) {
+    selectTab:function selectTab( name ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) !== -1 ) {
         if ( this.state !== name ) {
           document.getElementById(this.state).className = "";
@@ -137,7 +137,7 @@ var vm = new Vue({
       }
       return false;
     },
-    getTab:function( name = "System" ) {
+    getTab:function getTab( name ) {
       if ( typeof name === "string" && this.tabs.indexOf(name) !== -1 ) {
         if ( this.state === name ) {
           var queryTab = document.getElementById(this.state);
@@ -197,24 +197,19 @@ ashita.ui = {
             var args = message.split(" ");
             switch ( args[0] ) {
               case "join":
-              ashita.transmit.join("#"+args[1]);
+                ashita.transmit.channelJoin(args[1]);
               break;
               case "part":
-              ashita.transmit.part(args[1]);
+                ashita.transmit.channelPart(args[1]);
               break;
               default:
-              vm.printError("invalid command");
+                vm.printError("invalid command");
             }
             ashita.ui.elements.input.value = "";
             return false;
           } else {
-            if ( vm.state[0] === "@" ) {
-              ashita.transmit.privateMessage(vm.state.substr(1));
-              ashita.ui.elements.input.value = "";
-            } else {
-              ashita.transmit.message(vm.state, message);
-              ashita.ui.elements.input.value = "";
-            }
+            ashita.transmit.channelMessage(vm.state, message);
+            ashita.ui.elements.input.value = "";
             return false;
           }
         } else {
@@ -244,81 +239,47 @@ ashita.socket = {
       if ( ws.readyState === 1 ) {
         switch ( payload.type ) {
           case "newPeerDiscovered":
-            vm.printSystem(payload.ipaddr + " is now a node");
-            vm.printSystem("New Peer Discovered: " + payload.ipaddr);
+            vm.printSystem(payload.content.ipaddr + " is now a node");
+            vm.printSystem("New Peer Discovered: " + payload.content.ipaddr);
           break;
           case "newAuthedConnection":
             vm.printSystem("Welcome Back");
             if ( !document.cookie ) {
-              document.cookie = payload.sid;
+              document.cookie = payload.content.sid;
             }
           break;
           case "newAnonymousConnection":
             vm.printSystem("Who goes there?");
-            document.cookie = payload.sid;
-          break;
-          case "privateSubscribeSuccessful":
-            vm.addTab("@"+payload.content.ipaddr);
-            vm.selectTab("@"+payload.content.ipaddr);
+            document.cookie = payload.content.sid;
           break;
           case "subscribeNewSuccessful":
-            vm.addTab(payload.content.channel);
-            vm.selectTab(payload.content.channel);
+            vm.addTab(payload.content.channel.name);
+            vm.selectTab(payload.content.channel.name);
             vm.userlist =  payload.content.userlist;
-            vm.printSystem("Created channel " + payload.content.channel);
-          break;
-          case "subscribeNewFailed":
-            vm.printError("Channel already exists");
+            vm.printSystem("Created channel " + payload.content.channel.name);
           break;
           case "subscribeSuccessful":
-            vm.addTab(payload.content.channel);
-            vm.selectTab(payload.content.channel);
-            vm.printSystem("Subscribed to " + payload.content.channel);
-          break;
-          case "subscribeFailed":
-            vm.printError("Couldn't subscribe to channel");
-          break;
-          case "unsubscribeSuccessful":
-            vm.selectTab("System");
-            vm.removeTab(payload.content.channel);
-            vm.printSystem("Unsubscribed to channel");
-          break;
-          case "unsubscribeFailed":
-            vm.printError("Unsubscribe failed");
+            vm.addTab(payload.content.channel.name);
+            vm.selectTab(payload.content.channel.name);
+            vm.printSystem("Subscribed to " + payload.content.channel.name);
           break;
           case "userList":
             vm.printUsers(payload.content);
           break;
           case "messageSuccessful":
-            vm.selectTab(payload.content.channel);
+            vm.selectTab(payload.content.channel.name);
             vm.printMessage(payload.content);
-          break;
-          case "signalFault":
-            vm.printError("SIGFAULT");
-          break;
-          case "permissionDenied":
-            vm.printSystem("Permission Denied");
           break;
         }
       }
     },
     onerror:function( event ) {},
-    close:function( event ) {
-      vm.tabs.forEach(function( tab ) {
-        if ( tab === "System" ) {
-          console.log("Skipping system");
-        } else {
-          console.log("Unsubscribing to " + tab);
-          ashita.transmit.unsubscribe(tab);
-        }
-      });
-      vm.printSystem("Lost connection");
-    }
+    close:function( event ) {}
   },
   send:function( data ) {
-    var payload = JSON.stringify(data);
+    var payload = JSON.stringify( data );
     if ( ws.readyState === 1 ) {
-      ws.send(payload);
+      ws.send( payload );
       return true;
     }
     return false;
@@ -340,61 +301,31 @@ ashita.transmit = {
   auth:function() {
     ashita.socket.send({
       type:"auth",
-      sid:document.cookie
-    });
-  },
-  userlist:function( channel ) {
-    ashita.socket.send({
-      type:"userlist",
-      sid:document.cookie,
       content:{
-        channel:channel
+        sid:document.cookie,
       }
     });
   },
-  private:function( ipaddr ) {
+  channelJoin:function( channel ) {
     ashita.socket.send({
-      type:"private",
-      sid:document.cookie,
+      type:"channelJoin",
       content:{
-        ipaddr:ipaddr
+        sid:document.cookie,
+        channel:{
+          name:channel
+        }
       }
     });
   },
-  privateMessage:function( ipaddr ) {
+  channelMessage:function( channel, message ) {
     ashita.socket.send({
-      type:"privateMessage",
-      sid:document.cookie,
+      type:"channelMessage",
       content:{
-        ipaddr:ipaddr
-      }
-    });
-  },
-  join:function( channel ) {
-    ashita.socket.send({
-      type:"join",
-      sid:document.cookie,
-      content:{
-        channel:channel
-      }
-    });
-  },
-  part:function( channel ) {
-    ashita.socket.send({
-      type:"part",
-      sid:document.cookie,
-      content:{
-        channel:channel
-      }
-    });
-  },
-  message:function( channel, message ) {
-    ashita.socket.send({
-      type:"message",
-      sid:document.cookie,
-      content:{
-        channel:channel,
-        text:message
+        sid:document.cookie,
+        channel:{
+          name:channel,
+          message:message
+        }
       }
     });
   }

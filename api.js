@@ -11,17 +11,12 @@ module.exports = {
   * Console Controller
   */
   consoleCtl:{
-    printMessage:function printMessage( usr, msg ) {
+    printMessage:function printMessage( type, src, msg ) {
       var timestamp = moment().format("HH:mm:ss");
-      console.log("["+ timestamp +"] <" + usr + ">: " + msg );
-    },
-    printSystem:function printSystem( str )	{
-      var timestamp = moment().format("HH:mm:ss");
-      console.log("["+ timestamp +"] @System: " + str);
+      console.log("("+ timestamp +") [" + type + "] " + src + ": " + msg );
     },
     printError:function printError( str ) {
-      var timestamp = moment().format("HH:mm:ss");
-      console.log("["+ timestamp +"] !!! Error !!!: " + str);
+      console.log(str);
     }
   },
   /**
@@ -152,7 +147,7 @@ module.exports = {
         }
         return false;
       },
-      exit:function exit( channelData ) {
+      part:function part( channelData ) {
         if ( this.activeChannels[channelData]['userlist'].indexOf( channelData.username ) === -1 ) {
           return true;
         }

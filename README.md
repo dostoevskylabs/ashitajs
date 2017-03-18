@@ -48,6 +48,10 @@ Next we need to install our modules from the main directory with server.js
 npm install
 ```
 
+Now we only need to add our internal IP to the rudimentary ACL in server.js
+```javascript
+API.aclCtl.addEntry("10.0.1.4");
+```
 Now we are ready to start
 ```bash
 npm start Wi-Fi
@@ -56,9 +60,14 @@ npm start Wi-Fi
 ##Server Controllers
 ###consoleCtl
 ```javascript
-function printMessage( usr, msg ){}
-function printSystem( str ){}
+function printMessage( type, src, msg ){}
 function printError( str ){}
+```
+###aclCtl
+```javascript
+function init(){}
+function addEntry( peerIp ){}
+function removeEntry( peerIp ){}
 ```
 ###sessionCtl
 ```javascript
@@ -79,7 +88,7 @@ function getObject( channel ){}
 function setObject( channelData ){}
 function destroyObject( channelData ){}
 function join( channelData ){}
-function exit( channelData ){}
+function part( channelData ){}
 function message( channelData ){}
 ```
 ###peerCtl
@@ -94,129 +103,37 @@ send socket auth signal
 ```javascript
 ashita.socket.send({
 	type:"auth",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie
-});
-```
-###userlist
-send socket userlist signal
-```javascript
-ashita.socket.send({
-	type:"userlist",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
 	content:{
-		channel:channel
+		sid:document.cookie,
 	}
 });
 ```
-###register
-send socket register signal
-
+###channelJoin
+send socket channelJoin signal
 ```bash
-/register [username] [password]
+/join [channel]
 ```
-
 ```javascript
 ashita.socket.send({
-	type:"register",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
+	type:"channelJoin",
 	content:{
-		username:username,
-		password:password
+		sid:document.cookie,
+		channel:{
+			name:channel
+		}
 	}
 });
 ```
-###login
-send socket login signal
-
-```bash
-/login [username] [password]
-```
-
+###channelMessage
+send socket channelMessage signal
 ```javascript
 ashita.socket.send({
-	type:"login",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
+	type:"channelJoin",
 	content:{
-		username:username,
-		password:password
-	}
-});
-```
-###logout
-send socket logout signal
-
-```bash
-/logout
-```
-
-```javascript
-ashita.socket.send({
-	type:"logout",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
-	content:{}
-});
-```
-###subscribe
-send socket subscribe signal
-
-```bash
-/subscribe [channel]
-```
-
-```javascript
-ashita.socket.send({
-	type:"subscribe",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
-	content:{
-		channel:channel
-	}
-});
-```
-###unsubscribe
-send socket unsubscribe signal
-
-```bash
-/unsubscribe [channel]
-```
-
-```javascript
-ashita.socket.send({
-	type:"unsubscribe",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
-	content:{
-		channel:channel
-	}
-});
-```
-###purge
-send socket purge signal
-```javascript
-ashita.socket.send({
-	type:"purge",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
-	content:{
-		channel:channel
-	}
-});
-```
-###message
-send socket message signal
-```javascript
-ashita.socket.send({
-	type:"message",
-	ipaddr:ashita.ipAddr,
-	sid:document.cookie,
-	content:{
-		channel:channel,
-		text:message
+		sid:document.cookie,
+		channel:{
+			name:channel
+		}
 	}
 });
 ```
@@ -228,37 +145,11 @@ new peer event
 new authenticated peer event
 ###newAnonymousConnection
 new anonymous peer event
-###registerSuccessful
-register successful event
-###registerFailed
-register failed event
-###loginSuccessful
-login successful event
-###loginFailed
-login failed event
 ###subscribeNewSuccessful
 create new channel successful event
-###subscribeNewFailed
-create new channel failed event
 ###subscribeSuccessful
 subscribe to channel successful event
-###subscribeFailed
-subscribe to channel failed event
-###unsubscribeSuccessful
-unsubscribe to channel successful event
-###unsubscribeFailed
-unsubscribe to channel failed event
-###purgeSuccessful
-purge channel successful event
-###purgeFailed
-purge channel failed event
 ###messageSuccessful
 message to channel successful event
-###messageFailed
-message to channel failed event
 ###userList
 retreived userlist event
-###permissionDenied
-permission denied event
-###signalFault
-signal fault event
