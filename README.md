@@ -57,19 +57,20 @@ Now we are ready to start
 npm start Wi-Fi
 ```
 
-##Server Controllers
-###consoleCtl
+Server Controllers
+================================
+consoleCtl
 ```javascript
 function printMessage( type, src, msg ){}
 function printError( str ){}
 ```
-###aclCtl
+aclCtl
 ```javascript
 function init(){}
 function addEntry( peerIp ){}
 function removeEntry( peerIp ){}
 ```
-###sessionCtl
+sessionCtl
 ```javascript
 function init(){}
 function generateId(){}
@@ -79,7 +80,7 @@ function getObject( sessionid ){}
 function setObject( sessionData ){}
 function destroyObject( sessionid ){}
 ```
-###channelCtl
+channelCtl
 ```javascript
 function init(){}
 function getValue( channel, field ){}
@@ -91,15 +92,16 @@ function join( channelData ){}
 function part( channelData ){}
 function message( channelData ){}
 ```
-###peerCtl
+peerCtl
 ```javascript
 function init(){}
 function addPeer( peerIp ){}
 function removePeer( peerIp ){}
 ```
-##Client Signals
-###auth
-send socket auth signal
+
+Client Signals
+================================
+auth - send socket auth signal
 ```javascript
 ashita.socket.send({
 	type:"auth",
@@ -108,8 +110,7 @@ ashita.socket.send({
 	}
 });
 ```
-###channelJoin
-send socket channelJoin signal
+channelJoin - send socket channelJoin signal
 ```bash
 /join [channel]
 ```
@@ -124,8 +125,7 @@ ashita.socket.send({
 	}
 });
 ```
-###channelMessage
-send socket channelMessage signal
+channelMessage - send socket channelMessage signal
 ```javascript
 ashita.socket.send({
 	type:"channelJoin",
@@ -137,19 +137,12 @@ ashita.socket.send({
 	}
 });
 ```
-
-##Server Events
-###newPeerDiscovered
-new peer event
-###newAuthedConnection
-new authenticated peer event
-###newAnonymousConnection
-new anonymous peer event
-###subscribeNewSuccessful
-create new channel successful event
-###subscribeSuccessful
-subscribe to channel successful event
-###messageSuccessful
-message to channel successful event
-###userList
-retreived userlist event
+Server Events
+================================
+newPeerDiscovered - new peer event
+newAuthedConnection - new authenticated peer event
+newAnonymousConnection - new anonymous peer event
+subscribeNewSuccessful - create new channel successful event
+subscribeSuccessful - subscribe to channel successful event
+messageSuccessful - message to channel successful event
+userList - retreived userlist event
