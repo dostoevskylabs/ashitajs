@@ -184,5 +184,16 @@ module.exports = {
       removePeer:function removePeer( peerIp ) {
         delete this.activePeers[peerIp];
       }
+  },
+  workerCtl:{
+    init:function init() {
+      this.currentWorker = "";
+    },
+    addWorker:function addWorker( worker ) {
+      this.currentWorker = worker;
+    },
+    getWorker:function getWorker() {
+      return this.currentWorker;
+    }
   }
 };

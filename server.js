@@ -22,14 +22,17 @@ var assert=require('assert');
 var moment=require('moment');
 var crypto=require('crypto');
 var API=require('./api.js');
-/**
- * Setup our API
- */
 API.aclCtl.init();
 API.sessionCtl.init();
 API.channelCtl.init();
+API.workerCtl.init();
 API.peerCtl.init();
 API.aclCtl.addEntry("10.0.1.4");
+API.aclCtl.addEntry("10.0.1.2");
+
+/**
+ * Setup our API
+ */
 if ( cluster.isMaster ) {
   var forks = os.cpus().length;
   for ( var i = 0; i < forks; ++i ) {
@@ -47,27 +50,26 @@ if ( cluster.isMaster ) {
     API.consoleCtl.printMessage("Worker", worker.process.pid, message);
   });
   cluster.on('exit', function(worker, code, signal){
-    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Stopped");
+    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Lost to the aether");
   });
-  /*for ( var i = 1; i <= Object.keys(cluster.workers).length; ++i ) {
-    cluster.workers[i].process.send("test");
-  }*/
-} else {
-  var WebSocketServer=require('uws').Server;
-  var https=require('https');
-  var express=require('express');
-  var app=express();
-  var server=https.createServer({
-      key:fs.readFileSync('./ssl/server.key'),
-      cert:fs.readFileSync('./ssl/server.crt'),
-      ca:fs.readFileSync('./ssl/ca.crt'),
-      requestCert: true,
-      rejectUnauthorized: false
-  }, app);
-  var ashita=new WebSocketServer({
-    server: server,
-    origin:"https://"+nodeIp
-  });
+} else if ( cluster.isWorker ) {
+  API.workerCtl.addWorker(process.pid);
+  var https=require('https'),
+      express=require('express'),
+      app=express(),
+      WebSocketServer=require('uws').Server,
+      server=https.createServer({
+        key:fs.readFileSync('./ssl/server.key'),
+        cert:fs.readFileSync('./ssl/server.crt'),
+        ca:fs.readFileSync('./ssl/ca.crt'),
+        requestCert: true,
+        // never leave this false in production
+        rejectUnauthorized: false
+      }, app),
+      ashita=new WebSocketServer({
+        server: server,
+        origin:"https://"+nodeIp
+      });
   /**
    * Tell Express where our client lives
    */
@@ -106,6 +108,19 @@ if ( cluster.isMaster ) {
         debug:function( data ) {
           this.controller = data.controller;
           switch ( this.controller ) {
+            case "kill":
+              process.kill(process.pid);
+            break;
+            case "worker":
+              var payload = {
+                "type":"debug",
+                "content":{
+                  "object":API.workerCtl.getWorker()
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            break;
             case "channel":
               var payload = {
                 "type":"debug",
