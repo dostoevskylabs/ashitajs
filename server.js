@@ -25,7 +25,6 @@ var API=require('./api.js');
 API.aclCtl.init();
 API.sessionCtl.init();
 API.channelCtl.init();
-API.workerCtl.init();
 API.peerCtl.init();
 API.aclCtl.addEntry("10.0.1.4");
 API.aclCtl.addEntry("10.0.1.2");
@@ -50,10 +49,9 @@ if ( cluster.isMaster ) {
     API.consoleCtl.printMessage("Worker", worker.process.pid, message);
   });
   cluster.on('exit', function(worker, code, signal){
-    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Lost to the aether");
+    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Exited");
   });
 } else if ( cluster.isWorker ) {
-  API.workerCtl.addWorker(process.pid);
   var https=require('https'),
       express=require('express'),
       app=express(),
@@ -110,16 +108,6 @@ if ( cluster.isMaster ) {
           switch ( this.controller ) {
             case "kill":
               process.kill(process.pid);
-            break;
-            case "worker":
-              var payload = {
-                "type":"debug",
-                "content":{
-                  "object":API.workerCtl.getWorker()
-                }
-              };
-              payload = JSON.stringify( payload );
-              socket.send( payload );
             break;
             case "channel":
               var payload = {

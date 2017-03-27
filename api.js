@@ -29,11 +29,11 @@ module.exports = {
     getACL:function getACL() {
       return this.ACL;
     },
-    addEntry:function addEntry( peerIp ) {
-      this.ACL.push(peerIp);
+    addEntry:function addEntry( ipaddr ) {
+      this.ACL.push(ipaddr);
     },
-    checkEntry:function checkEntry( peerIp ) {
-      if ( this.ACL.indexOf(peerIp) !== -1 ) {
+    checkEntry:function checkEntry( ipaddr ) {
+      if ( this.ACL.indexOf(ipaddr) !== -1 ) {
         return true;
       }
       return false;
@@ -172,28 +172,17 @@ module.exports = {
       getPeers:function getPeers() {
         return this.activePeers;
       },
-      addPeer:function addPeer( peerIp ) {
-        this.activePeers.push(peerIp);
+      addPeer:function addPeer( ipaddr ) {
+        this.activePeers.push(ipaddr);
       },
-      checkPeer:function checkPeer( peerIp ) {
-        if ( this.activePeers[peerIp] ) {
+      checkPeer:function checkPeer( ipaddr ) {
+        if ( this.activePeers[ipaddr] ) {
           return true;
         }
         return false;
       },
-      removePeer:function removePeer( peerIp ) {
-        delete this.activePeers[peerIp];
+      removePeer:function removePeer( ipaddr ) {
+        delete this.activePeers[ipaddr];
       }
-  },
-  workerCtl:{
-    init:function init() {
-      this.currentWorker = "";
-    },
-    addWorker:function addWorker( worker ) {
-      this.currentWorker = worker;
-    },
-    getWorker:function getWorker() {
-      return this.currentWorker;
-    }
   }
 };

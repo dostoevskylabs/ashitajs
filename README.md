@@ -67,8 +67,10 @@ function printError( str ){}
 aclCtl
 ```javascript
 function init(){}
-function addEntry( peerIp ){}
-function removeEntry( peerIp ){}
+function getACL(){}
+function addEntry( ipaddr ){}
+function checkEntry( ipaddr ){}
+function removeEntry( ipaddr ){}
 ```
 sessionCtl
 ```javascript
@@ -95,13 +97,30 @@ function message( channelData ){}
 peerCtl
 ```javascript
 function init(){}
-function addPeer( peerIp ){}
-function removePeer( peerIp ){}
+function getPeers(){}
+function addPeer( ipaddr ){}
+function checkPeer( ipaddr ){}
+function removePeer( ipaddr ){}
 ```
 
 Client Signals
 ================================
+debug - get output for testing objects
+```javascript
+ashita.transmit.debug( controller );
+```
+```javascript
+ashita.socket.send({
+	type:"debug",
+	content:{
+		"controller":controller
+	}
+});
+```
 auth - send socket auth signal
+```javascript
+ashita.transmit.auth();
+```
 ```javascript
 ashita.socket.send({
 	type:"auth",
@@ -111,6 +130,9 @@ ashita.socket.send({
 });
 ```
 channelJoin - send socket channelJoin signal
+```javascript
+ashita.transmit.channelJoin( channel );
+```
 ```bash
 /join [channel]
 ```
@@ -127,12 +149,16 @@ ashita.socket.send({
 ```
 channelMessage - send socket channelMessage signal
 ```javascript
+ashita.transmit.channelMessage( channel, message );
+```
+```javascript
 ashita.socket.send({
-	type:"channelJoin",
+	type:"channelMessage",
 	content:{
 		sid:document.cookie,
 		channel:{
-			name:channel
+			name:channel,
+			message:message
 		}
 	}
 });
