@@ -1,7 +1,5 @@
 node_modules/
-ssl/
 .DS_Store
 .vscode/
 public/dist/
 npm-debug.log*
-tests

@@ -76,7 +76,6 @@ module.exports = {
           this.activeSessions[sessionData.sessionid] = {
             "username":sessionData.username,
             "ipaddr":sessionData.ipaddr,
-            "channels":sessionData.channels,
             "authenticated":sessionData.authenticated
           };
           return true;
@@ -86,77 +85,6 @@ module.exports = {
       destroyObject:function( sessionid )	{
         if ( this.activeSessions[sessionid] ) {
           delete this.activeSessions[sessionid];
-          return true;
-        }
-        return false;
-      }
-  },
-  /**
-  * Channel Controller
-  */
-  channelCtl:{
-      init:function init() {
-        this.activeChannels = new Object();
-        this.activeChannels["System"] = {
-          "userlist":['System'],
-          "owner":"System",
-          "groups":['System'],
-          "messages":[]
-        };
-      },
-      getValue:function getValue( channel, field ) {
-        if ( this.activeChannels[channel] ) {
-          return this.activeChannels[channel][field];
-        }
-        return false;
-      },
-      setValue:function setValue( channel, field, value ) {
-        if ( this.activeChannels[channel] ) {
-          this.activeChannels[channel][field] = value;
-          return true;
-        }
-        return false;
-      },
-      getObject:function getObject( channel )	{
-        if ( this.activeChannels[channel] ) {
-          return this.activeChannels[channel];
-        }
-        return false;
-      },
-      setObject:function setObject( channelData )	{
-        if ( !this.activeChannels[channelData.name] ) {
-          this.activeChannels[channelData.name] = {
-            "userlist":channelData.userlist,
-            "owner":channelData.owner,
-            "groups":channelData.groups,
-            "messages":channelData.messages
-          };
-          return true;
-        }
-        return false;
-      },
-      destroyObject:function destroyObject( channelData )	{
-        if ( this.activeChannels[channelData.name] ) {
-          delete this.activeChannels[channelData.name];
-          return true;
-        }
-        return false;
-      },
-      join:function join( channelData ) {
-        if ( this.activeChannels[channelData.name]['userlist'].indexOf( channelData.username ) !== -1 ) {
-          return true;
-        }
-        return false;
-      },
-      part:function part( channelData ) {
-        if ( this.activeChannels[channelData]['userlist'].indexOf( channelData.username ) === -1 ) {
-          return true;
-        }
-        return false;
-      },
-      message:function message( channelData )	{
-        if ( this.activeChannels[channelData.name] ) {
-          this.activeChannels[channelData.name]['messages'].push( channelData );
           return true;
         }
         return false;
