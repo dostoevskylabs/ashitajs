@@ -111,14 +111,14 @@ if ( cluster.isMaster ) {
             }
           }
         };
-        if(typeof signal[data.SIGNAL] !== "function"){
+        if(typeof signal[data.COMMAND] !== "function"){
           var payload = {
             "type":"SIGFAULT"
           };
           payload = JSON.stringify(payload);
     			socket.write(payload);
     		} else {
-          return signal[data.SIGNAL](data.PAYLOAD);
+          return signal[data.COMMAND](data.ARGUMENTS);
         }
       }
     });

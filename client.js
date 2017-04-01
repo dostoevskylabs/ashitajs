@@ -21,21 +21,25 @@ var rl=readline.createInterface({
   output:process.stdout,
   prompt:"[anon@localhost] "
 });
-var client = new net.createConnection(8000, nodeIp);
-client.on('data', function(data){
-  var data = JSON.parse(data);
-  console.log(data);
-  rl.prompt();
-});
-rl.on('line', (data) => {
-  if(data !== ""){
-    var data = {
-      "SIGNAL":data,
-      "PAYLOAD":"test"
+try {
+  var client = new net.createConnection(8000, nodeIp);
+  client.on('data', function(data){
+    var data = JSON.parse(data);
+    console.log(data);
+    rl.prompt();
+  });
+  rl.on('line', (cmd) => {
+    if(cmd !== ""){
+      var data = {
+        "COMMAND":cmd,
+        "ARGUMENTS":"test"
+      }
+      var data = JSON.stringify(data);
+      client.write(data, function(){
+        // do stuff
+      });
     }
-    var data = JSON.stringify(data);
-    client.write(data, function(){
-      // do stuff
-    });
-  }
-});
+  });
+} catch (e){
+  console.log("CONNECTION.REFUSED");
+}
