@@ -21,12 +21,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/recursiveoverflow/ashitajs.git"
+    "url": "git+https://github.com/evolretsinis/ashitajs.git"
   },
   "author": "recursiveoverflow",
   "license": "GNU",
   "bugs": {
-    "url": "https://github.com/recursiveoverflow/ashitajs/issues"
+    "url": "https://github.com/evolretsinis/ashitajs/issues"
   },
   "homepage": "https://github.com/recursiveoverflow/ashitajs#readme"
 }
