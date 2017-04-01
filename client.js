@@ -4,6 +4,16 @@
  * @package    ashita/core
  * @author     evolretsinis
  */
+ var ipaddr=require('ipaddr.js');//1.3.0
+ var assert=require('assert');
+ try {
+   var args=process.argv.slice(2);
+   var nodeIp=args[0];
+   assert(ipaddr.parse(nodeIp), true);
+ } catch (e){
+   console.log("example usage: npm test 10.0.1.4");
+   process.exit();
+ }
 var net=require('net');
 var readline=require('readline');
 var rl=readline.createInterface({
@@ -11,7 +21,7 @@ var rl=readline.createInterface({
   output:process.stdout,
   prompt:"[anon@localhost] "
 });
-var client = new net.createConnection(8000, "10.0.1.4");
+var client = new net.createConnection(8000, nodeIp);
 client.on('data', function(data){
   var data = JSON.parse(data);
   console.log(data);

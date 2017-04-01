@@ -24,22 +24,31 @@ module.exports = {
    */
   aclCtl:{
     init:function init() {
-      this.ACL = new Array();
+      this.ACL = new Object();
+      this.ACL.allowedHosts = new Array();
     },
     getACL:function getACL() {
       return this.ACL;
     },
-    addEntry:function addEntry( ipaddr ) {
-      this.ACL.push(ipaddr);
-    },
-    checkEntry:function checkEntry( ipaddr ) {
-      if ( this.ACL.indexOf(ipaddr) !== -1 ) {
-        return true;
+    addEntry:function addEntry( type, value ) {
+      switch ( type ) {
+        case "IP":
+          this.ACL.allowedHosts.push(value);
+        break;
       }
-      return false;
+    },
+    checkEntry:function checkEntry( type, value ) {
+      switch ( type ) {
+        case "IP":
+          if ( this.ACL.allowedHosts.indexOf(value) !== -1 ) {
+            return true;
+          }
+          return false;
+        break;
+      }
     },
     removeEntry:function removeEntry( peerIp ) {
-      delete this.ACL[peerIp];
+      //delete this.ACL[peerIp];
     }
   },
   /**

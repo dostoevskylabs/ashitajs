@@ -12,7 +12,10 @@ if ( !interfaces[interface] ) {
   console.log("example usage: npm start Wi-Fi");
   process.exit();
 }
-var nodeIp=interfaces[interface][1].address;
+var nodeIp=interfaces[interface][0].address;
+if ( nodeIp.length > 24 ) {
+  nodeIp=interfaces[interface][1].address;
+}
 var fs=require('fs');
 var cluster=require('cluster');
 var path=require('path');
@@ -25,8 +28,8 @@ var API=require('./api.js');
 API.aclCtl.init();
 API.sessionCtl.init();
 API.peerCtl.init();
-API.aclCtl.addEntry("10.0.1.4");
-API.aclCtl.addEntry("10.0.1.2");
+API.aclCtl.addEntry("IP", "10.0.1.4");
+API.aclCtl.addEntry("IP", "10.0.1.2");
 if ( cluster.isMaster ) {
   var forks = os.cpus().length;
   for ( var i = 0; i < forks; ++i ) {
@@ -123,7 +126,7 @@ if ( cluster.isMaster ) {
   server.on('connection', function(socket){
     var PEER = {};
     PEER.ipAddress = socket.server._connectionKey.split(":")[1];
-    if ( API.aclCtl.checkEntry(PEER.ipAddress) === false ) {
+    if ( API.aclCtl.checkEntry("IP", PEER.ipAddress) === false ) {
       socket.close();
     }
     API.consoleCtl.printMessage("SYSTEM", "Using Worker", process.pid);
