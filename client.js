@@ -28,7 +28,7 @@ try {
     console.log(data);
     rl.prompt();
   });
-  rl.on('line', (cmd) => {
+  rl.on('line', function(cmd){
     if(cmd !== ""){
       var data = {
         "COMMAND":cmd,

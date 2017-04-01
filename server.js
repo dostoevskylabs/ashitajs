@@ -28,6 +28,7 @@ var API=require('./api.js');
 API.aclCtl.init();
 API.sessionCtl.init();
 API.peerCtl.init();
+API.aclCtl.addEntry("IP", "10.0.1.7");
 API.aclCtl.addEntry("IP", "10.0.1.4");
 API.aclCtl.addEntry("IP", "10.0.1.2");
 if ( cluster.isMaster ) {
