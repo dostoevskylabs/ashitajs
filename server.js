@@ -4,17 +4,16 @@
  * @package    ashita/server
  * @author     evolretsinis
  */
-var os=require('os');
-
-var interfaces=os.networkInterfaces();
-var args=process.argv.slice(2);
-var interface=args[0];
+var os = require('os');
+var interfaces = os.networkInterfaces();
+var args = process.argv.slice(2);
+var interface = args[0];
 if ( !interfaces[interface] ) {
   console.log("example usage: npm start Wi-Fi");
   process.exit();
 }
-var ipaddr=require('ipaddr.js');
-var nodeIp=interfaces[interface][0].address;
+var ipaddr = require('ipaddr.js');
+var nodeIp = interfaces[interface][0].address;
 /**
  * Check if nodeIp is in IPv4 Format by counting the
  * number of parts and making sure they are 4, otherwise
@@ -22,30 +21,20 @@ var nodeIp=interfaces[interface][0].address;
  * this allows for the system to be run as IPv4 on
  * different architectures
  */
-if ( ipaddr.parse(nodeIp).octets ===  undefined ) {
-  nodeIp=interfaces[interface][1].address;
+if ( ipaddr.parse(nodeIp).octets === undefined ) {
+  nodeIp = interfaces[interface][1].address;
 }
-var fs=require('fs');
-var cluster=require('cluster');
-var path=require('path');
-var util=require('util');
-var validator=require('validator');
-var assert=require('assert');
-var moment=require('moment');
-var crypto=require('crypto');
-var net=require('net');
-var API=require('./api.js');
-var SYSCALL=require('./syscalls.js');
-/**
- * Initialize our API
- */
-API.aclCtl.init();
-/**
- * Add entries to our ACL for the IP addresses allowed
- */
-API.aclCtl.addEntry("IP", "10.0.1.7");
-API.aclCtl.addEntry("IP", "10.0.1.4");
-API.aclCtl.addEntry("IP", "10.0.1.2");
+var fs = require('fs');
+var cluster = require('cluster');
+var path = require('path');
+var util = require('util');
+var validator = require('validator');
+var assert = require('assert');
+var moment = require('moment');
+var crypto = require('crypto');
+var net = require('net');
+var API = require('./api.js');
+var SYSCALL = require('./syscalls.js');
 /**
  * If this is the master process
  */
@@ -58,25 +47,25 @@ if ( cluster.isMaster ) {
   for ( var i = 0; i < forks; ++i ) {
     cluster.fork();
   }
-  API.consoleCtl.printMessage("SYSTEM", "Master Process running on", process.pid);
-  API.consoleCtl.printMessage("SYSTEM", "Starting Workers", forks);
+  API.printMessage("SYSTEM", "Master Process running on", process.pid);
+  API.printMessage("SYSTEM", "Starting Workers", forks);
   /**
    * Setup event listener to trigger when a worker comes online
    */
   cluster.on('online', function( worker ) {
-    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Dispatched");
+    API.printMessage("SYSTEM", "Worker " + worker.process.pid, "Dispatched");
   });
   /**
    * Setup event listener to trigger when data is received from a worker
    */
   cluster.on('message', function( worker, message ) {
-    API.consoleCtl.printMessage("Worker", worker.process.pid, message);
+    API.printMessage("Worker", worker.process.pid, message);
   });
   /**
    * Setup event listener to trigger when a worker exits
    */
   cluster.on('exit', function( worker, code, signal ) {
-    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Exited");
+    API.printMessage("SYSTEM", "Worker " + worker.process.pid, "Exited");
   });
 /**
  * If is worker process
@@ -86,7 +75,7 @@ if ( cluster.isMaster ) {
    * Setup event listener to trigger when data is received from the master
    */
   process.on('message', function( message ) {
-    API.consoleCtl.printMessage("Master", message);
+    API.printMessage("Master", message);
   });
   /**
    * Send a message to the master to let it know we are listening
@@ -136,13 +125,7 @@ if ( cluster.isMaster ) {
   server.on('connection', function( socket ) {
     var PEER = {};
     PEER.ipAddress = socket.server._connectionKey.split(":")[1];
-    /**
-     * Check our ACL for the client's IP address
-     */
-    if ( API.aclCtl.checkEntry("IP", PEER.ipAddress) === false ) {
-      socket.close();
-    }
-    API.consoleCtl.printMessage("SYSTEM", "Using Worker", process.pid);
+    API.printMessage("SYSTEM", "Using Worker", process.pid);
     /**
      * Send our MOTD to the client
      */

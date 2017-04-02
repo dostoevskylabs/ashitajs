@@ -4,10 +4,10 @@
  * @package    ashita/client
  * @author     evolretsinis
  */
-var ipaddr=require('ipaddr.js');
-var assert=require('assert');
-var args=process.argv.slice(2);
-var nodeIp=args[0];
+var ipaddr = require('ipaddr.js');
+var assert = require('assert');
+var args = process.argv.slice(2);
+var nodeIp = args[0];
 try {
   /**
    * Check if argument is in IPv4 Format by counting the
@@ -24,7 +24,7 @@ var readline=require('readline');
 /**
  * Setup our readline interface for intepreting commands
  */
-var STDIN=readline.createInterface({
+var STDIN = readline.createInterface({
   input:process.stdin,
   output:process.stdout,
   prompt:"[anon@localhost] "
@@ -39,7 +39,7 @@ try {
     /**
      * Setup our signal for retreiving responses
      */
-    switch(data.TYPE){
+    switch ( data.TYPE ) {
       /**
        * SYS.MOTD
        */
@@ -47,12 +47,23 @@ try {
         console.log(data.STDOUT);
       break;
       /**
+       * SYS.ECHO
+       */
+      case "SYS.ECHO":
+        console.log(data.STDOUT);
+      break;
+      /**
        * SYS.CMD.SUCCESS
        */
       case "SYS.CMD.SUCCESS":
-        console.log("executing: " + data.STDOUT);
+         console.log(data.COMMAND + ": " + data.STDOUT);
       break;
       /**
+       * SYS.CMD.FAIL
+       */
+       case "SYS.CMD.FAIL":
+         console.log(data.COMMAND + ": " + data.STDOUT);
+       break;      /**
        * SYS.CMD.UNKNOWN
        */
       case "SYS.CMD.UNKNOWN":
@@ -64,17 +75,15 @@ try {
   /**
    * Setup event listener to read lines from terminal input
    */
-  STDIN.on('line', function( STDIN ) {
+  STDIN.on('line', function( input ) {
     /**
      * Pass the COMMAND as a string and the ARGUMENTS as an array
      */
-    if ( STDIN !== "" ) {
-      var STDIN = STDIN.split(" ");
-      var COMMAND = STDIN[0];
-      var ARGUMENTS = STDIN.slice(1);
+    if ( input !== "" ) {
+      var input = input.split(" ");
       var payload = {
-        "COMMAND":COMMAND,
-        "ARGUMENTS":ARGUMENTS
+        "COMMAND":input[0],
+        "ARGUMENTS":input.slice(1)
       }
       var payload = JSON.stringify( payload );
       /**
