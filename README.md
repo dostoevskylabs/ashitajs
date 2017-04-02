@@ -1,6 +1,6 @@
-ashitajs - decentralized P2P C&C Center
+ashitajs - Distributed Decentralized P2P Operating System
 ================================
-ashitajs has shifted focus, will do a writeup later
+I don't even know what this is I'm just building it.
 
 Next we need to install our modules from the main directory with server.js
 ```bash
@@ -12,9 +12,9 @@ API.aclCtl.addEntry("10.0.1.4");
 ```
 Now we are ready to start our server
 ```bash
-npm start Wi-Fi
+node server.js Wi-Fi
 ```
 And our Client
 ```bash
-npm test
+node client.js 10.0.1.4
 ```
