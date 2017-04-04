@@ -5,6 +5,17 @@
  * @author     evolretsinis
  */
 module.exports = {
+  activePeers:new Array(),
+  connect:function(socket, data) {
+    var payload = {
+      "TYPE":"SYS.CONNECT",
+      "COMMAND":"connect",
+      "peerIp":data[0],
+      "peerPort":data[1]
+    };
+    payload = JSON.stringify( payload );
+    socket.write( payload );
+  },
   echo:function( socket, data ) {
     var payload = {
       "TYPE":"SYS.ECHO",
@@ -18,7 +29,17 @@ module.exports = {
 
   },
   peerctl:function( socket, data ) {
-
+    switch ( data[0] ) {
+      case "-l":
+        var payload = {
+          "TYPE":"SYS.CMD.SUCCESS",
+          "COMMAND":"peerctl",
+          "STDOUT":this.activePeers
+        };
+      break;
+    }
+    payload = JSON.stringify( payload );
+    socket.write( payload );
   },
   aclctl:function( socket, data ) {
     switch ( data[0] ) {
@@ -28,8 +49,6 @@ module.exports = {
           "COMMAND":"aclctl",
           "STDOUT":"add rule"
         };
-        payload = JSON.stringify( payload );
-        socket.write( payload );
       break;
       case "-d":
         var payload = {
@@ -37,8 +56,6 @@ module.exports = {
           "COMMAND":"aclctl",
           "STDOUT":"delete rule"
         };
-        payload = JSON.stringify( payload );
-        socket.write( payload );
       break;
       case "-l":
         var payload = {
@@ -46,8 +63,6 @@ module.exports = {
           "COMMAND":"aclctl",
           "STDOUT":"list acl"
         };
-        payload = JSON.stringify( payload );
-        socket.write( payload );
       break;
       default:
         var payload = {
@@ -55,9 +70,9 @@ module.exports = {
           "COMMAND":"aclctl",
           "STDOUT":"invalid usage"
         };
-        payload = JSON.stringify( payload );
-        socket.write( payload );
     }
+    payload = JSON.stringify( payload );
+    socket.write( payload );
   },
   /**
    * mkdir

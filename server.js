@@ -1,10 +1,11 @@
 /**
- * ashita/core
+ * ashita/core/server
  *
- * @package    ashita/server
+ * @package    ashita/core
  * @author     evolretsinis
  */
 var os = require('os');
+var net = require('net');
 var interfaces = os.networkInterfaces();
 var args = process.argv.slice(2);
 var interface = args[0];
@@ -14,14 +15,13 @@ if ( !interfaces[interface] ) {
 }
 var ipaddr = require('ipaddr.js');
 var nodeIp = interfaces[interface][0].address;
+var nodePort = Math.floor(Math.random() * (65000 - 1025)) + 1025;
 /**
- * Check if nodeIp is in IPv4 Format by counting the
- * number of parts and making sure they are 4, otherwise
- * switch to a different reading of the interface
- * this allows for the system to be run as IPv4 on
- * different architectures
+ * Check if nodeIp is in IPv4 Format this allows
+ * for the system to be run as IPv4 on different
+ * architectures
  */
-if ( ipaddr.parse(nodeIp).octets === undefined ) {
+if ( net.isIPv6(nodeIp) ) {
   nodeIp = interfaces[interface][1].address;
 }
 var fs = require('fs');
@@ -32,112 +32,158 @@ var validator = require('validator');
 var assert = require('assert');
 var moment = require('moment');
 var crypto = require('crypto');
-var net = require('net');
-var API = require('./api.js');
 var SYSCALL = require('./syscalls.js');
-/**
- * If this is the master process
- */
-if ( cluster.isMaster ) {
+var server=net.createServer({allowHalfOpen:true}, function( socket ) {
+  console.log("Starting at " + nodeIp +":" + nodePort);
   /**
-   * Counts the number of CPUs available and forks a
-   * worker process for each core
+   * Setup event listener to trigger when data is received from a socket
    */
-  var forks = os.cpus().length;
-  for ( var i = 0; i < forks; ++i ) {
-    cluster.fork();
-  }
-  API.printMessage("SYSTEM", "Master Process running on", process.pid);
-  API.printMessage("SYSTEM", "Starting Workers", forks);
-  /**
-   * Setup event listener to trigger when a worker comes online
-   */
-  cluster.on('online', function( worker ) {
-    API.printMessage("SYSTEM", "Worker " + worker.process.pid, "Dispatched");
-  });
-  /**
-   * Setup event listener to trigger when data is received from a worker
-   */
-  cluster.on('message', function( worker, message ) {
-    API.printMessage("Worker", worker.process.pid, message);
-  });
-  /**
-   * Setup event listener to trigger when a worker exits
-   */
-  cluster.on('exit', function( worker, code, signal ) {
-    API.printMessage("SYSTEM", "Worker " + worker.process.pid, "Exited");
-  });
-/**
- * If is worker process
- */
-} else if ( cluster.isWorker ) {
-  /**
-   * Setup event listener to trigger when data is received from the master
-   */
-  process.on('message', function( message ) {
-    API.printMessage("Master", message);
-  });
-  /**
-   * Send a message to the master to let it know we are listening
-   */
-  process.send("Listening on: " + nodeIp + ":8000");
-  /**
-   * Create an instance of our server within the worker process
-   * and listen for connections
-   */
-  var server=net.createServer({allowHalfOpen:true}, function( socket ) {
-    var PEER = {};
-    PEER.ipAddress = socket.server._connectionKey.split(":")[1];
-    /**
-     * Setup event listener to trigger when data is received from a socket
-     */
-    socket.on('data', function( data ) {
-      if ( data !== "" ) {
+  socket.on('data', function( data ) {
+    if ( data !== "" ) {
+      /**
+       * Parse our data and build our PEER object
+       */
+      var data = JSON.parse( data );
+      /**
+       * If none of the commands passed through to our signal were found
+       */
+      if( typeof SYSCALL[data.COMMAND] !== "function" ) {
         /**
-         * Parse our data and build our PEER object
+         * send unknown command payload
          */
-        var data = JSON.parse( data );
+        var payload = {
+          "TYPE":"SYS.CMD.UNKNOWN",
+          "STDOUT":data.COMMAND
+        };
+        payload = JSON.stringify( payload );
+  			socket.write( payload );
+  		} else {
         /**
-         * If none of the commands passed through to our signal were found
+         * trigger our signal passed by the socket
          */
-        if( typeof SYSCALL[data.COMMAND] !== "function" ) {
-          /**
-           * send unknown command payload
-           */
-          var payload = {
-            "TYPE":"SYS.CMD.UNKNOWN",
-            "STDOUT":data.COMMAND
-          };
-          payload = JSON.stringify( payload );
-    			socket.write( payload );
-    		} else {
-          /**
-           * trigger our signal passed by the socket
-           */
-          return SYSCALL[data.COMMAND](socket, data.ARGUMENTS);
-        }
+        return SYSCALL[data.COMMAND](socket, data.ARGUMENTS);
       }
-    });
+    }
   });
+});
+/**
+ * Setup event listener to trigge ron new connection
+ */
+server.on('connection', function( socket ) {
+  SYSCALL.activePeers.push(socket.remoteAddress + ":" + socket.remotePort);
   /**
-   * Setup event listener to trigge ron new connection
+   * Send our MOTD to the client
    */
-  server.on('connection', function( socket ) {
-    var PEER = {};
-    PEER.ipAddress = socket.server._connectionKey.split(":")[1];
-    API.printMessage("SYSTEM", "Using Worker", process.pid);
-    /**
-     * Send our MOTD to the client
-     */
+  fs.readFile("./sysroot/etc/motd", "utf8", function( error, data ) {
     var payload = {
       "TYPE":"SYS.MOTD",
-      "STDOUT":"Information is power. But like all power, there are those who want to keep it for themselves."
+      "STDOUT":data.toString()
     };
     payload = JSON.stringify( payload );
     socket.write( payload );
   });
+
+});
+server.on('error', function(){
+  console.log("error:server");
+});
+server.on('exit', function(){
+  console.log("exit:server");
+});
+/**
+ * Listen
+ */
+server.listen(nodePort, nodeIp);
+var readline = require('readline');
+/**
+ * Setup our readline interface for intepreting commands
+ */
+var STDIN = readline.createInterface({input:process.stdin, output:process.stdout});
+try {
   /**
-   * Listen
+   * Start a new connection to our server
    */
-  server.listen(8000, nodeIp);
+  var peers = new Array();
+  peers[nodeIp] = new net.createConnection(nodePort, nodeIp);
+  peers[nodeIp].on('data', function( data ) {
+    var data = JSON.parse( data );
+    /**
+     * Setup our signal for retreiving responses
+     */
+    switch ( data.TYPE ) {
+      /**
+       * SYS.MOTD
+       */
+      case "SYS.MOTD":
+        console.log(data.STDOUT);
+      break;
+      /**
+       * SYS.CONNECT
+       */
+      case "SYS.CONNECT":
+        peers[data.peerIp] = new net.createConnection(data.peerPort, data.peerIp);
+        console.log("connected  to " + data.peerIp + ":" + data.peerPort);
+        peers[data.peerIp].on('data', function(){
+          console.log("woops");
+        });
+      break;
+      /**
+       * SYS.ECHO
+       */
+      case "SYS.ECHO":
+        console.log(data.STDOUT);
+      break;
+      /**
+       * SYS.CMD.SUCCESS
+       */
+      case "SYS.CMD.SUCCESS":
+         console.log(data.COMMAND + ": " + data.STDOUT);
+      break;
+      /**
+       * SYS.CMD.FAIL
+       */
+       case "SYS.CMD.FAIL":
+         console.log(data.COMMAND + ": " + data.STDOUT);
+       break;      /**
+       * SYS.CMD.UNKNOWN
+       */
+      case "SYS.CMD.UNKNOWN":
+         console.log(data.COMMAND + ": " + data.STDOUT);
+      break;
+    }
+    STDIN.prompt();
+  });
+  peers[nodeIp].on('error', function(){
+    console.log("error:client");
+  });
+  peers[nodeIp].on('exit', function(){
+    console.log("exit:client");
+  });
+  /**
+   * Setup event listener to read lines from terminal input
+   */
+  STDIN.on('line', function( input ) {
+    if ( input !== "" ) {
+      var input = input.split(" ");
+      /**
+       * Pass the COMMAND as a string and the ARGUMENTS as an array
+       */
+      var payload = {
+        "COMMAND":input[0],
+        "ARGUMENTS":input.slice(1)
+      }
+      var payload = JSON.stringify( payload );
+      /**
+       * Send our data to the server
+       */
+      peers[nodeIp].write(payload, function() {
+        // say your name
+        // try to speak as clearly as you can
+        // you know
+        // everything is written down
+      });
+    }
+  });
+} catch ( e ) {
+  console.log("This is an error");
 }
