@@ -15,7 +15,7 @@ if ( !interfaces[interface] ) {
 }
 var ipaddr = require('ipaddr.js');
 var nodeIp = interfaces[interface][0].address;
-var nodePort = Math.floor(Math.random() * (65000 - 1025)) + 1025;
+var nodePort = Math.floor(Math.random() * (3333 - 2222)) + 2222;
 /**
  * Check if nodeIp is in IPv4 Format this allows
  * for the system to be run as IPv4 on different
@@ -33,8 +33,8 @@ var assert = require('assert');
 var moment = require('moment');
 var crypto = require('crypto');
 var SYSCALL = require('./syscalls.js');
+console.log("Starting at " + nodeIp +":" + nodePort);
 var server=net.createServer({allowHalfOpen:true}, function( socket ) {
-  console.log("Starting at " + nodeIp +":" + nodePort);
   /**
    * Setup event listener to trigger when data is received from a socket
    */
@@ -110,46 +110,54 @@ try {
     /**
      * Setup our signal for retreiving responses
      */
-    switch ( data.TYPE ) {
+    var signal = {
       /**
        * SYS.MOTD
        */
-      case "SYS.MOTD":
+      "SYS.MOTD":function( data ) {
         console.log(data.STDOUT);
-      break;
+      },
       /**
        * SYS.CONNECT
        */
-      case "SYS.CONNECT":
+      "SYS.CONNECT":function( data ) {
         peers[data.peerIp] = new net.createConnection(data.peerPort, data.peerIp);
         console.log("connected  to " + data.peerIp + ":" + data.peerPort);
-        peers[data.peerIp].on('data', function(){
-          console.log("woops");
+        peers[data.peerIp].on('data', function ( data ) {
+          var data = JSON.parse( data );
+          return signal[data.TYPE](data);
         });
-      break;
+        STDIN.prompt();
+      },
       /**
        * SYS.ECHO
        */
-      case "SYS.ECHO":
+      "SYS.ECHO":function( data ) {
         console.log(data.STDOUT);
-      break;
+      },
       /**
        * SYS.CMD.SUCCESS
        */
-      case "SYS.CMD.SUCCESS":
+      "SYS.CMD.SUCCESS":function( data ) {
          console.log(data.COMMAND + ": " + data.STDOUT);
-      break;
+      },
       /**
        * SYS.CMD.FAIL
        */
-       case "SYS.CMD.FAIL":
+       "SYS.CMD.FAIL":function( data ) {
          console.log(data.COMMAND + ": " + data.STDOUT);
-       break;      /**
+       },
+      /**
        * SYS.CMD.UNKNOWN
        */
-      case "SYS.CMD.UNKNOWN":
+      "SYS.CMD.UNKNOWN":function( data ) {
          console.log(data.COMMAND + ": " + data.STDOUT);
-      break;
+      }
+    };
+    if( typeof signal[data.TYPE] !== "function" ) {
+      console.log("wut?");
+    } else {
+      return signal[data.TYPE](data);
     }
     STDIN.prompt();
   });
