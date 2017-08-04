@@ -1,8 +1,9 @@
 /**
- * ashita/core/SYSCALL
+ * ashita/core/syscalls
  *
  * @package    ashita/core
- * @author     evolretsinis
+ * @author     Elijah Seymour
+ * @email      dostoevsky.random@gmail.com
  */
 module.exports = {
   activePeers:new Array(),
