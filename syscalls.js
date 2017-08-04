@@ -3,7 +3,6 @@
  *
  * @package    ashita/core
  * @author     Elijah Seymour
- * @email      dostoevsky.random@gmail.com
  */
 module.exports = {
   activePeers:new Array(),
