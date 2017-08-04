@@ -16,17 +16,16 @@
   "devDependencies": {
   },
   "scripts": {
-    "start": "node ./server.js",
-    "test": "node ./client.js"
+    "start": "node ./server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/evolretsinis/ashitajs.git"
+    "url": "git+https://github.com/dostoevsky/ashitajs.git"
   },
-  "author": "recursiveoverflow",
+  "author": "Elijah Seymour",
   "license": "GPLv3",
   "bugs": {
-    "url": "https://github.com/evolretsinis/ashitajs/issues"
+    "url": "https://github.com/dostoevskylabs/ashitajs/issues"
   },
-  "homepage": "https://github.com/evolretsinis/ashitajs#readme"
+  "homepage": "https://github.com/dostoevskylabs/ashitajs#readme"
 }
