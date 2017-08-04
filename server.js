@@ -2,7 +2,8 @@
  * ashita/core/server
  *
  * @package    ashita/core
- * @author     evolretsinis
+ * @author     Elijah Seymour
+ * @email      dostoevsky.random@gmail.com
  */
 var os = require('os');
 var net = require('net');
@@ -15,6 +16,7 @@ if ( !interfaces[interface] ) {
 }
 var ipaddr = require('ipaddr.js');
 var nodeIp = interfaces[interface][0].address;
+// randomly select a port to use for hosting
 var nodePort = Math.floor(Math.random() * (3333 - 2222)) + 2222;
 /**
  * Check if nodeIp is in IPv4 Format this allows
@@ -57,7 +59,7 @@ var server=net.createServer({allowHalfOpen:true}, function( socket ) {
         };
         payload = JSON.stringify( payload );
   			socket.write( payload );
-  		} else {
+      } else {
         /**
          * trigger our signal passed by the socket
          */
@@ -67,7 +69,7 @@ var server=net.createServer({allowHalfOpen:true}, function( socket ) {
   });
 });
 /**
- * Setup event listener to trigge ron new connection
+ * Setup event listener to trigger on new connection
  */
 server.on('connection', function( socket ) {
   SYSCALL.activePeers.push(socket.remoteAddress + ":" + socket.remotePort);
