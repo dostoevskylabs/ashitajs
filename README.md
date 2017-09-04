@@ -1,4 +1,4 @@
-ashitajs - Distributed Decentralized P2P Trash
+ashitajs - Distributed P2P Trash
 ================================
 I don't even know what this is I'm just building it.
 
