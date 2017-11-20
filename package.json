@@ -1,17 +1,18 @@
 {
   "name": "ashitajs",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "dependencies": {
-    "cluster": "^0.7.7",
-    "net": "^1.0.2",
-    "readline": "^1.3.0",
-    "crypto": "^0.0.3",
-    "ipaddr.js": "^1.3.0",
-    "validator": "^6.2.1",
-    "moment": "^2.17.1",
-    "fs": "^0.0.1-security"
+    "https": "latest",
+    "express": "latest",
+    "cluster": "latest",
+    "ws": "latest",
+    "vue": "latest",
+    "crypto": "latest",
+    "validator": "latest",
+    "moment": "latest",
+    "fs": "latest"
   },
   "devDependencies": {
   },
@@ -20,12 +21,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dostoevsky/ashitajs.git"
+    "url": "git+https://github.com/recursiveoverflow/ashitajs.git"
   },
-  "author": "Elijah Seymour",
-  "license": "GPLv3",
+  "author": "dostoevskylabs",
+  "license": "GNU",
   "bugs": {
-    "url": "https://github.com/dostoevskylabs/ashitajs/issues"
+    "url": "https://github.com/recursiveoverflow/ashitajs/issues"
   },
-  "homepage": "https://github.com/dostoevskylabs/ashitajs#readme"
+  "homepage": "https://github.com/recursiveoverflow/ashitajs#readme"
 }

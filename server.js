@@ -1,198 +1,385 @@
 /**
- * ashita/core/server
+ * ashita/core
  *
  * @package    ashita/core
- * @author     Elijah Seymour
+ * @author     dostoevskylabs
  */
-var os = require('os');
-var net = require('net');
-var interfaces = os.networkInterfaces();
-var args = process.argv.slice(2);
-var interface = args[0];
+var os=require('os');
+var interfaces=os.networkInterfaces();
+var args=process.argv.slice(2);
+var interface=args[0];
 if ( !interfaces[interface] ) {
   console.log("example usage: npm start Wi-Fi");
   process.exit();
 }
-var ipaddr = require('ipaddr.js');
-var nodeIp = interfaces[interface][0].address;
-// randomly select a port to use for hosting
-var nodePort = Math.floor(Math.random() * (3333 - 2222)) + 2222;
+var nodeIp=interfaces[interface][0].address;
+var fs=require('fs');
+var cluster=require('cluster');
+var path=require('path');
+var util=require('util');
+var validator=require('validator');
+var assert=require('assert');
+var moment=require('moment');
+var crypto=require('crypto');
+var API=require('./api.js');
 /**
- * Check if nodeIp is in IPv4 Format this allows
- * for the system to be run as IPv4 on different
- * architectures
+ * Setup our API
  */
-if ( net.isIPv6(nodeIp) ) {
-  nodeIp = interfaces[interface][1].address;
-}
-var fs = require('fs');
-var cluster = require('cluster');
-var path = require('path');
-var util = require('util');
-var validator = require('validator');
-var assert = require('assert');
-var moment = require('moment');
-var crypto = require('crypto');
-var SYSCALL = require('./syscalls.js');
-console.log("Starting at " + nodeIp +":" + nodePort);
-var server=net.createServer({allowHalfOpen:true}, function( socket ) {
+API.aclCtl.init();
+API.sessionCtl.init();
+API.channelCtl.init();
+API.peerCtl.init();
+API.aclCtl.addEntry("192.168.1.19");
+if ( cluster.isMaster ) {
+  var forks = os.cpus().length;
+  for ( var i = 0; i < forks; ++i ) {
+    cluster.fork();
+  }
   /**
-   * Setup event listener to trigger when data is received from a socket
+   * Listening on:
    */
-  socket.on('data', function( data ) {
-    if ( data !== "" ) {
-      /**
-       * Parse our data and build our PEER object
-       */
-      var data = JSON.parse( data );
-      /**
-       * If none of the commands passed through to our signal were found
-       */
-      if( typeof SYSCALL[data.COMMAND] !== "function" ) {
-        /**
-         * send unknown command payload
-         */
-        var payload = {
-          "TYPE":"SYS.CMD.UNKNOWN",
-          "STDOUT":data.COMMAND
-        };
-        payload = JSON.stringify( payload );
-  			socket.write( payload );
-      } else {
-        /**
-         * trigger our signal passed by the socket
-         */
-        return SYSCALL[data.COMMAND](socket, data.ARGUMENTS);
-      }
-    }
+  API.consoleCtl.printMessage("SYSTEM", "Master Process running on", process.pid);
+  API.consoleCtl.printMessage("SYSTEM", "Starting Workers", forks);
+  cluster.on('online', function(worker){
+    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Dispatched");
   });
-});
-/**
- * Setup event listener to trigger on new connection
- */
-server.on('connection', function( socket ) {
-  SYSCALL.activePeers.push(socket.remoteAddress + ":" + socket.remotePort);
-  /**
-   * Send our MOTD to the client
-   */
-  fs.readFile("./sysroot/etc/motd", "utf8", function( error, data ) {
-    var payload = {
-      "TYPE":"SYS.MOTD",
-      "STDOUT":data.toString()
-    };
-    payload = JSON.stringify( payload );
-    socket.write( payload );
+  cluster.on('message', function(message){
+    API.consoleCtl.printMessage("MESSAGE", "Worker ", message);
   });
-
-});
-server.on('error', function(){
-  console.log("error:server");
-});
-server.on('exit', function(){
-  console.log("exit:server");
-});
-/**
- * Listen
- */
-server.listen(nodePort, nodeIp);
-var readline = require('readline');
-/**
- * Setup our readline interface for intepreting commands
- */
-var STDIN = readline.createInterface({input:process.stdin, output:process.stdout});
-try {
+  cluster.on('exit', function(worker, code, signal){
+    API.consoleCtl.printMessage("SYSTEM", "Worker " + worker.process.pid, "Stopped");
+  });
+/**  for ( var i = 1; i <= Object.keys(cluster.workers).length; ++i ) {
+    cluster.workers[i].process.send("test");
+  }*/
+} else {
+  var WebSocketServer=require('ws').Server;
+  var https=require('https');
+  var express=require('express');
+  var app=express();
+  var server=https.createServer({
+      key:fs.readFileSync('./ssl/server.key'),
+      cert:fs.readFileSync('./ssl/server.crt'),
+      ca:fs.readFileSync('./ssl/ca.crt'),
+      requestCert: true,
+      rejectUnauthorized: false
+  }, app);
+  var ashita=new WebSocketServer({
+    server: server,
+    origin:"https://"+nodeIp
+  });
   /**
-   * Start a new connection to our server
+   * Tell Express where our client lives
    */
-  var peers = new Array();
-  peers[nodeIp] = new net.createConnection(nodePort, nodeIp);
-  peers[nodeIp].on('data', function( data ) {
-    var data = JSON.parse( data );
+  app.use(express.static(path.join(__dirname, '/public')));
+  server.listen(443);
+  process.on('message', function(message){
+    API.consoleCtl.printMessage("Master", message);
+  });
+  process.send("Listening on: " + nodeIp + ":443");
+  /**
+   * On Connection
+   */
+  ashita.on('connection', function( socket ) {
+    API.consoleCtl.printMessage("SYSTEM", "Using Worker", process.pid);
     /**
-     * Setup our signal for retreiving responses
+     * Get our client's IP address
      */
-    var signal = {
-      /**
-       * SYS.MOTD
-       */
-      "SYS.MOTD":function( data ) {
-        console.log(data.STDOUT);
-      },
-      /**
-       * SYS.CONNECT
-       */
-      "SYS.CONNECT":function( data ) {
-        peers[data.peerIp] = new net.createConnection(data.peerPort, data.peerIp);
-        console.log("connected  to " + data.peerIp + ":" + data.peerPort);
-        peers[data.peerIp].on('data', function ( data ) {
-          var data = JSON.parse( data );
-          return signal[data.TYPE](data);
-        });
-        STDIN.prompt();
-      },
-      /**
-       * SYS.ECHO
-       */
-      "SYS.ECHO":function( data ) {
-        console.log(data.STDOUT);
-      },
-      /**
-       * SYS.CMD.SUCCESS
-       */
-      "SYS.CMD.SUCCESS":function( data ) {
-         console.log(data.COMMAND + ": " + data.STDOUT);
-      },
-      /**
-       * SYS.CMD.FAIL
-       */
-       "SYS.CMD.FAIL":function( data ) {
-         console.log(data.COMMAND + ": " + data.STDOUT);
-       },
-      /**
-       * SYS.CMD.UNKNOWN
-       */
-      "SYS.CMD.UNKNOWN":function( data ) {
-         console.log(data.COMMAND + ": " + data.STDOUT);
-      }
-    };
-    if( typeof signal[data.TYPE] !== "function" ) {
-      console.log("wut?");
-    } else {
-      return signal[data.TYPE](data);
+    socket.ipaddr = socket._socket.remoteAddress.substr(7);
+    if ( API.aclCtl.checkEntry(socket.ipaddr) === false ) {
+      socket.close();
     }
-    STDIN.prompt();
-  });
-  peers[nodeIp].on('error', function(){
-    console.log("error:client");
-  });
-  peers[nodeIp].on('exit', function(){
-    console.log("exit:client");
-  });
-  /**
-   * Setup event listener to read lines from terminal input
-   */
-  STDIN.on('line', function( input ) {
-    if ( input !== "" ) {
-      var input = input.split(" ");
+
+
+    /**
+     * On Message
+     */
+  	socket.on('message', function( data ) {
       /**
-       * Pass the COMMAND as a string and the ARGUMENTS as an array
+       * Parse our data
        */
-      var payload = {
-        "COMMAND":input[0],
-        "ARGUMENTS":input.slice(1)
-      }
-      var payload = JSON.stringify( payload );
+  		var data = JSON.parse( data );
       /**
-       * Send our data to the server
+       * Setup our Signal Object
        */
-      peers[nodeIp].write(payload, function() {
-        // say your name
-        // try to speak as clearly as you can
-        // you know
-        // everything is written down
-      });
-    }
+  		var signal = {
+        debug:function( data ) {
+          this.controller = data.controller;
+          switch ( this.controller ) {
+            case "channel":
+              var payload = {
+                "type":"debug",
+                "content":{
+                  "object":API.channelCtl.activeChannels
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            break;
+            case "session":
+              var payload = {
+                "type":"debug",
+                "content":{
+                  "object":API.sessionCtl.activeSessions
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            break;
+          }
+        },
+        /**
+         * Auth Signal
+         */
+  			auth:function( data ) {
+          this.sessionid      = data.sid ? data.sid : API.sessionCtl.generateId();
+          this.nodeIp         = nodeIp;
+          this.ipaddr         = socket.ipaddr;
+          try {
+            if ( API.peerCtl.checkPeer(socket.ipaddr) === false ) {
+              var peers = API.peerCtl.getPeers();
+              for ( var i = 0; i < peers.length; ++i ) {
+                var payload = {
+                  "type":"newPeerDiscovered",
+                  "content":{
+                    "ipaddr": peers[i]
+                  }
+                };
+                payload = JSON.stringify( payload );
+                socket.send( payload );
+              }
+            }
+            API.peerCtl.addPeer(socket.ipaddr);
+            ashita.clients.forEach(function( client ) {
+              if ( socket !== client ) {
+                var payload = {
+                  "type":"newPeerDiscovered",
+                  "content":{
+                    "ipaddr": socket.ipaddr
+                  }
+                };
+                payload = JSON.stringify( payload );
+                client.send( payload );
+              }
+            });
+            var sessionObject = API.sessionCtl.getObject(this.sessionid);
+            /**
+             * Session exists
+             */
+            if ( sessionObject ) {
+              API.sessionCtl.setObject({
+                sessionid:this.sessionid,
+                ipaddr:this.ipaddr,
+                channels:sessionObject.channels,
+              });
+              API.consoleCtl.printMessage("SYSTEM", "New Authenticated Connection", this.sessionid);
+              var payload = {
+                "type":"newAuthedConnection",
+                "content":{
+                  "sid":this.sessionid,
+                  "channels":sessionObject.channels
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            /**
+             * Session doesn't exist
+             */
+            } else {
+              API.sessionCtl.setObject({
+                sessionid:this.sessionid,
+                ipaddr:this.ipaddr,
+                channels:[],
+              });
+              API.consoleCtl.printMessage("SYSTEM", "New Anonymous Connection", this.sessionid);
+              var payload = {
+                "type":"newAnonymousConnection",
+                "content":{
+                  "sid":this.sessionid,
+                  "channels":['System']
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            }
+          } catch ( e ) {
+            API.consoleCtl.printError( e );
+          }
+  			},
+        /**
+         * Subscribe Signal
+         */
+  			channelJoin:function( data ) {
+          this.sessionid  = data.sid;
+          this.ipaddr     = socket.ipaddr;
+          this.channel    = data.channel.name;
+          try {
+            API.consoleCtl.printMessage("SYSTEM", this.ipaddr + " subscribing to", this.channel);
+            var channelObject = API.channelCtl.getObject(this.channel);
+            if ( channelObject ) {
+              var activeChannels = API.sessionCtl.getValue(this.sessionid, "channels");
+              activeChannels.push(this.channel);
+              API.sessionCtl.setValue(this.sessionid, "channels", activeChannels );
+              var userList = API.channelCtl.getValue(this.channel, "userlist");
+              userList.push(this.ipaddr);
+              API.channelCtl.setValue(this.channel, "userlist", userList);
+              var payload = {
+                "type":"subscribeSuccessful",
+                "content":{
+                  "channel":{
+                    "name":this.channel
+                  }
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+              for ( var i = 0; i < channelObject['messages'].length ; ++i ) {
+                var payload = {
+                  "type":"messageSuccessful",
+                  "content":{
+                    "channel":{
+                      "name":channelObject['messages'][i].channel,
+                      "ipaddr":this.ipaddr,
+                      "message":channelObject['messages'][i].message
+                    }
+                  }
+                };
+                payload = JSON.stringify( payload );
+                socket.send( payload );
+              }
+            } else {
+              API.channelCtl.setObject({
+                "name":this.channel,
+                "userlist":[this.ipaddr],
+                "owner":this.ipaddr,
+                "groups":[this.ipaddr],
+                "messages":[]
+              });
+              var activeChannels = API.sessionCtl.getValue(this.sessionid, "channels");
+              activeChannels.push(this.channel);
+              API.sessionCtl.setValue(this.sessionid, "channels", activeChannels );
+              var payload = {
+                "type":"subscribeNewSuccessful",
+                "content":{
+                  "channel":{
+                    "name":this.channel,
+                    "ipaddr":this.ipaddr
+                  }
+                }
+              };
+              payload = JSON.stringify( payload );
+              socket.send( payload );
+            }
+            var channelObject = API.channelCtl.getObject(this.channel);
+      			if ( channelObject ) {
+      				var activeUsers = new Object();
+      				for ( session in API.sessionCtl.activeSessions ) {
+      					var usr = API.sessionCtl.getValue(session, "username");
+      					if ( channelObject.userlist.indexOf(usr) !== -1 ) {
+      						activeUsers[usr] = API.sessionCtl.getValue(session, "ipaddr");
+      					}
+      				}
+      				var payload = {
+      					"type":"userList",
+      					"content":{
+      							"channel" : this.channel,
+      							"users" : channelObject.userlist
+      					}
+      				};
+      				payload = JSON.stringify( payload );
+      				socket.send( payload );
+      			}
+      		} catch ( e ) {
+      			API.consoleCtl.printError( e );
+      		}
+  			},
+        /**
+         * Unsubscribe Signal
+         */
+  			channelPart:function( data ) {
+              this.sessionid  = data.sid;
+              this.ipaddr     = socket.ipaddr;
+              this.channel    = data.channel.name;
+			    var payload = {
+				    "type":"unsubscribeSuccessful",
+				    "content":{
+						    "channel" : {
+                                "name" : this.channel
+                            }
+				    }
+			    };
+			    payload = JSON.stringify( payload );
+			    socket.send( payload );
+                API.consoleCtl.printMessage("SYSTEM", this.ipaddr + " unsubscribing to", data.channel.name);
+  			},
+        /**
+         * Message Signal
+         */
+  			channelMessage:function( data ) {
+  				data.sid = data.sid ? data.sid : API.sessionCtl.generateId();
+          this.sessionid = data.sid;
+          this.channel = data.channel.name;
+          this.ipaddr = socket.ipaddr;
+          this.message = data.channel.message;
+          try {
+           API.channelCtl.message({
+           	"name":this.channel,
+           	"ipaddr":this.ipaddr,
+           	"timestamp":0,
+           	"message":this.message
+           });
+           var payload = {
+          	"type":"messageSuccessful",
+          	"content":{
+              "sid":this.sessionid,
+          		"channel":{
+                "name":this.channel,
+                "ipaddr":this.ipaddr,
+                "message":this.message
+              }
+          	}
+          };
+          payload = JSON.stringify( payload );
+          API.consoleCtl.printMessage(this.channel, this.ipaddr, this.message);
+          ashita.clients.forEach(function( client )	{
+          	client.send( payload );
+          });
+     		 } catch ( e ) {
+     			 API.consoleCtl.printError( e );
+     		 }
+     	 },
+        /**
+         * Private Signal
+         */
+  			private:function( data ) {
+  				// pass
+  			},
+        /**
+         * PrivateMessage Signal
+         */
+  			privateMessage:function( data ) {
+  				// pass
+  			}
+  		};
+  		if ( typeof signal[data.type] !== "function" ) {
+  			API.consoleCtl.printError("SIGFAULT");
+  		}
+  		return signal[data.type](data.content);
+  	});
+    /**
+     * On Error
+     */
+  	socket.on('error', function( e ) {
+  		// pass
+  	});
+    /**
+     * On Close
+     */
+  	socket.on('close', function() {
+      /**
+       * Get Rid of our defunct peers
+       */
+  		API.peerCtl.removePeer(socket.ipaddr);
+  	});
   });
-} catch ( e ) {
-  console.log("This is an error");
 }
