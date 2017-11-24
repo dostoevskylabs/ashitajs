@@ -32,17 +32,24 @@ Node Events
 These events are pushed through to the client
 
 ```bash
-nodeOperatorConnected - this event is triggered when the operator of the node a connects to their own node (127.0.0.1)
+nodeOperatorConnected
 ```
+> this event is triggered when the operator of the node a connects to their own node (127.0.0.1)
+
 ```bash
-nodeConnected - this event is triggered when you peer b connected to peer a.
+nodeConnected
 ```
+> this event is triggered when you peer b connected to peer a.
+
 ```bash
-nodeList - this event is sent when peer b connected to peer a, it contains all nodes peer a is connected to.
+nodeList
 ```
+> this event is sent when peer b connected to peer a, it contains all nodes peer a is connected to.
+
 ```bash
-nodeDiscovered - this event is triggered whenever a new peer connects to any node in the node family, it is then propagated to all other peers
+nodeDiscovered
 ```
+> this event is triggered whenever a new peer connects to any node in the node family, it is then propagated to all other peers
 
 Client Signals
 ================================
