@@ -1,32 +1,15 @@
 {
   "name": "ashitajs",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "dependencies": {
-    "https": "latest",
-    "express": "latest",
-    "cluster": "latest",
-    "ws": "latest",
-    "vue": "latest",
-    "crypto": "latest",
-    "validator": "latest",
-    "moment": "latest",
-    "fs": "latest"
-  },
-  "devDependencies": {
-  },
-  "scripts": {
-    "start": "node ./server.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/recursiveoverflow/ashitajs.git"
-  },
+  "version": "0.0.1",
+  "description": "decentralized p2p network",
+  "main": "index.js",
   "author": "dostoevskylabs",
-  "license": "GNU",
-  "bugs": {
-    "url": "https://github.com/recursiveoverflow/ashitajs/issues"
-  },
-  "homepage": "https://github.com/recursiveoverflow/ashitajs#readme"
+  "license": "GPL-3.0",
+  "dependencies": {
+    "consoleplusplus": "^1.4.1",
+    "crypto": "^1.0.1",
+    "express": "^4.16.2",
+    "validator": "^9.1.1",
+    "ws": "^3.3.2"
+  }
 }

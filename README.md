@@ -1,162 +1,60 @@
-ashitajs - decentralized P2P network in the browser
+ashitajs - decentralized P2P network
 ================================
+ashitajs intends to be a fully decentralized P2P network (though not there yet) designed to be deployed anywhere. It comes in two parts following a client and server model for each node. To be part of the network you need only access a node via the browser, to be a node you need only run your own node with the server portion of the model. It's still in its infancy and a lot of work still needs to be done. Currently a PoC so security may be non-existent. Run at your own risk. (although theres not a whole lot they can probably do as it doesn't have much of anything to it yet);
 
-ashitajs intends to be a fully decentralized P2P network  (though not there yet) designed to be deployed anywhere. It comes in two parts following a client and server model. To be part of the network you need only access a node via the browser, to be a node you need only run your own node with the server portion of the model. It's still in its infancy and a lot of work still needs to be done.
+Server API
+================================
+These are calls within the node to perform certain tasks/communicatons
 
-First we need to generate an SSL bundle to use with node.js
-```bash
-mkdir ssl
-```
-
-```bash
-cd ssl
-```
-
-```bash
-openssl genrsa -des3 -out ca.key 4096
-```
-
-```bash
-openssl req -new -key ca.key -out ca.csr
-```
-
-```bash
-openssl x509 -req -days 365 -in ca.csr -out ca.crt -signkey ca.key
-```
-```bash
-openssl genrsa -des3 -out server.key 4096
-```
-
-```bash
-openssl req -new -key server.key -out server.csr
-```
-
-```bash
-cp server.key server.key.passphrase
-```
-
-```bash
-openssl rsa -in server.key.passphrase -out server.key
-```
-
-```bash
-openssl x509 -req -days 365 -in server.csr -signkey server.key -out server.crt
-```
-
-Next we need to install our modules from the main directory with server.js
-```bash
+As a test case you can run
+```javascript
 npm install
+nodejs index.js
 ```
 
-Now we only need to add our internal IP to the rudimentary ACL in server.js
+Then open your browser to http://127.0.0.1:8000 http://127.0.0.1:8000/node.html and http://127.0.0.1:8000/test.html (output is to console) (currently running off of the same node as a PoC test - haven't written the code to handle broadcasting the connected node's ip:port to the server so each (.html) is a hardcoded ip/port to pass to the node hosted on :8000)
+
+###### User
 ```javascript
-API.aclCtl.addEntry("10.0.1.4");
+constructor ( data ) {}
+isAuthenticated () {}
 ```
-Now we are ready to start
-```bash
-npm start Wi-Fi
+###### Client
+```javascript
+constructor( socket, data ){}
+sendClientEvent( event, data ){}
 ```
 
-Server Controllers
+Node Events
 ================================
-consoleCtl
-```javascript
-function printMessage( type, src, msg ){}
-function printError( str ){}
+These events are pushed through to the client
+
+```bash
+nodeOperatorConnected - this event is triggered when the operator of the node a connects to their own node (127.0.0.1)
 ```
-aclCtl
-```javascript
-function init(){}
-function addEntry( peerIp ){}
-function removeEntry( peerIp ){}
+```bash
+nodeConnected - this event is triggered when you peer b connected to peer a.
 ```
-sessionCtl
-```javascript
-function init(){}
-function generateId(){}
-function getValue( sessionid, field ){}
-function setValue( sessionid, field, value){}
-function getObject( sessionid ){}
-function setObject( sessionData ){}
-function destroyObject( sessionid ){}
+```bash
+nodeList - this event is sent when peer b connected to peer a, it contains all nodes peer a is connected to.
 ```
-channelCtl
-```javascript
-function init(){}
-function getValue( channel, field ){}
-function setValue( channel, field ){}
-function getObject( channel ){}
-function setObject( channelData ){}
-function destroyObject( channelData ){}
-function join( channelData ){}
-function part( channelData ){}
-function message( channelData ){}
-```
-peerCtl
-```javascript
-function init(){}
-function addPeer( peerIp ){}
-function removePeer( peerIp ){}
+```bash
+nodeDiscovered - this event is triggered whenever a new peer connects to any node in the node family, it is then propagated to all other peers
 ```
 
 Client Signals
 ================================
-auth - send socket auth signal
+These signals are transmitted to the node to setup a new node, or perform some other action
+
+###### auth
 ```javascript
-ashita.socket.send({
-	type:"auth",
-	content:{
-		sid:document.cookie,
-	}
-});
-```
-channelJoin - send socket channelJoin signal
-```bash
-/join [channel]
-```
-```javascript
-ashita.socket.send({
-	type:"channelJoin",
-	content:{
-		sid:document.cookie,
-		channel:{
-			name:channel
-		}
-	}
-});
-```
-channelMessage - send socket channelMessage signal
-```javascript
-ashita.socket.send({
-	type:"channelJoin",
-	content:{
-		sid:document.cookie,
-		channel:{
-			name:channel
-		}
-	}
-});
-```
-Server Events
-================================
-```bash
-newPeerDiscovered - new peer event
-```
-```bash
-newAuthedConnection - new authenticated peer event
-```
-```bash
-newAnonymousConnection - new anonymous peer event
-```
-```bash
-subscribeNewSuccessful - create new channel successful event
-```
-```bash
-subscribeSuccessful - subscribe to channel successful event
-```
-```bash
-messageSuccessful - message to channel successful event
-```
-```bash
-userList - retreived userlist event
+ashita.signal = {
+  "auth":function () {
+    ashita.socket.send({
+      type:"auth",
+      node:"127.0.0.1:8000",
+      content:{}
+    });
+  }
+};
 ```
