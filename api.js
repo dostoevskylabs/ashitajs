@@ -37,10 +37,6 @@ class Client {
         payload.content.test = true;
       break;
 
-      case "nodeList":
-        payload.content.nodeList = data;
-      break;
-
       case "nodeDiscovered":
         payload.content.nodeIp = data;
       break;

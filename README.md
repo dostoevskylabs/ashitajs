@@ -37,13 +37,10 @@ Node Events
 These events are pushed through to the client
 
 ###### nodeOperatorConnected
-> this event is triggered when the operator of the node a connects to their own node (127.0.0.1)
+> this event is triggered when the operator of the node a connects to their own node (not implemented)
 
 ###### nodeConnected
 > this event is triggered when peer a peer connect sto any node, it is transmitted to the client to let the client known there is an active socket
-
-###### nodeList
-> this event is sent when peer b connects to peer a, it contains all nodes peer a is connected to.
 
 ###### nodeDiscovered
 > this event is triggered whenever a new peer connects to any node in the node family, it is then propagated to all other peers
@@ -55,8 +52,8 @@ These signals are transmitted to the node to setup a new node, or perform some o
 ###### auth
 ```javascript
 ashita.signal = {
-  "auth":function () {
-    ashita.socket.send({
+  "auth":function ( nodeIp ) {
+    ashita.socket[nodeIp].send({
       type:"auth",
       node:"127.0.0.1:8000",
       content:{}

@@ -37,7 +37,6 @@ module.exports = {
       client.sendClientEvent("nodeOperatorConnected");
     } else {
       if ( Object.keys(this.connectedNodes).length > 0 ) {
-        client.sendClientEvent("nodeList", Object.keys(this.connectedNodes)); // send node list
         for ( let nodeSocket in this.connectedNodes ) {
           let peer = new API.Client( this.connectedNodes[nodeSocket] );
           peer.sendClientEvent("nodeDiscovered", this.node);

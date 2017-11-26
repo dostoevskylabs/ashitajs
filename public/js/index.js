@@ -38,14 +38,6 @@ function generateSocket(nodeIp){
               console.log("nodeConnected Event Received");
             break;
 
-            case "nodeList":
-              console.log("Connected peers");
-              console.log("---------------");
-              payload.content.nodeList.forEach(function(peer){
-                console.log(peer);
-              });
-            break;
-
             case "nodeDiscovered":
               if ( Object.keys(ashita.socket).indexOf(payload.content.nodeIp) !== -1 ) break;
               console.log("new peer discovered: " + payload.content.nodeIp);
@@ -82,6 +74,7 @@ function generateSocket(nodeIp){
   return ws;
 }
 generateSocket(ashita.node);
+
 /*
  * ashita/client/signal
  *
