@@ -11,10 +11,16 @@ These are calls within the node to perform certain tasks/communicatons
 As a test case you can run
 ```javascript
 npm install
-nodejs index.js
+nodejs index.js 8000
+nodejs index.js 9000
+nodejs index.js 10000
 ```
 
-Then open your browser to http://127.0.0.1:8000 http://127.0.0.1:8000/node.html and http://127.0.0.1:8000/test.html (output is to console) (currently running off of the same node as a PoC test - haven't written the code to handle broadcasting the connected node's ip:port to the server so each (.html) is a hardcoded ip/port to pass to the node hosted on :8000)
+Then open your browser to http://127.0.0.1:8000 http://127.0.0.1:9000/ and http://127.0.0.1:10000/ (output is to console) from the console if you run:
+```javascript
+generateSocket("127.0.0.1:8000");
+```
+from a node other than 8000, you will see the p2p at work, if you then type ```javascript ashita.socket``` you can see the peer sockets.
 
 ###### User
 ```javascript
