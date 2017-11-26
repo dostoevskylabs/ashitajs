@@ -16,9 +16,6 @@ class User {
   }
 
   get isAuthenticated () {
-    /* ----- <OUTPUT> ----- */
-    console.debug(color.Blue + "Socket has been set as Anonymous.");
-    /* ----- </OUTPUT> ----- */
   	return false;
   } 	
 }

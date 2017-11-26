@@ -6,12 +6,18 @@
  */
 "use strict";
 require('consoleplusplus');
+const args = process.argv.slice(2);
+
+if ( args.length !== 1 ) {
+  process.exit(0);
+}
+
 const path            = require('path');
 const WebSocketServer = require('ws').Server;
 const http            = require('http');
 const express         = require('express');
 const app             = express().use(express.static(path.join(__dirname, '/public')));
-const server          = http.createServer(app).listen(8000);
+const server          = http.createServer(app).listen(args[0]);
 const ashita          = new WebSocketServer({server: server});
 const SIGNAL          = require('./signal.js');
 const color           = require('./color.js');
@@ -19,7 +25,7 @@ const color           = require('./color.js');
 let connectedNodes    = {};
 
 /* ----- <OUTPUT> ----- */
-console.info(color.BgGreen + color.Black + "System is now online. http://127.0.0.1:8000" + color.Reset);
+console.info(color.BgGreen + color.Black + "System is now online. http://127.0.0.1:" + args[0] + color.Reset);
 /* ----- </OUTPUT> ----- */
 
 ashita.on('connection', function ( socket ) {
@@ -50,8 +56,11 @@ ashita.on('connection', function ( socket ) {
     /* ----- <OUTPUT> ----- */
     console.debug(color.Red + "Removed node " + socket.node);
     /* ----- </OUTPUT> ----- */
+
     connectedNodes[socket.node] = null;
     delete connectedNodes[socket.node];
+
+    /* ----- <OUTPUT> ----- */
     console.info(color.Red + "Connection closed.");
     /* ----- </OUTPUT> ----- */
   });
