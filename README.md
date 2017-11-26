@@ -4,10 +4,6 @@ ashitajs intends to be a fully decentralized P2P network (though not there yet) 
 
 ![PoC](https://i.imgur.com/vJkAZoN.png)
 
-Server API
-================================
-These are calls within the node to perform certain tasks/communicatons
-
 As a test case you can run
 ```javascript
 npm install
@@ -22,6 +18,9 @@ generateSocket("127.0.0.1:8000");
 ```
 from a node other than 8000, you will see the p2p at work, if you then type ```javascript ashita.socket``` you can see the peer sockets.
 
+Server API
+================================
+These are calls within the node to perform certain tasks/communicatons
 ###### User
 ```javascript
 constructor ( data ) {}
@@ -37,24 +36,16 @@ Node Events
 ================================
 These events are pushed through to the client
 
-```bash
-nodeOperatorConnected
-```
+###### nodeOperatorConnected
 > this event is triggered when the operator of the node a connects to their own node (127.0.0.1)
 
-```bash
-nodeConnected
-```
-> this event is triggered when you peer b connected to peer a.
+###### nodeConnected
+> this event is triggered when peer a peer connect sto any node, it is transmitted to the client to let the client known there is an active socket
 
-```bash
-nodeList
-```
-> this event is sent when peer b connected to peer a, it contains all nodes peer a is connected to.
+###### nodeList
+> this event is sent when peer b connects to peer a, it contains all nodes peer a is connected to.
 
-```bash
-nodeDiscovered
-```
+###### nodeDiscovered
 > this event is triggered whenever a new peer connects to any node in the node family, it is then propagated to all other peers
 
 Client Signals
