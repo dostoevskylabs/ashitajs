@@ -12,11 +12,15 @@ nodejs index.js 9000
 nodejs index.js 10000
 ```
 
-Then open your browser to http://127.0.0.1:8000 http://127.0.0.1:9000/ and http://127.0.0.1:10000/ (output is to console) from the console if you run:
+Then open your browser to http://127.0.0.1:8000 http://127.0.0.1:9000/ and http://127.0.0.1:10000/ (output is to console) from the console if you type:
 ```javascript
 generateSocket("127.0.0.1:8000");
 ```
-from a node other than 8000, you will see the p2p at work, if you then type ```javascript ashita.socket``` you can see the peer sockets.
+from a node other than 8000, you will see the p2p at work, if you then type:
+```javascript
+ashita.socket
+```
+you can see the peer sockets.
 
 Server API
 ================================
