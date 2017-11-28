@@ -1,7 +1,5 @@
-ashitajs - decentralized P2P network
+ashitajs - [![AUR](https://img.shields.io/aur/license/yaourt.svg)](LICENSE) [![Docs](https://img.shields.io/readthedocs/pip/stable.svg)](README.md)
 ================================
-[![AUR](https://img.shields.io/aur/license/yaourt.svg)](LICENSE)
-[![Docs](https://img.shields.io/readthedocs/pip/stable.svg)](README.md)
 
 ashitajs intends to be a fully decentralized P2P network (though not there yet) designed to be deployed anywhere. It comes in two parts following a client and server model for each node. To be part of the network you need only access a node via the browser, to be a node you need only run your own node with the server portion of the model. It's still in its infancy and a lot of work still needs to be done. Currently a PoC so security may be non-existent. Run at your own risk. (although theres not a whole lot they can probably do as it doesn't have much of anything to it yet);
 
