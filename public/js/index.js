@@ -18,20 +18,20 @@ let ashita = {
  * @package  ashita/client
  * @author   dostoevskylabs
  */
-function generateSocket(nodeIp){
-  let ws = new WebSocket("ws://" + nodeIp);
-  ashita.socket[nodeIp] = {
+function generateSocket(node){
+  let ws = new WebSocket("ws://" + node);
+  ashita.socket[node] = {
     "events":{
       "open":function ( event ) {
-        ashita.signal.auth( nodeIp );
+        ashita.transmit.auth( node );
       },
 
       "onmessage":function ( event ) {
         let payload = JSON.parse(event.data);
         if ( ws.readyState === 1 ) {
           switch ( payload.type ) {
-            case "nodeOperatorConnected":
-              console.log("nodeOperatorConnected Event Received");
+            case "nodeOwnerConnected":
+              console.log("nodeOwnerConnected Event Received");
             break;
 
             case "nodeConnected":
@@ -39,9 +39,9 @@ function generateSocket(nodeIp){
             break;
 
             case "nodeDiscovered":
-              if ( Object.keys(ashita.socket).indexOf(payload.content.nodeIp) !== -1 ) break;
-              console.log("new peer discovered: " + payload.content.nodeIp);
-              generateSocket(payload.content.nodeIp);
+              if ( Object.keys(ashita.socket).indexOf(payload.content.node) !== -1 ) break;
+              console.log("new peer discovered: " + payload.content.node);
+              generateSocket(payload.content.node);
             break;
 
             default:
@@ -67,25 +67,25 @@ function generateSocket(nodeIp){
       return false;
     }
   };  
-  ws.addEventListener("open", ashita.socket[nodeIp].events.open);
-  ws.addEventListener("close", ashita.socket[nodeIp].events.close);
-  ws.addEventListener("message", ashita.socket[nodeIp].events.onmessage);
-  ws.addEventListener("error", ashita.socket[nodeIp].events.onerror);
+  ws.addEventListener("open", ashita.socket[node].events.open);
+  ws.addEventListener("close", ashita.socket[node].events.close);
+  ws.addEventListener("message", ashita.socket[node].events.onmessage);
+  ws.addEventListener("error", ashita.socket[node].events.onerror);
   return ws;
 }
 generateSocket(ashita.node);
 
 /*
- * ashita/client/signal
+ * ashita/client/transmit
  *
- * abstraction layer to transmit data
+ * abstraction layer to transmit data to the api
  *
  * @package  ashita/client
  * @author   dostoevskylabs
  */
-ashita.signal = {
-  "auth":function ( nodeIp ) {
-    ashita.socket[nodeIp].send({
+ashita.transmit = {
+  "auth":function ( node ) {
+    ashita.socket[node].send({
       type:"auth",
       node:ashita.node,
       content:{}
