@@ -5,90 +5,124 @@
  * @author     dostoevskylabs
  */
 "use strict";
-let ashita = {
-  node:window.origin.substr(7),
-  socket:{}
-};
 
-/*
- * ashita/client/socket
- *
- * abstraction layer to handle socket
- *
- * @package  ashita/client
- * @author   dostoevskylabs
- */
-function generateSocket(node){
-  let ws = new WebSocket("ws://" + node);
-  ashita.socket[node] = {
-    "events":{
-      "open":function ( event ) {
-        ashita.transmit.auth( node );
-      },
+class Socket {
+  constructor( node ) {
+    this.ws = new WebSocket( "ws://" + node );
+    this.node = node;
+    this.onNodeDiscovery = undefined;
 
-      "onmessage":function ( event ) {
-        let payload = JSON.parse(event.data);
-        if ( ws.readyState === 1 ) {
-          switch ( payload.type ) {
-            case "nodeOwnerConnected":
-              console.log("nodeOwnerConnected Event Received");
-            break;
+    this.ws.addEventListener( "open" , this.onOpen.bind(this) );
+    this.ws.addEventListener( "close" , this.onClose.bind(this) );
+    this.ws.addEventListener( "message" , this.onMessage.bind(this) );
+    this.ws.addEventListener( "error" , this.onError.bind(this) );
+  }
 
-            case "nodeConnected":
-              console.log("nodeConnected Event Received");
-            break;
-
-            case "nodeDiscovered":
-              if ( Object.keys(ashita.socket).indexOf(payload.content.node) !== -1 ) break;
-              console.log("new peer discovered: " + payload.content.node);
-              generateSocket(payload.content.node);
-            break;
-
-            default:
-              console.log("Unhandled Event");
-          }
-        }
-      },
-
-      "onerror":function ( error ) {
-        //console.error(error);
-      },
-
-      "close":function ( event ) {
-      }
-    },
-
-    "send":function ( data ) {
-      let payload = JSON.stringify( data );
-      if ( ws.readyState === 1 ) {
-        ws.send( payload );
-        return true;
-      }
-      return false;
+  send( data ) {
+    let payload = JSON.stringify( data );
+    if ( this.ws.readyState === 1 ) {
+      this.ws.send( payload );
+      return true;
     }
-  };  
-  ws.addEventListener("open", ashita.socket[node].events.open);
-  ws.addEventListener("close", ashita.socket[node].events.close);
-  ws.addEventListener("message", ashita.socket[node].events.onmessage);
-  ws.addEventListener("error", ashita.socket[node].events.onerror);
-  return ws;
-}
-generateSocket(ashita.node);
+    return false;
+  }
 
-/*
- * ashita/client/transmit
- *
- * abstraction layer to transmit data to the api
- *
- * @package  ashita/client
- * @author   dostoevskylabs
- */
-ashita.transmit = {
-  "auth":function ( node ) {
-    ashita.socket[node].send({
+  onClose ( event ) {
+    console.warn("CLOSING", event);
+  }
+  onError ( event ) {
+    console.error(event);
+  }
+  onMessage ( event ) {
+    let payload = JSON.parse(event.data);
+    if ( this.ws.readyState === 1 ) {
+      switch ( payload.type ) {
+        case "nodeOwnerConnected":
+          console.log("nodeOwnerConnected Event Received");
+        break;
+
+        case "nodeConnected":
+          console.log("nodeConnected Event Received");
+        break;
+
+        case "nodeDiscovered":
+          this.onNodeDiscovery(payload.content.node);
+        break;
+
+        default:
+          console.log("Unhandled Event");
+      }
+    }
+  }
+  onOpen ( event ) {
+    this.send({
       type:"auth",
-      node:ashita.node,
+      node:this.node,
       content:{}
     });
   }
-};
+}
+
+class AshitaSocket extends Socket{
+  constructor ( node ) {
+    super( node );
+  }
+  send ( data ) {
+    super.send( data );
+  }
+  login(){
+    this.send( /*login payload*/ );
+  }
+}
+
+class Ashita{
+  constructor(ui){
+    this.sockets = {};
+    this.ui = ui;
+
+    this.ui.onInput = this.onInput;
+  }
+
+  onInput ( message ) {
+    console.log("Ashita.onInput", message);
+  }
+
+
+  addSocket (nodeId) {
+    let newSocket = new AshitaSocket(nodeId);
+    newSocket.onNodeDiscovery = this.onNodeDiscovery;
+    this.sockets[nodeId] = newSocket;
+  }
+
+  onNodeDiscovery(nodeId){
+    if ( Object.keys(this.sockets).indexOf(nodeId) !== -1 )
+      return;
+    console.log("new peer discovered: " + nodeId);
+    this.addSocket(nodeId);
+  }
+}
+
+class UI {
+  constructor () {
+    const input = document.querySelector( "input" );
+    this.onInput = undefined;
+    input.addEventListener( 'keydown', this.inputKeydown.bind(this) );
+    //document.addEventListener( ' keydown',)
+  }
+
+  inputKeydown ( event ) {
+    if ( event.key === "Enter" ) {
+      const message = event.target.value;
+      event.target.value = "";
+
+      if(this.onInput)
+        this.onInput(message);
+    }
+  }
+}
+
+
+
+let ui = new UI();
+let ashita = new Ashita(ui);
+ashita.addSocket(window.origin.substr(7))
