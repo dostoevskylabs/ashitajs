@@ -9,7 +9,8 @@ require('consoleplusplus');
 const args = process.argv.slice(2);
 
 if ( args.length !== 1 ) {
-  process.exit(0);
+  //process.exit(0);
+  args[0] = 8000;
 }
 
 const path            = require('path');

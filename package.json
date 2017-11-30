@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "decentralized p2p network",
   "main": "index.js",
+  "scripts": {
+    "debug": "node --nolazy --inspect=9229 index.js 8000"
+  },
   "author": "dostoevskylabs",
   "license": "GPL-3.0",
   "dependencies": {

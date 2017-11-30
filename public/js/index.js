@@ -5,7 +5,6 @@
  * @author     dostoevskylabs
  */
 "use strict";
-
 class Socket {
   constructor( node ) {
     this.ws = new WebSocket( "ws://" + node );
@@ -62,6 +61,7 @@ class Socket {
     });
   }
 }
+
 
 class AshitaSocket extends Socket{
   constructor ( node ) {
