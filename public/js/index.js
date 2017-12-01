@@ -5,10 +5,10 @@
  * @author     dostoevskylabs
  */
 "use strict";
-class Socket {
-  constructor( node ) {
-    this.ws = new WebSocket( "ws://" + node );
-    this.node = node;
+class Socket{
+  constructor( nodeId ) {
+    this.ws = new WebSocket( "ws://" + nodeId );
+    this.node = window.origin.substr(7);
     this.onNodeDiscovery = undefined;
 
     this.ws.addEventListener( "open" , this.onOpen.bind(this) );
@@ -40,6 +40,10 @@ class Socket {
           console.log("nodeOwnerConnected Event Received");
         break;
 
+        case "MOTD":
+          this.printMOTD(payload.content);
+        break;
+
         case "nodeConnected":
           console.log("nodeConnected Event Received");
         break;
@@ -63,18 +67,6 @@ class Socket {
 }
 
 
-class AshitaSocket extends Socket{
-  constructor ( node ) {
-    super( node );
-  }
-  send ( data ) {
-    super.send( data );
-  }
-  login(){
-    this.send( /*login payload*/ );
-  }
-}
-
 class Ashita{
   constructor(ui){
     this.sockets = {};
@@ -87,17 +79,36 @@ class Ashita{
     console.log("Ashita.onInput", message);
   }
 
-
   addSocket (nodeId) {
-    let newSocket = new AshitaSocket(nodeId);
-    newSocket.onNodeDiscovery = this.onNodeDiscovery;
+    let newSocket = new Socket(nodeId);
     this.sockets[nodeId] = newSocket;
+    newSocket.onNodeDiscovery = this.onNodeDiscovery.bind(this);
+    newSocket.printMOTD = this.printMOTD.bind(this);
+
+    // hack
+    const menu = document.getElementById("menu");
+    const parts = nodeId.split(":");
+    menu.innerHTML += `<div class="node">
+      <img class="icon" src="./assets/node.svg"/>
+      <div class="address">${parts[0]}
+        <span class="port">:${parts[1]}</span>
+      </div>
+    </div>`;
   }
 
+  printMOTD(MOTD){
+    this.ui.print({
+      type:"blank",
+      message:MOTD
+    });
+  }
   onNodeDiscovery(nodeId){
     if ( Object.keys(this.sockets).indexOf(nodeId) !== -1 )
       return;
-    console.log("new peer discovered: " + nodeId);
+    this.ui.print({
+      type:"notice",
+      message:"New peer discovered: " + nodeId
+    });
     this.addSocket(nodeId);
   }
 }
@@ -116,7 +127,10 @@ class UI {
       event.target.value = "";
 
       if(this.onInput)
-        this.onInput(message);
+        this.print({
+          username:window.origin.substr(7),
+          message:message
+        });
     }
   }
 
@@ -124,6 +138,14 @@ class UI {
     const time = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric', minute: 'numeric', second: 'numeric'
     }).format(data.timestamp);
+    if ( data.type === "blank" ) {
+      const entry = `
+      <div class="entry blank">
+        <div class="msg">${data.message}</div>
+      </div>
+      `;
+      return entry;      
+    }
 
     if(data.hasOwnProperty("type")){
       switch(data.type){

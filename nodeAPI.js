@@ -21,7 +21,7 @@ class User {
       return true;
     }
     return false;
-  } 	
+  }	
 }
 
 class Client {
@@ -39,6 +39,11 @@ class Client {
     switch ( event ) {
       case "nodeOwnerConnected":
         payload.type = "nodeOwnerConnected";
+      break;
+
+      case "MOTD":
+        payload.type = "MOTD";
+        payload.content = data;
       break;
 
       case "nodeConnected":
