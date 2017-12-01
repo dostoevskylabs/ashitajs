@@ -7,80 +7,26 @@
 "use strict";
 const validator       = require('validator');
 const assert          = require('assert');
-const crypto          = require('crypto');
 const nodeAPI         = require('./nodeAPI.js');
-var fs                = require('fs');
 const color           = require('./color.js');
 
 module.exports = {
-  "auth":function ( connectedNodes, nodeOwner, socket, data ) {
-    this.connectedNodes   = connectedNodes;
-    this.nodeOwner        = nodeOwner;
-    this.socket           = socket;  
-    this.node             = socket.node;
-    this.data             = data;
+  "publicMessage":function(nodes, owner, nodeId, data){
+    this.nodes    = nodes;
+    this.owner    = owner;
+    this.nodeId   = nodeId;
+    this.data     = data;
 
-    console.debug(color.Blue + "auth SIGNAL received from client");
+    let user    = new nodeAPI.User( owner, `${this.nodes[this.nodeId].nodeIp}:${this.nodes[this.nodeId].nodePort}`, this.data );
+    let client  = new nodeAPI.Client( this.nodes[this.nodeId].socket );
 
-    let user    = new nodeAPI.User( this.nodeOwner, this.node, this.data );
-    let client  = new nodeAPI.Client( this.socket );
-
-    if ( user.isOwner ) { 
-      // user owns this node
-      // grant special privs
-      client.sendClientEvent("nodeOwnerConnected");
-      fs.readFile("./etc/issue", "utf8", function( error, data ) {
-        client.sendClientEvent("MOTD", data.toString());
-      });    
-
-      // notify this user of all known peers
-       if ( Object.keys(this.connectedNodes).length > 0 ) {
-        for ( let nodeSocket in this.connectedNodes ) {
-          client.sendClientEvent("nodeDiscovered", nodeSocket);
-        }
-      }
-      // add new peer
-      if ( !connectedNodes.hasOwnProperty(this.node) ) {
-        this.connectedNodes[this.node] = this.socket;
-      }       
-
-      console.info(color.Green + "Connected peers");
-      console.info(color.Green + "---------------");
-      for ( let peer in this.connectedNodes ) {
-        console.info(color.Green + peer);
-      }      
-    } else {
-      // user is connected to node
-      // do not grant special privs
-      fs.readFile("./etc/issue", "utf8", function( error, data ) {
-        client.sendClientEvent("MOTD", data.toString());
-      });  
-      // notify this user of all known peers
-       if ( Object.keys(this.connectedNodes).length > 0 ) {
-        for ( let nodeSocket in this.connectedNodes ) {
-          client.sendClientEvent("nodeDiscovered", nodeSocket);
-        }
-      }
-
-      // notify everyone about this new peer
-      if ( Object.keys(this.connectedNodes).length > 0 ) {
-        for ( let nodeSocket in this.connectedNodes ) {
-          let peer = new nodeAPI.Client( this.connectedNodes[nodeSocket] );
-          peer.sendClientEvent("nodeDiscovered", this.node);
-          peer = null;
-        }
-      }
-
-      // add new peer
-      if ( !connectedNodes.hasOwnProperty(this.node) ) {
-        this.connectedNodes[this.node] = this.socket;
-        client.sendClientEvent("nodeConnected", null);
-      }       
-
-      console.info(color.Green + "Connected peers");
-      console.info(color.Green + "---------------");
-      for ( let peer in this.connectedNodes ) {
-        console.info(color.Green + peer);
+    for ( let peerId in this.nodes ) {
+      if ( this.nodeId !== peerId ) {
+        let peer = new nodeAPI.Client( this.nodes[peerId].socket );
+        peer.sendClientEvent("publicMessage", {
+          "username":this.nodes[this.nodeId].username,
+          "message":this.data.message
+        });
       }
     }
   }

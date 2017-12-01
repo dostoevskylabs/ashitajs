@@ -29,9 +29,11 @@ class Socket{
   onClose ( event ) {
     console.warn("CLOSING", event);
   }
+
   onError ( event ) {
     console.error(event);
   }
+
   onMessage ( event ) {
     let payload = JSON.parse(event.data);
     if ( this.ws.readyState === 1 ) {
@@ -41,7 +43,7 @@ class Socket{
         break;
 
         case "MOTD":
-          this.printMOTD(payload.content);
+          this.onReceiveMOTD(payload.content);
         break;
 
         case "nodeConnected":
@@ -52,17 +54,18 @@ class Socket{
           this.onNodeDiscovery(payload.content.node);
         break;
 
+        case "publicMessage":
+          this.onPublicMessage(payload.content);
+        break;
+
         default:
           console.log("Unhandled Event");
       }
     }
   }
+
   onOpen ( event ) {
-    this.send({
-      type:"auth",
-      node:this.node,
-      content:{}
-    });
+    this.send({"handshake":this.node});
   }
 }
 
@@ -72,36 +75,53 @@ class Ashita{
     this.sockets = {};
     this.ui = ui;
 
-    this.ui.onInput = this.onInput;
+    this.ui.onInput = this.onInput.bind(this);
   }
 
-  onInput ( message ) {
-    console.log("Ashita.onInput", message);
+  onInput ( data ) {
+    this.ui.print({
+      "nodeId"    : this.ui.state,
+      "username"  : data.username,
+      "message"   : data.message
+    });
+    this.sockets[this.ui.state].send({
+      "type":"publicMessage",
+      "content":{
+        "nodeId"   : this.ui.state,
+        "username" : data.username,
+        "message"  : data.message
+      }
+    });
   }
 
   addSocket (nodeId) {
     let newSocket = new Socket(nodeId);
     this.sockets[nodeId] = newSocket;
     newSocket.onNodeDiscovery = this.onNodeDiscovery.bind(this);
-    newSocket.printMOTD = this.printMOTD.bind(this);
+    newSocket.onReceiveMOTD = this.onReceiveMOTD.bind(this);
+    newSocket.onPublicMessage = this.onPublicMessage.bind(this);
 
     // hack
     const menu = document.getElementById("menu");
     const parts = nodeId.split(":");
-    menu.innerHTML += `<div class="node">
+    this.ui.state = nodeId; //selected channel
+    const newEntry = `<div class="node">
       <img class="icon" src="./assets/node.svg"/>
       <div class="address">${parts[0]}
         <span class="port">:${parts[1]}</span>
       </div>
     </div>`;
+    menu.insertAdjacentHTML('beforeend', newEntry);
   }
 
-  printMOTD(MOTD){
+  onReceiveMOTD( data ){
     this.ui.print({
-      type:"blank",
-      message:MOTD
+      "type":"blank",
+      "nodeId":data.nodeId,
+      "message":data.MOTD
     });
   }
+
   onNodeDiscovery(nodeId){
     if ( Object.keys(this.sockets).indexOf(nodeId) !== -1 )
       return;
@@ -110,6 +130,13 @@ class Ashita{
       message:"New peer discovered: " + nodeId
     });
     this.addSocket(nodeId);
+  }
+
+  onPublicMessage(data){
+    this.ui.print({
+      username:data.username,
+      message:data.message
+    });
   }
 }
 
@@ -123,14 +150,14 @@ class UI {
 
   inputKeydown ( event ) {
     if ( event.key === "Enter" ) {
-      const message = event.target.value;
+      const data = {
+        "username" : "Anonymous",
+        "message" : event.target.value
+      };
       event.target.value = "";
 
       if(this.onInput)
-        this.print({
-          username:window.origin.substr(7),
-          message:message
-        });
+        this.onInput( data );
     }
   }
 
@@ -184,8 +211,6 @@ class UI {
     }
   }
 }
-
-
 
 let ui = new UI();
 let ashita = new Ashita(ui);

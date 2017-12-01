@@ -55,6 +55,11 @@ class Client {
         payload.content.node = data;
       break;
 
+      case "publicMessage":
+        payload.type = "publicMessage";
+        payload.content = data;
+      break;
+
       default:
         payload.type = undefined;
     }
