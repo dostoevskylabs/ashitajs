@@ -104,10 +104,10 @@ class Ashita{
 
 class UI {
   constructor () {
-    const input = document.querySelector( "input" );
+    this.input = document.getElementById("input");
+    this.output = document.getElementById("output");
     this.onInput = undefined;
     input.addEventListener( 'keydown', this.inputKeydown.bind(this) );
-    //document.addEventListener( ' keydown',)
   }
 
   inputKeydown ( event ) {
@@ -120,38 +120,46 @@ class UI {
     }
   }
 
-  print ( data ) {
-    const entry = document.createElement('div');
-    entry.classList.add("entry");
-    entry.classList.add(data.type ? data.type : "");
-
-    const time = document.createElement('time');
-    time.innerText = new Intl.DateTimeFormat('en-US', {
+  createEntry ( data ) {
+    const time = new Intl.DateTimeFormat('en-US', {
       hour: 'numeric', minute: 'numeric', second: 'numeric'
-    }).format(new Date());
-    time.className = "date";
-    entry.appendChild(time);
+    }).format(data.timestamp);
 
-    const user = document.createElement('div');
-    user.className = "user";
-    if(data.type){
-      const gross = {notice: "\uf071", error: "\uf06a", warning: "\uf071"};
-      console.log(data.type);
-      user.innerText = gross[data.type];
-      user.classList.add('fa');
-    }else{
-      user.innerText = data.user;
+    if(data.hasOwnProperty("type")){
+      switch(data.type){
+        case "error":
+          data.username = "\uf06a";
+        break;
+        case "notice":
+          data.username = "\uf0f3";
+        break;
+        case "warning":
+          data.username = "\uf071";
+        break;
+        default:
+          console.error(`Invalid Type "${data.type}"`);
+          return;
+      }
     }
-    entry.appendChild(user);
+    const entry = `
+    <div class="entry ${data.type ? data.type : ''}"">
+      <time class="date" datetime="${data.timestamp}">${time}</time>
+      <div class="user ${data.type ? 'fa' : ''}">${data.username}</div>
+      <div class="msg">${data.message}</div>
+    </div>
+    `;
+    return entry;
+  }
 
-    const msg = document.createElement('div');
-    msg.className = "msg";
-    msg.innerText = data.msg;    
-    entry.appendChild(msg);
-
-    const output = document.getElementById("output");
-    output.appendChild(entry);
-    output.scrollTop = output.scrollHeight;
+  print ( data ) {
+    if(!data){
+      data = {username: "test", message: "test test test", timestamp: Date.now()};
+    }
+    const newEntry = this.createEntry( data );
+    if(newEntry){
+      this.output.insertAdjacentHTML('beforeend', newEntry);
+      this.output.scrollTop = this.output.scrollHeight;
+    }
   }
 }
 
