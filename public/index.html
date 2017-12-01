@@ -4,7 +4,7 @@
 	<title>ashitajs</title>
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="./css/client.css"/>
-	<link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css"/>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
 	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans"/>
 </head>
 <body>
@@ -19,9 +19,15 @@
 			</div>
 		</div>
 	</div>
-	<div id="submenu">
-		submenu
-	</div>
+	<!-- <div id="submenu">
+		<ul id="tags">
+			<li>lorem</li>
+			<li>ipsum</li>
+			<li>dolor</li>
+			<li>sit</li>
+			<li>amet</li>
+		</ul>
+	</div> -->
 
 	<div id="output">
 			<div class="entry">
@@ -40,6 +46,29 @@
 				<time class="date" datetime="2001-05-15T19:00">12:00:00</time>
 				<div class="user">Dizzle</div>
 				<div class="msg">orizzle ipsizzle yippiyo sit boom shackalack, check it out mammasay mammasa mamma oo sa phat. Nullizzle sapien velit, fo volutpizzle, suscipit quis, gravida vizzle, away. Pellentesque eget break yo neck, yall.</div>
+			</div>
+
+			<div class="entry warning">
+					<time class="date" datetime="2001-05-15T19:00">12:00:00</time>
+					<div class="user"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></div>
+					<div class="msg"> THIS IS A WARNING MESSAGE BOY</div>					
+			</div>
+
+			<div class="entry error">
+					<time class="date" datetime="2001-05-15T19:00">12:00:00</time>
+					<div class="user"><i class="fa fa-exclamation-circle" aria-hidden="true"></i></div>
+					<div class="msg"> THIS IS A ERROR MESSAGE BOY</div>					
+			</div>
+
+			<div class="entry notice">
+					<time class="date" datetime="2001-05-15T19:00">12:00:00</time>
+					<div class="user"><i class="fa fa-bell" aria-hidden="true"></i></div>
+					<div class="msg"> THIS IS A NOTICE MESSAGE BOY</div>					
+			</div>
+
+			<div class="entry blank">
+					<div class="msg">THIS IS A BLANK MESSAGE BOY</div>
+					
 			</div>
 	</div>
 	<div id="bottom">

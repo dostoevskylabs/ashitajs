@@ -1,33 +1,44 @@
 @import url('https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700');
 
 
+:root{
+	--color-text: #FBFBFB;
+	--color-back: #1d1d1d;
+	--color-red: #A30B37;
+	--color-blue: #0D5C63;
+	--color-purple: #842353;
+	--color-border: #0000004d;
+	--color-submenu: #201A23;
+}
+
 body{
     font-family: 'Open Sans', sans-serif;
     font-size: 0.90em;
-	background-color: #1d1d1d;
+	background-color: var(--color-back);
 	margin: 0;
-	color: #ededed;
+	color: var(--color-text);
 
 }
 
 #main{
 	display: grid;
-	grid-template-areas:"menu submenu output"
-					 	"menu submenu output"
-					 	"menu submenu bottom";
+	grid-template-areas:"menu output"
+					 	"menu output"
+					 	"menu bottom";
 
 	grid-template-rows: auto auto 5rem;
-	grid-template-columns: 15rem 10rem auto;
+	grid-template-columns: 15rem auto;
 	width: 100vw;
 	height: 100vh;
 }
 #menu{
-	background-color: #842353;
+	background-color: var(--color-purple);
 	grid-area: menu;
-	border-right: 1px solid #0000004d
+	border-right: 1px solid var(--color-border);
+	border-radius:5px;
+	margin: 5px;
 }
 	#logo{
-		color: #fff;
 		padding: 2rem 0 2rem 0;
 		text-align:center;
 		font-weight:300;
@@ -35,7 +46,7 @@ body{
 	}
 	.node{
 		font-weight:600;
-		background-color:rgba(0,0,0,0.45);
+		background-color:var(--color-border);
 		border-radius:5px;
 		padding:10px;
 		margin: 2px 5px;
@@ -53,24 +64,45 @@ body{
 			display: block;
 			clear:both;
 		}
+		.address{
+
+		}
 		.port{
 			color:#bc6897;
 		}
 
 #submenu{
-	background-color: #292929;
+	/* background-color: #292929; */
+	padding: 10px 5px;
 	grid-area: submenu;
-	border-right: 1px solid #0000004d
+	border-right: 1px solid rgba(0,0,0,0.2);
 
 }
+	#tags{
+		padding:0;
+		margin:0;
+	}
+		#tags li{
+			list-style: none;
+			display: inline; 
+		}
+		#tags li:before{
+			content: "#";
+			color: pink;
+		}
 
 #output{
 	padding-top:5px;
 	grid-area: output;
+	height:auto;
+	overflow-y:scroll;
 /*	display: grid;
 	grid-template-columns: 4em 9em auto;
 	grid-gap: 5px;*/
 }
+
+
+
 
 .entry{
 	margin: 0.5rem;
@@ -84,6 +116,24 @@ body{
 }
 .entry:last-child{
 	border: 0;
+}
+.warning, .error, .notice, .blank{
+	grid-template-columns: 5rem  2rem auto;
+}
+.error .user{
+	color: rgb(199, 40, 40);
+}
+.warning .user{
+	color:rgb(175, 175, 37);
+}
+.notice .user{
+	color: rgb(43, 152, 185);
+}
+
+.blank{
+	grid-template-areas:"date message";
+	grid-template-columns: auto;
+	grid-template-areas:"message";
 }
 
 

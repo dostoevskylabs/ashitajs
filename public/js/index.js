@@ -119,6 +119,40 @@ class UI {
         this.onInput(message);
     }
   }
+
+  print ( data ) {
+    const entry = document.createElement('div');
+    entry.classList.add("entry");
+    entry.classList.add(data.type ? data.type : "");
+
+    const time = document.createElement('time');
+    time.innerText = new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric', minute: 'numeric', second: 'numeric'
+    }).format(new Date());
+    time.className = "date";
+    entry.appendChild(time);
+
+    const user = document.createElement('div');
+    user.className = "user";
+    if(data.type){
+      const gross = {notice: "\uf071", error: "\uf06a", warning: "\uf071"};
+      console.log(data.type);
+      user.innerText = gross[data.type];
+      user.classList.add('fa');
+    }else{
+      user.innerText = data.user;
+    }
+    entry.appendChild(user);
+
+    const msg = document.createElement('div');
+    msg.className = "msg";
+    msg.innerText = data.msg;    
+    entry.appendChild(msg);
+
+    const output = document.getElementById("output");
+    output.appendChild(entry);
+    output.scrollTop = output.scrollHeight;
+  }
 }
 
 
