@@ -8,8 +8,8 @@
 "use strict";
 class AshitaSocket extends WebSocket{
   constructor(nodeId){
-    super("ws://" + atob(nodeId));
-    this.nodeId = nodeId;
+    super("ws://" + nodeId);
+    this.nodeId = btoa(nodeId);
     this.addEventListener('open', this.onOpen);
     this.addEventListener('close', this.onClose);
     this.addEventListener('message', this.onMessage);
@@ -96,7 +96,7 @@ class Ashita {
     this.nodes = new Map();
     this.ui = ui;
     this.state = undefined;
-    this.addNode(btoa(location.host));
+    this.addNode(location.host);
     this.ui.input = this.onUiInput.bind(this);
   }
 
@@ -118,7 +118,7 @@ class Ashita {
   }
 
   addNode ( nodeId ) {
-    if ( this.nodes.has(nodeId) ) {
+    if ( this.nodes.has(btoa(nodeId)) ) {
       return false;
     }    
     let node = new AshitaSocket(nodeId);
@@ -164,7 +164,7 @@ class Ashita {
     if ( this.nodes.has(nodeId) || this.state.nodeId === nodeId ) {
       return false;
     }
-    this.addNode(nodeId);
+    this.addNode(atob(nodeId));
     if(this.ui){
       this.ui.print( { type:"notice", message:"New peer discovered: " + nodeId } );
     }
