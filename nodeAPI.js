@@ -8,16 +8,16 @@
 const color = require('./color.js');
 
 class User {
-  constructor ( nodeOwner, node, data ) {
-    this.nodeOwner = nodeOwner;
-    this.node = node;
+  constructor ( ownerId, nodeId, data ) {
+    this.ownerId = ownerId;
+    this.nodeId = nodeId;
   	this.data = data;
 
     console.debug(color.Blue + "User object initialized.");
   }
 
   get isOwner () {
-  	if ( this.node === this.nodeOwner ) {
+  	if ( this.nodeId === this.ownerId ) {
       return true;
     }
     return false;
@@ -36,34 +36,9 @@ class Client {
       "type":undefined,
       "content":{}
     };
-    switch ( event ) {
-      case "nodeOwnerConnected":
-        payload.type = "nodeOwnerConnected";
-      break;
-
-      case "MOTD":
-        payload.type = "MOTD";
-        payload.content = data;
-      break;
-
-      case "nodeConnected":
-        payload.type = "nodeConnected";
-      break;
-
-      case "nodeDiscovered":
-        payload.type = "nodeDiscovered";
-        payload.content.node = data;
-      break;
-
-      case "publicMessage":
-        payload.type = "publicMessage";
-        payload.content = data;
-      break;
-
-      default:
-        payload.type = undefined;
-    }
-
+    payload.type = event;
+    payload.content = data;
+    
     if ( payload.type !== undefined ) {
       this.socket.send( JSON.stringify( payload ) );
       

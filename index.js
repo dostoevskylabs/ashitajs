@@ -9,7 +9,6 @@ require('consoleplusplus');
 const args = process.argv.slice(2);
 
 if ( args.length !== 1 ) {
-  //process.exit(0);
   args[0] = 8000;
 }
 
@@ -23,9 +22,11 @@ const ashita          = new WebSocketServer({server: server});
 const fs              = require('fs');
 const nodeAPI         = require('./nodeAPI.js');
 const clientAPI       = require('./clientAPI.js');
+const btoa            = require('btoa');
+const atob            = require('atob');
 const color           = require('./color.js');
 
-const owner           = `127.0.0.1:${args[0]}`;
+const ownerId         = btoa(`127.0.0.1:${args[0]}`);
 let nodes             = {};
 
 console.info(color.BgGreen + color.Black + "System is now online. http://127.0.0.1:" + args[0] + color.Reset);
@@ -42,19 +43,15 @@ ashita.on('connection', function ( socket ) {
      */
     if ( data.hasOwnProperty("handshake") ) {
       let reportedNode = data["handshake"].split(":");    
-      nodeId = `${reportedNode[0]}:${reportedNode[1]}`;
+      nodeId = btoa(`${reportedNode[0]}:${reportedNode[1]}`);
 
       nodes[nodeId] = {
-        "nodeIp"    : socket._socket.remoteAddress.substr(7),
-        "nodePort"  : reportedNode[1],
         "nodeName"  : "default",
         "username"  : "Anonymous",
         "socket"    : socket
       };
-
-      console.debug(color.Blue + "auth SIGNAL received from client");
       
-      let user    = new nodeAPI.User( owner, `${nodes[nodeId].nodeIp}:${nodes[nodeId].nodePort}`, data.content );
+      let user    = new nodeAPI.User( ownerId, nodeId, data.content );
       let client  = new nodeAPI.Client( nodes[nodeId].socket );
   
       if ( user.isOwner ) {
@@ -64,7 +61,6 @@ ashita.on('connection', function ( socket ) {
         client.sendClientEvent("nodeOwnerConnected");
         fs.readFile("./etc/issue", "utf8", function( error, data ) {
           client.sendClientEvent("MOTD", {
-            "nodeId" : nodeId,
             "MOTD" : data.toString()
           });
         });
@@ -73,7 +69,9 @@ ashita.on('connection', function ( socket ) {
         if ( Object.keys(nodes).length > 0 ) {
           for ( let peerId in nodes ) {
             if ( peerId !== nodeId ) {
-              client.sendClientEvent("nodeDiscovered", `${nodes[peerId].nodeIp}:${nodes[peerId].nodePort}`);
+              client.sendClientEvent("nodeDiscovered", {
+                "nodeId":peerId
+              });
             }
           }
         }     
@@ -90,7 +88,6 @@ ashita.on('connection', function ( socket ) {
          */        
         fs.readFile("./etc/issue", "utf8", function( error, data ) {
           client.sendClientEvent("MOTD", {
-            "nodeId" : nodeId,
             "MOTD" : data.toString()
           });
         });
@@ -98,16 +95,24 @@ ashita.on('connection', function ( socket ) {
         // notify this user of all known peers
         if ( Object.keys(nodes).length > 0 ) {
           for ( let peerId in nodes ) {
-            client.sendClientEvent("nodeDiscovered", `${nodes[peerId].nodeIp}:${nodes[peerId].nodePort}`);
+            if ( peerId !== nodeId && peerId != ownerId ) {
+              client.sendClientEvent("nodeDiscovered", {
+                "nodeId" : peerId
+              });
+            }
           }
         }
   
         // notify everyone about this new peer
         if ( Object.keys(nodes).length > 0 ) {
           for ( let peerId in nodes ) {
-            let peer = new nodeAPI.Client( nodes[peerId].socket );
-            peer.sendClientEvent("nodeDiscovered", `${nodes[nodeId].nodeIp}:${nodes[nodeId].nodePort}`);
-            peer = null;
+            if ( peerId !== nodeId ) {
+              let peer = new nodeAPI.Client( nodes[peerId].socket );
+              peer.sendClientEvent("nodeDiscovered", {
+                "nodeId":nodeId
+              });
+              peer = null;
+            }
           }
         }      
   
@@ -121,23 +126,27 @@ ashita.on('connection', function ( socket ) {
       /**
        * Handshake with client has been established
        */
+      client.sendClientEvent("handshakeEstablished");
       console.info(color.Green + `Handshake established with ${nodeId}`);
-    } else {
+    } else if ( data.hasOwnProperty("type") ) {
       /**
        * Wait for client to query ClientAPI
        */
       if ( nodes.hasOwnProperty(nodeId) ) {
         if ( typeof clientAPI[data.type] !== "function" ) {
           console.warn("Invalid clientAPI call received from socket.");
+          return false;
         }
 
-        return clientAPI[data.type](nodes, owner, nodeId, data.content);
+        return clientAPI[data.type](nodes, ownerId, nodeId, data);
       } else {
         /**
          * If this is reached the client does not have a valid handshake
          */
         console.log(`Invalid Handshake with ${nodeId}`);
       }
+    } else {
+      console.log("Malformed data");
     }
   });
 

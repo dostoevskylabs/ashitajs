@@ -3,16 +3,13 @@
  *
  * @package    ashita/client
  * @author     dostoevskylabs
+ * @author     mooglesonthecob
  */
 "use strict";
-
-
-
 class AshitaSocket extends WebSocket{
-  constructor(nodeUrl){
-
-    super("ws://" + nodeUrl);
-    this.nodeUrl = nodeUrl;
+  constructor(nodeId){
+    super("ws://" + atob(nodeId));
+    this.nodeId = nodeId;
     this.addEventListener('open', this.onOpen);
     this.addEventListener('close', this.onClose);
     this.addEventListener('message', this.onMessage);
@@ -21,8 +18,10 @@ class AshitaSocket extends WebSocket{
     this.onReceiveMOTD;
     this.onPublicMessage;
     this.onNodeDiscovery;
+    this.onHandshakeEstablished;
 
   }
+
   send(data){
     console.info("AshitaSocket => send", data);
     
@@ -31,13 +30,21 @@ class AshitaSocket extends WebSocket{
       super.send(data);
     }
   }
+
   onOpen(event){
     console.info("Socket => onOpen", event);
     this.handshake();
   }
+
   onClose(event){
     console.info("Socket => onClose", event);
+    if ( event.code === 3001 ) {
+      console.log("disconnected");
+    } else {
+      console.log("couldn't establish connection");
+    }
   }
+
   onMessage(event){
     console.info("Socket => onMessage", event);
 
@@ -58,11 +65,15 @@ class AshitaSocket extends WebSocket{
         break;
 
         case "nodeDiscovered":
-          this.onNodeDiscovery(data.content.node);
+          this.onNodeDiscovery(data.content.nodeId);
         break;
 
         case "publicMessage":
           this.onPublicMessage(data.content);
+        break;
+
+        case "handshakeEstablished":
+          this.onHandshakeEstablished(this);
         break;
 
         default:
@@ -84,14 +95,14 @@ class Ashita {
   constructor ( ui = undefined ) {
     this.nodes = new Map();
     this.ui = ui;
-    this.state = this.addNode(location.host);
+    this.state = undefined;
+    this.addNode(btoa(location.host));
     this.ui.input = this.onUiInput.bind(this);
   }
 
   onUiInput(data){
     if(this.ui){
       this.ui.print({
-        "nodeId": this.state.nodeUrl,
         "username": data.username,
         "message": data.message
       });
@@ -100,25 +111,34 @@ class Ashita {
     this.state.send({
       type: "publicMessage",
       content:{
-        nodeId   : this.state.nodeUrl,
         username : data.username,
         message  : data.message,
       }
     });
   }
 
-  addNode ( nodeUrl ) {
-    let node = new AshitaSocket(nodeUrl);
+  addNode ( nodeId ) {
+    if ( this.nodes.has(nodeId) ) {
+      return false;
+    }    
+    let node = new AshitaSocket(nodeId);
     node.onReceiveMOTD = this.onReceiveMOTD.bind(this);
     node.onPublicMessage = this.onPublicMessage.bind(this);
     node.onNodeDiscovery = this.onNodeDiscovery.bind(this);
-    this.nodes.set(node.nodeUrl, node);
+    node.onHandshakeEstablished = this.onHandshakeEstablished.bind(this);
+  }
 
-    if(this.ui){
-      this.ui.addNode(node);
+  onHandshakeEstablished ( node ) {
+    if ( this.nodes.has(node.nodeId) ) {
+      return false;
     }
-
-    return node;
+    this.nodes.set(node.nodeId, node);
+    if(this.ui){
+      this.ui.addNode(node.nodeId);
+    }
+    if ( this.state === undefined ) {
+      this.state = node;
+    }
   }
 
   onReceiveMOTD ( data ) {
@@ -126,7 +146,6 @@ class Ashita {
     if(this.ui){
       this.ui.print( {
         type   : "blank",
-        nodeId : data.nodeId,
         message: data.MOTD
       });
     }
@@ -134,21 +153,22 @@ class Ashita {
 
   onPublicMessage ( data ) {
     if(this.ui){
-      this.ui.print( { username: data.username, message: data.message } );
+      this.ui.print({
+        username: data.username,
+        message: data.message
+      });
     }
   }
 
-  onNodeDiscovery ( nodeUrl ) {
-    if ( this.nodes.get(nodeUrl) ) {
-      return
+  onNodeDiscovery ( nodeId ) {
+    if ( this.nodes.has(nodeId) || this.state.nodeId === nodeId ) {
+      return false;
     }
-    this.addNode(nodeUrl);
+    this.addNode(nodeId);
     if(this.ui){
-      this.ui.print( { type:"notice", message:"New peer discovered: " + nodeUrl } );
+      this.ui.print( { type:"notice", message:"New peer discovered: " + nodeId } );
     }
-
   }
-
 }
 
 class UI {
@@ -161,8 +181,8 @@ class UI {
     input.addEventListener( 'keydown', this.inputKeydown.bind(this) );
   }
 
-  addNode(node){
-    const parts = node.nodeUrl.split(":");
+  addNode(nodeId){
+    const parts = atob(nodeId).split(":");
     const newEntry = `<div class="node">
       <img class="icon" src="./assets/node.svg"/>
       <div class="address">${parts[0]}

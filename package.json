@@ -7,9 +7,13 @@
     "debug": "node --nolazy --inspect=9229 index.js 8000"
   },
   "author": "dostoevskylabs",
-  "contributors":["mooglesonthecob"],
+  "contributors": [
+    "mooglesonthecob"
+  ],
   "license": "GPL-3.0",
   "dependencies": {
+    "atob": "^2.0.3",
+    "btoa": "^1.1.2",
     "consoleplusplus": "latest",
     "express": "latest",
     "validator": "latest",
