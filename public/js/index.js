@@ -6,6 +6,21 @@
  * @author     mooglesonthecob
  */
 "use strict";
+class Messages{
+  constructor(){
+    this.messages = [];
+  }
+
+  addMessage(obj){
+    this.messages.push(obj);
+  }
+
+  get getMessages(){
+    return this.messages;
+  }
+}
+
+
 class AshitaSocket extends WebSocket{
   constructor(nodeId){
     super("ws://" + nodeId);
@@ -19,6 +34,7 @@ class AshitaSocket extends WebSocket{
     this.onPublicMessage;
     this.onNodeDiscovery;
     this.onHandshakeEstablished;
+    this.messages = new this.Messages();
 
   }
 
@@ -98,6 +114,18 @@ class Ashita {
     this.state = undefined;
     this.addNode(location.host);
     this.ui.input = this.onUiInput.bind(this);
+    this.ui.changeNode = this.onUiChangeNode.bind(this);
+  }
+
+  onUiChangeNode(nodeId){
+    if ( !this.nodes.has(nodeId) ) {
+      return false;
+    }
+    let node = this.nodes.get(nodeId);
+    if(node){
+      this.state = node;
+      console.info("onUiChangeNode", this.state);
+    }
   }
 
   onUiInput(data){
@@ -133,6 +161,12 @@ class Ashita {
       return false;
     }
     this.nodes.set(node.nodeId, node);
+
+    // test
+    node.messages.addMessage({"test":"pie"});
+    console.log(node.messages.getMessages);
+
+
     if(this.ui){
       this.ui.addNode(node.nodeId);
     }
@@ -176,17 +210,13 @@ class UI {
     this.input = document.getElementById("input");
     this.output = document.getElementById("output");
     this.menu = document.getElementById("menu");
-
+    this.changeNode = noop => {};
     this.input = noop => {};
     input.addEventListener( 'keydown', this.inputKeydown.bind(this) );
   }
 
-  nodeClick ( event ) {
-    event.stopPropagation();
-    console.log(event, this);   
-
-   // let nodeId = event.target;
-    //console.log(nodeId);
+  nodeClick ( event ) {;
+    this.changeNode(event.currentTarget.dataset.nodeid);
   }
 
   addNode(nodeId){
@@ -203,7 +233,7 @@ class UI {
     let elAddress = UI.HTMLElement("div", {"class": "address"}, parts[0]);
     let elPort = UI.HTMLElement("span", {"class": "port"}, parts[1]);
 
-    elNode.addEventListener('click', this.nodeClick, false);
+    elNode.addEventListener('click', this.nodeClick.bind(this), false);
 
     elAddress.appendChild(elPort);
     elNode.appendChild(elIcon);
