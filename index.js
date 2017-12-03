@@ -63,18 +63,7 @@ ashita.on('connection', function ( socket ) {
           client.sendClientEvent("MOTD", {
             "MOTD" : data.toString()
           });
-        });
-  
-        // notify this user of all known peers
-        if ( Object.keys( nodes ).length > 0 ) {
-          for ( let peerId in nodes ) {
-            if ( peerId !== nodeId ) {
-              client.sendClientEvent("nodeDiscovered", {
-                "nodeId" : peerId
-              });
-            }
-          }
-        }     
+        }); 
   
         // print peerlist
         console.info(color.Green + "Connected peers");
@@ -82,27 +71,12 @@ ashita.on('connection', function ( socket ) {
         for ( let peerId in nodes ) {
           console.info(color.Green + peerId);
         }
-      } else {
         /**
-         * Establish client as a user of thise node
-         */        
-        fs.readFile("./etc/issue", "utf8", function( error, data ) {
-          client.sendClientEvent("MOTD", {
-            "MOTD" : data.toString()
-          });
-        });
-  
-        // notify this user of all known peers
-        if ( Object.keys( nodes ).length > 0 ) {
-          for ( let peerId in nodes ) {
-            if ( peerId !== nodeId && peerId != ownerId ) {
-              client.sendClientEvent("nodeDiscovered", {
-                "nodeId" : peerId
-              });
-            }
-          }
-        }
-  
+         * Handshake with client has been established
+         */
+        client.sendClientEvent("handshakeEstablished");
+        console.info(color.Green + `Handshake established with ${nodeId}`);
+
         // notify everyone about this new peer
         if ( Object.keys( nodes ).length > 0 ) {
           for ( let peerId in nodes ) {
@@ -114,7 +88,26 @@ ashita.on('connection', function ( socket ) {
               peer = null;
             }
           }
-        }      
+        }       
+        // notify this user of all known peers
+        if ( Object.keys( nodes ).length > 0 ) {
+          for ( let peerId in nodes ) {
+            if ( peerId !== nodeId ) {
+              client.sendClientEvent("nodeDiscovered", {
+                "nodeId" : peerId
+              });
+            }
+          }
+        }             
+      } else {
+        /**
+         * Establish client as a user of thise node
+         */        
+        fs.readFile("./etc/issue", "utf8", function( error, data ) {
+          client.sendClientEvent("MOTD", {
+            "MOTD" : data.toString()
+          });
+        });
   
         // print peerlist
         console.info(color.Green + "Connected peers");
@@ -122,12 +115,35 @@ ashita.on('connection', function ( socket ) {
         for ( let peerId in nodes ) {
           console.info(color.Green + peerId);
         }
-      }
-      /**
-       * Handshake with client has been established
-       */
-      client.sendClientEvent("handshakeEstablished");
-      console.info(color.Green + `Handshake established with ${nodeId}`);
+        /**
+         * Handshake with client has been established
+         */
+        client.sendClientEvent("handshakeEstablished");
+        console.info(color.Green + `Handshake established with ${nodeId}`);
+
+        // notify everyone about this new peer
+        if ( Object.keys( nodes ).length > 0 ) {
+          for ( let peerId in nodes ) {
+            if ( peerId !== nodeId ) {
+              let peer = new nodeAPI.Client( nodes[peerId].socket );
+              peer.sendClientEvent("nodeDiscovered", {
+                "nodeId" : nodeId
+              });
+              peer = null;
+            }
+          }
+        }
+        // notify this user of all known peers
+        if ( Object.keys( nodes ).length > 0 ) {
+          for ( let peerId in nodes ) {
+            if ( peerId !== nodeId && peerId != ownerId ) {
+              client.sendClientEvent("nodeDiscovered", {
+                "nodeId" : peerId
+              });
+            }
+          }
+        }              
+      }      
     } else if ( data.hasOwnProperty("type") ) {
       /**
        * Wait for client to query ClientAPI

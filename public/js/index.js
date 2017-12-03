@@ -14,15 +14,16 @@
  */
 class Messages {
   constructor () {
-    this.messages = [];
+    this.privateMessages = [];
+    this.publicMessages  = [];
   }
 
-  addMessage ( obj ) {
-    this.messages.push(obj);
+  storePublicMessage ( messageObject ) {
+    this.publicMessages.push(messageObject);
   }
 
-  get getMessages () {
-    return this.messages;
+  get getPublicMessages () {
+    return this.publicMessages;
   }
 }
 
@@ -49,7 +50,7 @@ class AshitaSocket extends WebSocket {
   }
 
   send ( data ) {
-    console.info("AshitaSocket => send", data);
+    //console.info("AshitaSocket => send", data);
 
     data = JSON.stringify(data);
     if ( this.readyState === this.OPEN ) {
@@ -58,46 +59,46 @@ class AshitaSocket extends WebSocket {
   }
 
   onOpen ( event ) {
-    console.info("Socket => onOpen", event);
+    //console.info("Socket => onOpen", event);
     this.handshake();
   }
 
   onClose ( event ) {
-    console.info("Socket => onClose", event);
+    //console.info("Socket => onClose", event);
     if ( event.code === 3001 ) {
-      console.log("disconnected");
+      //console.log("disconnected");
     } else {
-      console.log("couldn't establish connection");
+      //console.log("couldn't establish connection");
     }
   }
 
   onMessage ( event ) {
-    console.info("Socket => onMessage", event);
+    //console.info("Socket => onMessage", event);
 
     let data = JSON.parse( event.data );
 
     if ( this.readyState === this.OPEN ) {
       switch ( data.type ) {
         case "nodeOwnerConnected":
-          console.info("nodeOwnerConnected Event Received");
+          //console.info("nodeOwnerConnected Event Received");
           break;
         case "MOTD":
-          this.onReceiveMOTD( data.content );
+          this.onReceiveMOTD( this.nodeId, data.content );
           break;
         case "nodeConnected":
-          console.info("nodeConnected Event Received");
+          //console.info("nodeConnected Event Received");
           break;
         case "nodeDiscovered":
           this.onNodeDiscovery( data.content.nodeId );
           break;
         case "publicMessage":
-          this.onPublicMessage( data.content );
+          this.onPublicMessage( this.nodeId, data.content );
           break;
         case "handshakeEstablished":
           this.onHandshakeEstablished( this );
           break;
         default:
-          console.log("Unhandled Event");
+          //console.log("Unhandled Event");
       }
     }
   }
@@ -134,17 +135,22 @@ class Ashita {
     }
     let node = this.nodes.get( nodeId );
     this.state = node;
-    console.info("onUiChangeNode", this.state);
+    // hack
+    if ( this.ui ) {
+      let output = document.getElementById("output");
+      output.innerHTML = "";
+      for ( let i = 0; i < this.state.messages.getPublicMessages.length; i++ ) {
+        let entry = {};
+        for ( let key in this.state.messages.getPublicMessages[i] ) {
+          entry[key] = this.state.messages.getPublicMessages[i][key];
+        }
+        this.ui.print( entry );        
+      }
+    }
+    //console.info("onUiChangeNode", this.state);
   }
 
   onUiInput ( data ) {
-    if ( this.ui ) {
-      this.ui.print({
-        "username" : data.username,
-        "message"  : data.message
-      });
-    }
-
     this.state.send({
       type     : "publicMessage",
       content  : {
@@ -152,6 +158,18 @@ class Ashita {
         message  : data.message,
       }
     });
+
+    this.state.messages.storePublicMessage({
+      username : data.username,
+      message  : data.message
+    });
+
+    if ( this.ui ) {
+      this.ui.print({
+        "username" : data.username,
+        "message"  : data.message
+      });
+    }    
   }
 
   addNode ( nodeId ) {
@@ -171,13 +189,6 @@ class Ashita {
     }
     this.nodes.set( node.nodeId, node );
 
-    // test
-    node.messages.addMessage({
-      "test":"pie"
-    });
-
-    console.log(node.messages.getMessages);
-
     if ( this.ui ) {
       this.ui.addNode( node.nodeId );
     }
@@ -187,23 +198,37 @@ class Ashita {
     }
   }
 
-  onReceiveMOTD ( data ) {
-    console.log("onReceiveMOTD", this);
+  onReceiveMOTD ( nodeId, data ) {
+    //console.log("onReceiveMOTD", this);
+    this.nodes.get( nodeId ).messages.storePublicMessage({
+      type     : "blank",
+      message  : data.MOTD
+    });     
+    
     if ( this.ui ) {
-      this.ui.print({
-        type    : "blank",
-        message : data.MOTD
-      });
-    }
+      if ( this.state.nodeId === nodeId ) {
+        this.ui.print({
+          type    : "blank",
+          message : data.MOTD
+        });
+      }
+    }    
   }
 
-  onPublicMessage ( data ) {
+  onPublicMessage ( nodeId, data ) {
+    this.nodes.get( nodeId ).messages.storePublicMessage({
+      username : data.username,
+      message  : data.message
+    });
+
     if ( this.ui ) {
-      this.ui.print({
-        username : data.username,
-        message  : data.message
-      });
-    }
+      if ( this.state.nodeId === nodeId ) {
+        this.ui.print({
+          username : data.username,
+          message  : data.message
+        });
+      }
+    }     
   }
 
   onNodeDiscovery ( nodeId ) {
@@ -212,7 +237,7 @@ class Ashita {
     }
 
     this.addNode( atob( nodeId ) );
-    
+
     if ( this.ui ) {
       this.ui.print({
         type    : "notice",
@@ -250,13 +275,16 @@ class UI {
       "class"       : "node",
       "data-nodeid" : nodeId
     });
+
     let elIcon = UI.HTMLElement("img", {
       "class" : "icon",
       "src"   : "./assets/node.svg"
     });
+
     let elAddress = UI.HTMLElement("div", {
       "class" : "address"
     }, parts[0]);
+
     let elPort = UI.HTMLElement("span", {
       "class" : "port"
     }, parts[1]);
@@ -312,6 +340,8 @@ class UI {
           break;
         case "warning":
           data.username = "\uf071";
+          break;
+        case undefined:
           break;
         default:
           console.error(`Invalid Type "${data.type}"`);
