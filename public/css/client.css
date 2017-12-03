@@ -32,11 +32,11 @@ body{
 	height: 100vh;
 }
 #menu{
-	background-color: var(--color-purple);
+	background-color: #101010;
 	grid-area: menu;
-	border-right: 1px solid var(--color-border);
-	border-radius:5px;
-	margin: 5px;
+/* 	border-right: 1px solid var(--color-border); */
+/* 	border-radius:5px;
+	margin: 5px; */
 }
 	#logo{
 		padding: 2rem 0 2rem 0;

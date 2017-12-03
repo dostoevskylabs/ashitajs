@@ -181,15 +181,47 @@ class UI {
     input.addEventListener( 'keydown', this.inputKeydown.bind(this) );
   }
 
+  nodeClick ( event ) {
+    event.stopPropagation();
+    console.log(event, this);   
+
+   // let nodeId = event.target;
+    //console.log(nodeId);
+  }
+
   addNode(nodeId){
     const parts = atob(nodeId).split(":");
-    const newEntry = `<div class="node">
-      <img class="icon" src="./assets/node.svg"/>
-      <div class="address">${parts[0]}
-        <span class="port">:${parts[1]}</span>
-      </div>
-    </div>`;
-    menu.insertAdjacentHTML('beforeend', newEntry);
+    // const newEntry = `<div class="node" data-nodeid="${nodeId}">
+    //   <img class="icon" src="./assets/node.svg"/>
+    //   <div class="address">
+    //     ${parts[0]}<span class="port">:${parts[1]}</span>
+    //   </div>
+    // </div>`;
+
+    let elNode = UI.HTMLElement("div", {"class": "node", "data-nodeid": nodeId});
+    let elIcon = UI.HTMLElement("img", {"class": "icon", "src": "./assets/node.svg"});
+    let elAddress = UI.HTMLElement("div", {"class": "address"}, parts[0]);
+    let elPort = UI.HTMLElement("span", {"class": "port"}, parts[1]);
+
+    elNode.addEventListener('click', this.nodeClick, false);
+
+    elAddress.appendChild(elPort);
+    elNode.appendChild(elIcon);
+    elNode.appendChild(elAddress);
+
+    menu.appendChild(elNode);
+    //menu.insertAdjacentHTML('beforeend', newEntry);
+  }
+
+  static HTMLElement(tag, props, innerText = null){
+    let el = document.createElement(tag);
+    for(const [key, value] of Object.entries(props)){
+        el.setAttribute(key, value);
+    }
+    if(innerText){
+      el.innerText = innerText;
+    }
+    return el;
   }
 
   inputKeydown ( event ) {
