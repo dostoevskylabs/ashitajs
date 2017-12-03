@@ -1,3 +1,5 @@
+//@ts-check
+
 /**
  * ashita/client/index
  *
@@ -27,6 +29,8 @@ class Messages {
   }
 }
 
+
+
 /**
  * ashita/client/AshitaSocket
  * 
@@ -42,10 +46,10 @@ class AshitaSocket extends WebSocket {
     this.addEventListener("message", this.onMessage);
     this.addEventListener("error", this.onError);
 
-    this.onReceiveMOTD;
-    this.onPublicMessage;
-    this.onNodeDiscovery;
-    this.onHandshakeEstablished;
+    this.onReceiveMOTD = undefined;
+    this.onPublicMessage = undefined;
+    this.onNodeDiscovery = undefined;
+    this.onHandshakeEstablished = undefined;
     this.messages = new Messages();
   }
 
@@ -258,8 +262,8 @@ class UI {
     this.output = document.getElementById("output");
     this.menu = document.getElementById("menu");
 
-    this.changeNode = () => {};
-    this.onInput = () => {};
+    this.changeNode = undefined;
+    this.onInput = undefined;
 
     this.input.addEventListener( "keydown", this.inputKeydown.bind( this ) );
   }

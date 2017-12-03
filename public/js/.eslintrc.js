@@ -5,23 +5,18 @@ module.exports = {
     },
     "extends": "eslint:recommended",
     "rules": {
-        "indent": [
-            "error",
-            2,
+        "no-unexpected-multiline": 2,
+        "guard-for-in": 2,
+        "no-caller": 2,
+        "no-with": 2,
+        "array-bracket-newline": ["error", "consistent"],
+        "array-bracket-spacing": [2, 'never'],
+        "indent": ["error", 2,
             { "SwitchCase": 1 }
         ],
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
-        "quotes": [
-            "error",
-            "double"
-        ],
-        "semi": [
-            "error",
-            "always"
-        ],
+        "linebreak-style": ["error", "unix"],
+        "quotes": ["error", "double"],
+        "semi": ["error", "always"],
         "space-before-function-paren": ["error", {
             "anonymous": "always",
             "named": "always",
