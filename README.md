@@ -4,7 +4,7 @@ ashitajs [![gplv3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICE
 [![p2p](https://img.shields.io/badge/using-p2p-green.svg)](README.md)
 ================================
 
-ashitajs intends to be a fully decentralized P2P network (though not there yet) designed to be deployed anywhere. It comes in two parts following a client and server model for each node. To be part of the network you need only access a node via the browser, to be a node you need only run your own node with the server portion of the model. It's still in its infancy and a lot of work still needs to be done. Currently a PoC so security may be non-existent. Run at your own risk. (although theres not a whole lot they can probably do as it doesn't have much of anything to it yet);
+ashitajs intends to be a fully decentralized P2P network (though not there yet) designed to be deployed anywhere. It's still in its infancy and a lot of work still needs to be done. Currently a PoC so security may be non-existent. Run at your own risk.
 
 ![PoC](https://i.imgur.com/vJkAZoN.png)
 
@@ -18,33 +18,27 @@ nodejs index.js 10000
 
 Then open your browser to http://127.0.0.1:8000 http://127.0.0.1:9000/ and http://127.0.0.1:10000/ (output is to console) from the console if you type:
 ```javascript
-generateSocket("127.0.0.1:8000");
+ashita.addNode("127.0.0.1:8000");
 ```
-from a node other than 8000, you will see the p2p at work, if you then type:
-```javascript
-ashita.socket
-```
-you can see the peer sockets.
 
-Node API
+Client
 ================================
-These are calls within the node to perform certain tasks/communicatons
-###### User
-```javascript
-constructor ( nodeOwner, node, data ) {}
-isOwner () {}
-```
-###### Client
-```javascript
-constructor( socket, data ){}
-sendClientEvent( event, data ){}
-```
+###### class Messages
+> TODO
+
+###### class AshitaSocket
+> TODO
+
+###### class Ashita
+> TODO
+
+###### class UI
+> TODO
 
 Client API
 ================================
-These calls are transmitted to the node to setup a new node, or perform some other action
-
-###### ashita.transmit.auth( node );
+###### handshake
+###### publicMessage
 
 Client Events
 ================================
@@ -59,26 +53,20 @@ These events are pushed through to the client
 ###### nodeDiscovered
 > this event is triggered whenever a new peer connects to any node in the node family, it is then propagated to all other peers
 
-Client Interfaces
+###### handshakeEstablished
+> this event is triggered when a handshake is fully established
+
+###### MOTD
+> this event is triggered when a client connects, sends them our ./etc/issue file (or motd)
+
+###### publicMessage
+> this event is triggered when a public message is sent by a client, emits to all sockets on the node
+
+Node
 ================================
-###### ashita
+> TODO
 
-###### ashita.socket
-```javascript
-function generateSocket ( node ) {}
-```
+Node API
+================================
+> TODO
 
-###### ashita.ui
-
-###### ashita.transmit
-```javascript
-ashita.transmit = {
-  "auth":function ( nodeIp ) {
-    ashita.socket[nodeIp].send({
-      type:"auth",
-      node:"127.0.0.1:8000",
-      content:{}
-    });
-  }
-};
-```
