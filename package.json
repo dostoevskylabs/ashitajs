@@ -18,5 +18,8 @@
     "express": "latest",
     "validator": "latest",
     "ws": "latest"
+  },
+  "devDependencies": {
+    "eslint": "latest"
   }
 }

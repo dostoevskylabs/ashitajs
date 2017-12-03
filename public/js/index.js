@@ -36,17 +36,16 @@ class AshitaSocket extends WebSocket {
   constructor ( nodeId ) {
     super("ws://" + nodeId);
     this.nodeId = btoa( nodeId );
-    this.addEventListener('open', this.onOpen);
-    this.addEventListener('close', this.onClose);
-    this.addEventListener('message', this.onMessage);
-    this.addEventListener('error', this.onError);
+    this.addEventListener("open", this.onOpen);
+    this.addEventListener("close", this.onClose);
+    this.addEventListener("message", this.onMessage);
+    this.addEventListener("error", this.onError);
 
     this.onReceiveMOTD;
     this.onPublicMessage;
     this.onNodeDiscovery;
     this.onHandshakeEstablished;
     this.messages = new Messages();
-
   }
 
   send ( data ) {
@@ -81,28 +80,22 @@ class AshitaSocket extends WebSocket {
       switch ( data.type ) {
         case "nodeOwnerConnected":
           console.info("nodeOwnerConnected Event Received");
-        break;
-
+          break;
         case "MOTD":
           this.onReceiveMOTD( data.content );
-        break;
-
+          break;
         case "nodeConnected":
           console.info("nodeConnected Event Received");
-        break;
-
+          break;
         case "nodeDiscovered":
           this.onNodeDiscovery( data.content.nodeId );
-        break;
-
+          break;
         case "publicMessage":
           this.onPublicMessage( data.content );
-        break;
-
+          break;
         case "handshakeEstablished":
           this.onHandshakeEstablished( this );
-        break;
-
+          break;
         default:
           console.log("Unhandled Event");
       }
@@ -131,7 +124,7 @@ class Ashita {
     this.ui = ui;
     this.state = undefined;
     this.addNode( location.host );
-    this.ui.input = this.onUiInput.bind( this );
+    this.ui.onInput = this.onUiInput.bind( this );
     this.ui.changeNode = this.onUiChangeNode.bind( this );
   }
 
@@ -239,9 +232,11 @@ class UI {
     this.input = document.getElementById("input");
     this.output = document.getElementById("output");
     this.menu = document.getElementById("menu");
-    this.changeNode = noop => {};
-    this.input = noop => {};
-    input.addEventListener( 'keydown', this.inputKeydown.bind( this ) );
+
+    this.changeNode = () => {};
+    this.onInput = () => {};
+
+    this.input.addEventListener( "keydown", this.inputKeydown.bind( this ) );
   }
 
   nodeClick ( event ) {
@@ -266,19 +261,19 @@ class UI {
       "class" : "port"
     }, parts[1]);
 
-    elNode.addEventListener('click', this.nodeClick.bind( this ), false);
+    elNode.addEventListener("click", this.nodeClick.bind( this ), false);
 
     elAddress.appendChild( elPort );
     elNode.appendChild( elIcon );
     elNode.appendChild( elAddress );
 
-    menu.appendChild( elNode );
+    this.menu.appendChild( elNode );
   }
 
   static HTMLElement ( tag, props, innerText = null ) {
     let el = document.createElement( tag );
     for ( const [key, value] of Object.entries( props ) ) {
-        el.setAttribute( key, value );
+      el.setAttribute( key, value );
     }
     if ( innerText ) {
       el.innerText = innerText;
@@ -294,34 +289,30 @@ class UI {
         "message"  : event.target.value
       };
       event.target.value = "";
-      this.input( data );
+      this.onInput( data );
     }
   }
 
   createEntry ( data ) {
     let entry;
 
-    const time = new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric', minute: 'numeric', second: 'numeric'
+    const time = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric", minute: "numeric", second: "numeric"
     }).format( data.timestamp );
 
     if ( data.hasOwnProperty("type") ) {
       switch ( data.type ) {
         case "blank":
-        break;
-
+          break;
         case "error":
           data.username = "\uf06a";
-        break;
-
+          break;
         case "notice":
           data.username = "\uf0f3";
-        break;
-        
+          break;
         case "warning":
           data.username = "\uf071";
-        break;
-        
+          break;
         default:
           console.error(`Invalid Type "${data.type}"`);
       }
@@ -334,9 +325,9 @@ class UI {
       </div>`;
     } else {
       entry = `
-      <div class="entry ${data.type ? data.type : ''}"">
+      <div class="entry ${data.type ? data.type : ""}"">
         <time class="date" datetime="${data.timestamp}">${time}</time>
-        <div class="user ${data.type ? 'fa' : ''}">${data.username}</div>
+        <div class="user ${data.type ? "fa" : ""}">${data.username}</div>
         <div class="msg">${data.message}</div>
       </div>`;
     }
@@ -347,14 +338,14 @@ class UI {
   print ( data ) {
     if ( !data ) {
       data = {
-        username: "test",
-        message: "test test test",
-        timestamp: Date.now()
+        username  : "test",
+        message   : "test test test",
+        timestamp : Date.now()
       };
     }
     const newEntry = this.createEntry( data );
     if ( newEntry ) {
-      this.output.insertAdjacentHTML('beforeend', newEntry);
+      this.output.insertAdjacentHTML("beforeend", newEntry);
       this.output.scrollTop = this.output.scrollHeight;
     }
   }
