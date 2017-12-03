@@ -1,5 +1,3 @@
-//@ts-check
-
 /**
  * ashita/client/index
  *
@@ -16,7 +14,6 @@
  */
 class Messages {
   constructor () {
-    this.privateMessages = [];
     this.publicMessages  = [];
   }
 
@@ -28,8 +25,6 @@ class Messages {
     return this.publicMessages;
   }
 }
-
-
 
 /**
  * ashita/client/AshitaSocket
