@@ -12,8 +12,8 @@
   ],
   "license": "GPL-3.0",
   "dependencies": {
-    "atob": "^2.0.3",
-    "btoa": "^1.1.2",
+    "atob": "latest",
+    "btoa": "latest",
     "consoleplusplus": "latest",
     "express": "latest",
     "validator": "latest",

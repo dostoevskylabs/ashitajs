@@ -6,7 +6,7 @@
  */
 "use strict";
 require('consoleplusplus');
-const args = process.argv.slice(2);
+const args = process.argv.slice( 2 );
 
 if ( args.length !== 1 ) {
   args[0] = 8000;
@@ -16,9 +16,9 @@ const path            = require('path');
 const WebSocketServer = require('ws').Server;
 const http            = require('http');
 const express         = require('express');
-const app             = express().use(express.static(path.join(__dirname, '/public')));
-const server          = http.createServer(app).listen(args[0]);
-const ashita          = new WebSocketServer({server: server});
+const app             = express().use( express.static( path.join(__dirname, '/public') ) );
+const server          = http.createServer( app ).listen( args[0] );
+const ashita          = new WebSocketServer( {server: server} );
 const fs              = require('fs');
 const nodeAPI         = require('./nodeAPI.js');
 const clientAPI       = require('./clientAPI.js');
@@ -66,11 +66,11 @@ ashita.on('connection', function ( socket ) {
         });
   
         // notify this user of all known peers
-        if ( Object.keys(nodes).length > 0 ) {
+        if ( Object.keys( nodes ).length > 0 ) {
           for ( let peerId in nodes ) {
             if ( peerId !== nodeId ) {
               client.sendClientEvent("nodeDiscovered", {
-                "nodeId":peerId
+                "nodeId" : peerId
               });
             }
           }
@@ -93,7 +93,7 @@ ashita.on('connection', function ( socket ) {
         });
   
         // notify this user of all known peers
-        if ( Object.keys(nodes).length > 0 ) {
+        if ( Object.keys( nodes ).length > 0 ) {
           for ( let peerId in nodes ) {
             if ( peerId !== nodeId && peerId != ownerId ) {
               client.sendClientEvent("nodeDiscovered", {
@@ -104,12 +104,12 @@ ashita.on('connection', function ( socket ) {
         }
   
         // notify everyone about this new peer
-        if ( Object.keys(nodes).length > 0 ) {
+        if ( Object.keys( nodes ).length > 0 ) {
           for ( let peerId in nodes ) {
             if ( peerId !== nodeId ) {
               let peer = new nodeAPI.Client( nodes[peerId].socket );
               peer.sendClientEvent("nodeDiscovered", {
-                "nodeId":nodeId
+                "nodeId" : nodeId
               });
               peer = null;
             }
@@ -138,7 +138,7 @@ ashita.on('connection', function ( socket ) {
           return false;
         }
 
-        return clientAPI[data.type](nodes, ownerId, nodeId, data);
+        return clientAPI[data.type]( nodes, ownerId, nodeId, data );
       } else {
         /**
          * If this is reached the client does not have a valid handshake
@@ -151,11 +151,11 @@ ashita.on('connection', function ( socket ) {
   });
 
   socket.on('error', function ( error ) {
-    console.error(error)
+    console.error( error )
   });
 
   socket.on('close', function () {
-    if ( nodes.hasOwnProperty(nodeId) ) {
+    if ( nodes.hasOwnProperty( nodeId ) ) {
       nodes[nodeId] = null;
       delete nodes[nodeId];
       console.debug(color.Red + "Removed node " + nodeId);

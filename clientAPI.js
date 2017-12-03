@@ -13,9 +13,9 @@ const atob            = require('atob');
 const color           = require('./color.js');
 
 module.exports = {
-  "publicMessage":function(nodes, ownerId, nodeId, data){
+  "publicMessage" : function ( nodes, ownerId, nodeId, data ) {
     this.nodes    = nodes;
-    this.ownerId    = ownerId;
+    this.ownerId  = ownerId;
     this.nodeId   = nodeId;
     this.data     = data.hasOwnProperty("content") ? data.content : undefined;
     
@@ -38,9 +38,10 @@ module.exports = {
     for ( let peerId in this.nodes ) {
       if ( this.nodeId !== peerId ) {
         let peer = new nodeAPI.Client( this.nodes[peerId].socket );
+       
         peer.sendClientEvent("publicMessage", {
-          "username":this.nodes[this.nodeId].username,
-          "message":this.data.message
+          "username" : this.nodes[this.nodeId].username,
+          "message"  : this.data.message
         });
       }
     }

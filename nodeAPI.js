@@ -33,10 +33,11 @@ class Client {
 
   sendClientEvent ( event, data ) {
     let payload = {
-      "type":undefined,
-      "content":{}
+      "type"    : undefined,
+      "content" : {}
     };
-    payload.type = event;
+    
+    payload.type    = event;
     payload.content = data;
     
     if ( payload.type !== undefined ) {
