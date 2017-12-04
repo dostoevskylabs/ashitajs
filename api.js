@@ -1,9 +1,21 @@
+/**
+ * ashita/API
+ *
+ * @package    ashita/core
+ * @author     dostoevskylabs
+ */
 "use strict";
 const fs     = require('fs');
 const btoa   = require('btoa');
 const crypto = require('crypto');
 const color  = require('./color.js');
 
+/**
+ * Client
+ *
+ * @package    ashita/API
+ * @author     dostoevskylabs
+ */
 class Client {
   constructor ( nodes, ownerId, socket, data ) {
     this.nodes = nodes;

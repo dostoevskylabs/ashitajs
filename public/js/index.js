@@ -1,5 +1,5 @@
 /**
- * ashita/client/index
+ * ashita/client
  *
  * @package    ashita/client
  * @author     dostoevskylabs
@@ -8,7 +8,7 @@
 "use strict";
 
 /**
- * ashita/client/Messages
+ * Messages
  * 
  * @package ashita/client
  */
@@ -27,7 +27,7 @@ class Messages {
 }
 
 /**
- * ashita/client/AshitaSocket
+ * AshitaSocket
  * 
  * @extends WebSocket
  * @package ashita/client
@@ -118,7 +118,7 @@ class AshitaSocket extends WebSocket {
 }
 
 /**
- * ashita/client/Ashita
+ * Ashita
  * 
  * @package ashita/client
  */
@@ -253,7 +253,7 @@ class Ashita {
 }
 
 /**
- * ashita/client/UI
+ * UI
  * 
  * @package ashita/client
  */
