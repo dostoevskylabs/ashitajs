@@ -22,29 +22,37 @@ class Client {
     this.ownerId = ownerId;
     this.socket = socket;
     this.nodeId = undefined;
+    this.data = this.safeParseJSON( data );
 
-    try {
-      this.data = JSON.parse( data );
-    } catch ( error ) {
-      this.data = {};
+    if ( !this.data.hasOwnProperty("type") || !this.data.hasOwnProperty("content") ) {
+      console.error(color.Red + "Malformed Data");
+      return false;
     }
 
-    if ( this.data.hasOwnProperty("type") && this.data.hasOwnProperty("content") ) {
-      this.peerId = this.nodes.hasOwnProperty(this.data.content.sessionId) ? this.data.content.sessionId : this.generateSessionId();
-      this.handleClientRequest( this.data.type );
-    }
+    this.sessionId = this.nodes.hasOwnProperty(this.data.content.sessionId) ? this.data.content.sessionId : this.generateSessionId();
+    this.handleClientRequest( this.data.type );
   }
 
   get isOwner () {
-    if ( this.ownerId === this.nodes[this.peerId].nodeId ) {
+    if ( this.ownerId === this.nodes[this.sessionId].nodeId ) {
       return true;
     }
     return false;
   }
 
+  safeParseJSON ( data ) {
+    try {
+      let obj = JSON.parse( data );
+      if ( obj && typeof obj === "object" ) {
+          return obj;
+      }
+    } catch ( error ) {}
+    return {};
+  }
+
   addNode () {
-    console.info(color.Blue + this.peerId + " peer connection established");
-    this.nodes[this.peerId] = {
+    console.info(color.Blue + this.sessionId + " peer connection established");
+    this.nodes[this.sessionId] = {
       "nodeId"   : this.nodeId,
       "username" : "Anonymous",
       "socket"   : this.socket
@@ -85,9 +93,9 @@ class Client {
       "content" : data
     };
 
-    for ( let peerId in this.nodes ) {
-      if ( peerId !== this.peerId ) {
-        this.nodes[peerId].socket.send( JSON.stringify( payload ) );
+    for ( let sessionId in this.nodes ) {
+      if ( sessionId !== this.sessionId ) {
+        this.nodes[sessionId].socket.send( JSON.stringify( payload ) );
       }
     }
   }
@@ -97,7 +105,8 @@ class Client {
   }
 
   handshake () {
-    if ( !this.data.content.nodeId ) {
+    // hacky pos, rewrite later
+    if ( !this.data.content.nodeId || this.data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
       console.error(color.Red + "Invalid handshake");
       return false;
     }
@@ -112,11 +121,11 @@ class Client {
     }
 
     // send this client all known peers
-    for ( let peerId in this.nodes ) {
-      if ( peerId !== this.peerId ) {
-        if ( this.nodes[peerId].nodeId !== this.ownerId ) {
+    for ( let sessionId in this.nodes ) {
+      if ( sessionId !== this.sessionId ) {
+        if ( this.nodes[sessionId].nodeId !== this.ownerId ) {
           this.sendClientEvent("nodeDiscovered", {
-            "nodeId" : this.nodes[peerId].nodeId
+            "nodeId" : this.nodes[sessionId].nodeId
           });
         }
       }
@@ -133,7 +142,7 @@ class Client {
     });
 
     this.sendClientEvent("handshakeEstablished", {
-     sessionId : this.peerId
+     sessionId : this.sessionId
     });
     console.info(color.Blue + "Handshake Established");
     this.printPeers();
@@ -142,8 +151,8 @@ class Client {
   printPeers () {
     console.info("Active Peers");
     console.info("-------------");
-    for ( let peerId in this.nodes ) {
-      console.info(peerId);
+    for ( let sessionId in this.nodes ) {
+      console.info(sessionId);
     }
     console.info("-------------");
   }
