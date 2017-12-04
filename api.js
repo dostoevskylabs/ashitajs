@@ -22,10 +22,17 @@ class Client {
     this.ownerId = ownerId;
     this.socket = socket;
     this.nodeId = undefined;
-    this.data = JSON.parse( data );
 
-    this.peerId = this.nodes.hasOwnProperty(this.data.content.sessionId) ? this.data.content.sessionId : this.generateSessionId();
-    this.handleClientRequest( this.data.type );
+    try {
+      this.data = JSON.parse( data );
+    } catch ( error ) {
+      this.data = {};
+    }
+
+    if ( this.data.hasOwnProperty("type") && this.data.hasOwnProperty("content") ) {
+      this.peerId = this.nodes.hasOwnProperty(this.data.content.sessionId) ? this.data.content.sessionId : this.generateSessionId();
+      this.handleClientRequest( this.data.type );
+    }
   }
 
   get isOwner () {
@@ -55,7 +62,7 @@ class Client {
         break;
 
       default:
-        console.info("unhandled");
+        console.error(color.Red + "Invalid Event");
     }
   }
 
@@ -90,6 +97,10 @@ class Client {
   }
 
   handshake () {
+    if ( !this.data.content.nodeId ) {
+      console.error(color.Red + "Invalid handshake");
+      return false;
+    }
     console.info(color.Blue + "Handshake started");
     this.nodeId = btoa(this.data.content.nodeId);
     this.addNode();
