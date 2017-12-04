@@ -94,7 +94,7 @@ class AshitaSocket extends WebSocket {
           this.onPublicMessage( this.nodeId, data.content );
           break;
         case "handshakeEstablished":
-          this.onHandshakeEstablished( this );
+          this.onHandshakeEstablished( this, data.content );
           break;
         default:
           //console.log("Unhandled Event");
@@ -108,7 +108,11 @@ class AshitaSocket extends WebSocket {
 
   handshake () {
     this.send({
-      "handshake" : location.host
+      "type"    : "handshake",
+      "content" : {
+        "sessionId" : localStorage.getItem(this.nodeId),
+        "nodeId"    : location.host
+      }
     });
   }
 }
@@ -153,6 +157,7 @@ class Ashita {
     this.state.send({
       type     : "publicMessage",
       content  : {
+        sessionId : localStorage.getItem(this.state.nodeId),
         username : data.username,
         message  : data.message,
       }
@@ -182,7 +187,7 @@ class Ashita {
     node.onHandshakeEstablished = this.onHandshakeEstablished.bind( this );
   }
 
-  onHandshakeEstablished ( node ) {
+  onHandshakeEstablished ( node, data ) {
     if ( this.nodes.has( node.nodeId ) ) {
       return false;
     }
@@ -195,6 +200,7 @@ class Ashita {
     if ( this.state === undefined ) {
       this.state = node;
     }
+    localStorage.setItem(node.nodeId, data.sessionId);
   }
 
   onReceiveMOTD ( nodeId, data ) {
