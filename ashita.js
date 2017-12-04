@@ -10,7 +10,7 @@ const fs              = require('fs');
 const btoa            = require('btoa');
 const atob            = require('atob');
 const crypto          = require('crypto');
-const color           = require('./color.js');
+const Logger          = require('./logger.js')
 
 /**
  * Client
@@ -27,24 +27,30 @@ class API extends WebSocketServer {
     this.ownerId = btoa("127.0.0.1:" + Object["server"]["_connectionKey"].split(":").pop() );
     this.socket = undefined;
     this.nodeId = undefined;
+    this.remoteAddress = undefined;
+    this.remotePort   = undefined;
     this.sessionId = undefined;
 
-    console.log(color.Green + "Server started: http://" + atob(this.ownerId));
+    Logger.notice(`Server started. Visit http://${atob( this.ownerId )}`);
   }
 
   onConnection ( socket ) {
-    console.info(color.Green + "New connection");
     this.socket = socket;
     this.socket.on('message', this.onMessage.bind(this) );
     this.socket.on('error', this.onError.bind(this) );
-    this.socket.on('close', this.onClose.bind(this) );  
+    this.socket.on('close', this.onClose.bind(this) );
+
+    this.remoteAddress = this.socket._socket.remoteAddress.substr(7);
+    this.remotePort    = this.socket._socket.remotePort;
+
+    Logger.info(`New connection received from ${this.remoteAddress}:${this.remotePort}`)
   }
 
   onMessage ( data ) {
     data = this.safeParseJSON( data );
 
     if ( !data.hasOwnProperty("type") || !data.hasOwnProperty("content") ) {
-      console.error(color.Red + "Malformed Data");
+      Logger.warn(`Malformed data received from ${this.sessionId}`)
       return false;
     }
 
@@ -81,12 +87,13 @@ class API extends WebSocketServer {
   }
 
   addNode () {
-    console.info(color.Blue + this.sessionId + " peer connection established");
     this.nodes[this.sessionId] = {
       "nodeId"   : this.nodeId,
       "username" : "Anonymous",
       "socket"   : this.socket
     };
+
+    Logger.info(`New peer session: ${this.sessionId}`)
   }
 
   handleClientRequest ( data ) {
@@ -100,14 +107,12 @@ class API extends WebSocketServer {
         break;
 
       default:
-        console.error(color.Red + "Invalid Event");
+        Logger.warn("Invalid Event Received From Client");
     }
   }
 
   sendClientEvent ( event, data ) {
     if ( Object.keys( this.nodes ).length === 0 ) return false;
-
-    console.info(color.Blue + "Sending client event: " + event);
 
     let payload = {
       "type"    : event,
@@ -115,12 +120,12 @@ class API extends WebSocketServer {
     };
     
     this.socket.send( JSON.stringify( payload ) );
+
+    Logger.debug(`Sending client Event: ${event}`)
   }
 
   sendNodeEvent ( event, data ) {
     if ( Object.keys( this.nodes ).length === 0 ) return false;
-
-    console.info(color.Blue + "Sending node event: " + event);
 
     let payload = {
       "type"    : event,
@@ -132,6 +137,8 @@ class API extends WebSocketServer {
         this.nodes[sessionId].socket.send( JSON.stringify( payload ) );
       }
     }
+
+    Logger.debug(`Sending node Event: ${event}`)
   }
 
   generateSessionId () {
@@ -141,10 +148,11 @@ class API extends WebSocketServer {
   handshake ( data ) {
     // hacky pos, rewrite later
     if ( !data.content.nodeId || data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
-      console.error(color.Red + "Invalid handshake");
+      Logger.warn(`Invalid handshake received from ${this.sessionId}`);
       return false;
     }
-    console.info(color.Blue + "Handshake started");
+    
+    Logger.info(`Handshake initialized with ${this.sessionId}`)
     this.nodeId = btoa(data.content.nodeId);
     this.addNode();
 
@@ -179,17 +187,17 @@ class API extends WebSocketServer {
      sessionId : this.sessionId
     });
 
-    console.info(color.Blue + "Handshake Established");
+    Logger.info(`Handshake Established with ${this.sessionId}`);
     this.printPeers();
   }
 
   printPeers () {
-    console.info("Active Peers");
-    console.info("-------------");
+    Logger.info("Active Peers");
+    Logger.info("-------------");
     for ( let sessionId in this.nodes ) {
-      console.info(sessionId);
+      Logger.info(sessionId);
     }
-    console.info("-------------");
+    Logger.info("-------------");
   }
 
   publicMessage ( data ) {
@@ -197,6 +205,8 @@ class API extends WebSocketServer {
       username : data.content.username,
       message : data.content.message
     });
+
+    Logger.info(`<${data.content.username}> ${data.content.message}`)
   }
 }
 
