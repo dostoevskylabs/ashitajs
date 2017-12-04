@@ -5,10 +5,12 @@
  * @author     dostoevskylabs
  */
 "use strict";
-const fs     = require('fs');
-const btoa   = require('btoa');
-const crypto = require('crypto');
-const color  = require('./color.js');
+const WebSocketServer = require('ws').Server;
+const fs              = require('fs');
+const btoa            = require('btoa');
+const atob            = require('atob');
+const crypto          = require('crypto');
+const color           = require('./color.js');
 
 /**
  * Client
@@ -16,28 +18,49 @@ const color  = require('./color.js');
  * @package    ashita/API
  * @author     dostoevskylabs
  */
-class Client {
-  constructor ( nodes, ownerId, socket, data ) {
-    this.nodes = nodes;
-    this.ownerId = ownerId;
-    this.socket = socket;
-    this.nodeId = undefined;
-    this.data = this.safeParseJSON( data );
+class API extends WebSocketServer {
+  constructor ( Object ) {
+    super( Object );
+    this.on('connection', this.onConnection );
 
-    if ( !this.data.hasOwnProperty("type") || !this.data.hasOwnProperty("content") ) {
+    this.nodes = {};
+    this.ownerId = btoa("127.0.0.1:" + Object["server"]["_connectionKey"].split(":").pop() );
+    this.socket = undefined;
+    this.nodeId = undefined;
+    this.sessionId = undefined;
+
+    console.log(color.Green + "Server started: http://" + atob(this.ownerId));
+  }
+
+  onConnection ( socket ) {
+    console.info(color.Green + "New connection");
+    this.socket = socket;
+    this.socket.on('message', this.onMessage.bind(this) );
+    this.socket.on('error', this.onError.bind(this) );
+    this.socket.on('close', this.onClose.bind(this) );  
+  }
+
+  onMessage ( data ) {
+    data = this.safeParseJSON( data );
+
+    if ( !data.hasOwnProperty("type") || !data.hasOwnProperty("content") ) {
       console.error(color.Red + "Malformed Data");
       return false;
     }
 
-    this.sessionId = this.nodes.hasOwnProperty(this.data.content.sessionId) ? this.data.content.sessionId : this.generateSessionId();
-    this.handleClientRequest( this.data.type );
+    this.sessionId = this.nodes.hasOwnProperty(data.content.sessionId) ? data.content.sessionId : this.generateSessionId();
+
+    this.handleClientRequest( data );
+
   }
 
-  get isOwner () {
-    if ( this.ownerId === this.nodes[this.sessionId].nodeId ) {
-      return true;
-    }
-    return false;
+  onError ( error ) {
+    console.log( error );
+
+  }
+
+  onClose () {
+    console.log("close");
   }
 
   safeParseJSON ( data ) {
@@ -50,6 +73,13 @@ class Client {
     return {};
   }
 
+  get isOwner () {
+    if ( this.ownerId === this.nodes[this.sessionId].nodeId ) {
+      return true;
+    }
+    return false;
+  }
+
   addNode () {
     console.info(color.Blue + this.sessionId + " peer connection established");
     this.nodes[this.sessionId] = {
@@ -59,14 +89,14 @@ class Client {
     };
   }
 
-  handleClientRequest ( request ) {
-    switch ( request ) {
+  handleClientRequest ( data ) {
+    switch ( data.type ) {
       case "handshake":
-        this.handshake();
+        this.handshake( data );
         break;
 
       case "publicMessage":
-        this.publicMessage();
+        this.publicMessage( data );
         break;
 
       default:
@@ -76,7 +106,9 @@ class Client {
 
   sendClientEvent ( event, data ) {
     if ( Object.keys( this.nodes ).length === 0 ) return false;
+
     console.info(color.Blue + "Sending client event: " + event);
+
     let payload = {
       "type"    : event,
       "content" : data
@@ -87,7 +119,9 @@ class Client {
 
   sendNodeEvent ( event, data ) {
     if ( Object.keys( this.nodes ).length === 0 ) return false;
+
     console.info(color.Blue + "Sending node event: " + event);
+
     let payload = {
       "type"    : event,
       "content" : data
@@ -104,14 +138,14 @@ class Client {
     return crypto.randomBytes(8).toString('hex');
   }
 
-  handshake () {
+  handshake ( data ) {
     // hacky pos, rewrite later
-    if ( !this.data.content.nodeId || this.data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
+    if ( !data.content.nodeId || data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
       console.error(color.Red + "Invalid handshake");
       return false;
     }
     console.info(color.Blue + "Handshake started");
-    this.nodeId = btoa(this.data.content.nodeId);
+    this.nodeId = btoa(data.content.nodeId);
     this.addNode();
 
     if ( this.isOwner ) {
@@ -144,6 +178,7 @@ class Client {
     this.sendClientEvent("handshakeEstablished", {
      sessionId : this.sessionId
     });
+
     console.info(color.Blue + "Handshake Established");
     this.printPeers();
   }
@@ -156,15 +191,15 @@ class Client {
     }
     console.info("-------------");
   }
-  publicMessage () {
+
+  publicMessage ( data ) {
     this.sendNodeEvent("publicMessage", {
-      username : this.data.content.username,
-      message : this.data.content.message
+      username : data.content.username,
+      message : data.content.message
     });
   }
-
 }
 
 module.exports = {
-  "Client" : Client
+  "API" : API
 }
