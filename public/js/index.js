@@ -276,29 +276,59 @@ class UI {
   addNode ( nodeId ) {
     const parts = atob( nodeId ).split(":");
 
+
     let elNode = UI.HTMLElement("div", {
-      "class"       : "node",
+      "class"       : "nodeTest",
       "data-nodeid" : nodeId
     });
 
     let elIcon = UI.HTMLElement("img", {
-      "class" : "icon",
-      "src"   : "./assets/node.svg"
+      "class" : "nodeLeft"
+    });
+
+    let elTitle = UI.HTMLElement("div", {
+      "class" : "nodeCenter"
+    }, "Temp Title");
+
+    let elIndicator = UI.HTMLElement("div", {
+      "class" : "nodeRight"
     });
 
     let elAddress = UI.HTMLElement("div", {
-      "class" : "address"
-    }, parts[0]);
-
-    let elPort = UI.HTMLElement("span", {
-      "class" : "port"
-    }, parts[1]);
+      "class" : "nodeBottom"
+    }, `${parts[0]} : ${parts[1]}`);
 
     elNode.addEventListener("click", this.nodeClick.bind( this ), false);
 
-    elAddress.appendChild( elPort );
-    elNode.appendChild( elIcon );
-    elNode.appendChild( elAddress );
+    elNode.appendChild(elIcon);
+    elNode.appendChild(elTitle);
+    elNode.appendChild(elIndicator);
+    elNode.appendChild(elAddress);
+
+
+    // let elNode = UI.HTMLElement("div", {
+    //   "class"       : "node",
+    //   "data-nodeid" : nodeId
+    // });
+
+    // let elIcon = UI.HTMLElement("img", {
+    //   "class" : "icon",
+    //   "src"   : "./assets/node.svg"
+    // });
+
+    // let elAddress = UI.HTMLElement("div", {
+    //   "class" : "address"
+    // }, parts[0]);
+
+    // let elPort = UI.HTMLElement("span", {
+    //   "class" : "port"
+    // }, parts[1]);
+
+    // elNode.addEventListener("click", this.nodeClick.bind( this ), false);
+
+    // elAddress.appendChild( elPort );
+    // elNode.appendChild( elIcon );
+    // elNode.appendChild( elAddress );
 
     this.menu.appendChild( elNode );
   }
