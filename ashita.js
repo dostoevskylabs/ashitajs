@@ -3,6 +3,7 @@
  *
  * @package    ashita
  * @author     dostoevskylabs
+ * @author     mooglesonthecob
  */
 "use strict";
 const WebSocketServer = require('ws').Server;

@@ -3,6 +3,7 @@
  *
  * @package    ashita/Core
  * @author     dostoevskylabs
+ * @author     mooglesonthecob
  */
 "use strict";
 const fs              = require('fs');
@@ -134,7 +135,7 @@ class API {
     }
     Logger.info("-------------");
   }
-    
+
   /**
    * sendClientEvent
    * 

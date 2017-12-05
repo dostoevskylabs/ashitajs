@@ -1,11 +1,11 @@
-/* eslint-disable no-console */
-
 /**
- * ashita/API
+ * ashita/core/Logger
  *
  * @package    ashita/core
  * @author     dostoevskylabs
+ * @author     mooglesonthecob
  */
+/* eslint-disable no-console */
 "use strict";
 const color     = require("./color.js");
 const getTime   = () => Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "numeric", second: "numeric"}).format( Date.now() );
@@ -29,24 +29,30 @@ class Logger {
   static get NOTICE () {
     return NOTICE;
   }
+
   static get WARN () {
     return WARN;
   }
+
   static get INFO () {
     return INFO;
   }
+
   static get DEBUG () {
     return DEBUG;
   }
+
   static get ERROR () {
     return ERROR;
   }
+
   static setVerbosity ( ...symbols ) {
     for ( const level of symbols ) {
       verbosity[level] = true;
 
     }
   }
+
   static notice ( ...message ) { 
     if ( verbosity[NOTICE] ) {
       console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message );
@@ -75,8 +81,7 @@ class Logger {
     if ( verbosity[ERROR] ) {
       console.log( color.Red + `[ERROR\t- ${getTime()}] `, ...message );
     }
-  }   
-
+  }
 }
 
 module.exports = Logger;
