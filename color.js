@@ -1,7 +1,7 @@
 /**
- * ashita/core/color
+ * ashita/color
  *
- * @package    ashita/core
+ * @package    ashita
  * @author     dostoevskylabs
  */
 "use strict";
