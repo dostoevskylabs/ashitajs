@@ -1,7 +1,7 @@
 /**
- * ashita/core/index
+ * ashita/index
  *
- * @package    ashita/core
+ * @package    ashita
  * @author     dostoevskylabs
  */
 "use strict";
@@ -17,8 +17,8 @@ const http            = require('http');
 const express         = require('express');
 const app             = express().use( express.static( path.join(__dirname, '/public') ) );
 const server          = http.createServer( app ).listen( args[0] );
-const Ashita          = require('./ashita.js');
+const ashita          = require('./ashita.js');
 
-new Ashita.API({
+new ashita.Core({
   server:server
 });
