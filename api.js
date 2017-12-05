@@ -21,6 +21,8 @@ class API {
     this.socket.on('error', this.onError.bind(this) );
     this.socket.on('close', this.onClose.bind(this) );
 
+    this.established = false;
+    this.data   = undefined;
     this.nodeId = undefined;
     this.sessionId = undefined;
 
@@ -32,17 +34,15 @@ class API {
   }
 
   onMessage ( data ) {
-    data = this.safeParseJSON( data );
+    this.data = this.safeParseJSON( data );
 
-    if ( !data.hasOwnProperty("type") || !data.hasOwnProperty("content") ) {
-      Logger.warn(`Malformed data received from ${this.remoteAddress}:${this.remotePort}`)
-      return false;
+    if ( this.data === undefined || !this.data.hasOwnProperty("type") || !this.data.hasOwnProperty("content") ) {
+      Logger.warn(`Malformed data received from ${this.remoteAddress}:${this.remotePort}`);
+      return this.killSocket();
     }
 
-    this.sessionId = this.parent.getNode(data.content.sessionId) ? data.content.sessionId : this.generateSessionId();
-
-    this.handleClientRequest( data );
-
+    this.sessionId = this.parent.getNode(this.data.content.sessionId) ? this.data.content.sessionId : this.generateSessionId();
+    this.handleClientRequest();
   }
 
   onError ( error ) {
@@ -54,6 +54,11 @@ class API {
     console.log("close");
   }
 
+  killSocket () {
+    this.socket.terminate();
+    return false;
+  }
+
   safeParseJSON ( data ) {
     try {
       let obj = JSON.parse( data );
@@ -61,7 +66,7 @@ class API {
         return obj;
       }
     } catch ( error ) {}
-    return {};
+    return undefined;
   }
 
   get isOwner () {
@@ -71,14 +76,14 @@ class API {
     return false;
   }
 
-  handleClientRequest ( data ) {
-    switch ( data.type ) {
+  handleClientRequest () {
+    switch ( this.data.type ) {
       case "handshake":
-        this.handshake( data );
+        this.handshake( this.data );
         break;
 
       case "publicMessage":
-        this.publicMessage( data );
+        this.publicMessage( this.data );
         break;
 
       default:
@@ -120,15 +125,19 @@ class API {
     return crypto.randomBytes(8).toString('hex');
   }
 
-  handshake ( data ) {
+  handshake () {
     // hacky pos, rewrite later
-    if ( !data.content.nodeId || data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
+    if ( this.established ) {
+      Logger.warn(`Client tried to send a new handshake when they already have an active one`);
+      return false;
+    }
+    if ( !this.data.content.nodeId || this.data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
       Logger.warn(`Invalid handshake received from ${this.sessionId}`);
       return false;
     }
     
     Logger.info(`Handshake initialized with ${this.sessionId}`)
-    this.nodeId = btoa(data.content.nodeId);
+    this.nodeId = btoa(this.data.content.nodeId);
     this.parent.addNode(this.sessionId, {
       "nodeId"   : this.nodeId,
       "username" : "Anonymous",
@@ -168,6 +177,7 @@ class API {
 
     Logger.info(`Handshake Established with ${this.sessionId}`);
     this.printPeers();
+    this.established = true;
   }
 
   printPeers () {
@@ -179,13 +189,13 @@ class API {
     Logger.info("-------------");
   }
 
-  publicMessage ( data ) {
+  publicMessage () {
     this.sendNodeEvent("publicMessage", {
-      username : data.content.username,
-      message : data.content.message
+      username : this.data.content.username,
+      message : this.data.content.message
     });
 
-    Logger.info(`<${data.content.username}> ${data.content.message}`)
+    Logger.info(`<${this.data.content.username}> ${this.data.content.message}`)
   }
 }
 
