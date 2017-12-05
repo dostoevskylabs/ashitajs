@@ -7,7 +7,6 @@ module.exports = {
     "extends": "eslint:recommended",
     "rules": {
         "no-unexpected-multiline": 2,
-        "guard-for-in": 2,
         "no-caller": 2,
         "no-with": 2,
         "array-bracket-newline": ["error", "consistent"],

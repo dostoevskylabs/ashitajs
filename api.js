@@ -216,7 +216,7 @@ class API {
 
     // send this client all known peers
     for ( let sessionId in this.parent.getNodeList ) {
-      if ( sessionId !== this.sessionId && !this.parent.node.nodeIds.includes( atob(this.parent.getNode( sessionId ).nodeId) ) ) {
+      if ( sessionId !== this.sessionId && this.parent.nodeHost !== atob(this.parent.getNode( sessionId ).nodeId) ) {
         if ( this.parent.getNode( sessionId ).socket !== null ) {
           this.sendClientEvent("nodeDiscovered", {
             "nodeId" : this.parent.getNode( sessionId ).nodeId
@@ -224,7 +224,6 @@ class API {
         }
       }
     }
-
 
     this.parent.addNode(this.sessionId, {
       "nodeId"   : this.nodeId,
