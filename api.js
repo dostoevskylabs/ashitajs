@@ -12,6 +12,12 @@ const crypto          = require('crypto');
 const Logger          = require('./logger.js')
 
 class API {
+  /**
+   * constructor
+   * 
+   * @param      parent
+   * @param      socket
+   */  
   constructor ( parent, socket ) {
     this.parent = parent;
     this.ownerId = this.parent.ownerId;
@@ -21,7 +27,6 @@ class API {
     this.socket.on('error', this.onError.bind(this) );
     this.socket.on('close', this.onClose.bind(this) );
 
-    this.established = false;
     this.data   = undefined;
     this.nodeId = undefined;
     this.sessionId = undefined;
@@ -33,6 +38,11 @@ class API {
     Logger.info(`New connection received from ${this.remoteAddress}:${this.remotePort}`)    
   }
 
+  /**
+   * onMessage
+   * 
+   * @param      data
+   */    
   onMessage ( data ) {
     this.data = this.safeParseJSON( data );
 
@@ -45,20 +55,36 @@ class API {
     this.handleClientRequest();
   }
 
+  /**
+   * constructor
+   * 
+   * @param      error
+   */  
   onError ( error ) {
     console.log( error );
 
   }
 
+  /**
+   * onClose
+   */   
   onClose () {
     console.log("close");
   }
 
+  /**
+   * killSocket
+   */ 
   killSocket () {
     this.socket.terminate();
     return false;
   }
 
+  /**
+   * safeParseJSON
+   * 
+   * @param      data
+   */ 
   safeParseJSON ( data ) {
     try {
       let obj = JSON.parse( data );
@@ -69,6 +95,9 @@ class API {
     return undefined;
   }
 
+  /**
+   * isOwner
+   */ 
   get isOwner () {
     if ( this.ownerId === this.parent.getNode(this.sessionId).nodeId ) {
       return true;
@@ -76,6 +105,9 @@ class API {
     return false;
   }
 
+  /**
+   * handleClientRequest
+   */   
   handleClientRequest () {
     switch ( this.data.type ) {
       case "handshake":
@@ -91,6 +123,24 @@ class API {
     }
   }
 
+  /**
+   * printPeers
+   */ 
+  printPeers () {
+    Logger.info("Active Peers");
+    Logger.info("-------------");
+    for ( let sessionId in this.parent.getNodeList ) {
+      Logger.info(sessionId);
+    }
+    Logger.info("-------------");
+  }
+    
+  /**
+   * sendClientEvent
+   * 
+   * @param      event
+   * @param      data
+   */ 
   sendClientEvent ( event, data ) {
     if ( Object.keys( this.parent.getNodeList ).length === 0 ) return false;
 
@@ -104,6 +154,12 @@ class API {
     Logger.debug(`Sending client Event: ${event}`)
   }
 
+  /**
+   * sendNodeEvent
+   * 
+   * @param      event
+   * @param      data
+   */ 
   sendNodeEvent ( event, data ) {
     if ( Object.keys( this.parent.getNodeList ).length === 0 ) return false;
 
@@ -121,17 +177,18 @@ class API {
     Logger.debug(`Sending node Event: ${event}`)
   }
 
+  /**
+   * generateSessionId
+   */   
   generateSessionId () {
     return crypto.randomBytes(8).toString('hex');
   }
 
+  /**
+   * handshake
+   */   
   handshake () {
-    // hacky pos, rewrite later
-    if ( this.established ) {
-      Logger.warn(`Client tried to send a new handshake when they already have an active one`);
-      return false;
-    }
-    if ( !this.data.content.nodeId || this.data.content.nodeId.split(":")[0] !== this.socket._socket.remoteAddress.substr(7) ) {
+    if ( this.parent.established || !this.data.content.hasOwnProperty("nodeId") ) {
       Logger.warn(`Invalid handshake received from ${this.sessionId}`);
       return false;
     }
@@ -177,18 +234,12 @@ class API {
 
     Logger.info(`Handshake Established with ${this.sessionId}`);
     this.printPeers();
-    this.established = true;
+    this.parent.established = true;
   }
 
-  printPeers () {
-    Logger.info("Active Peers");
-    Logger.info("-------------");
-    for ( let sessionId in this.parent.getNodeList ) {
-      Logger.info(sessionId);
-    }
-    Logger.info("-------------");
-  }
-
+  /**
+   * publicMessage
+   */ 
   publicMessage () {
     this.sendNodeEvent("publicMessage", {
       username : this.data.content.username,
