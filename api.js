@@ -20,7 +20,6 @@ class API {
    * @param      socket
    */  
   constructor ( parent, socket ) {
-    console.log(parent.node.channelName);
     this.parent = parent;
     this.ownerId = this.parent.node.nodeId;
     this.socket = socket;
@@ -231,7 +230,8 @@ class API {
     });
 
     this.sendClientEvent("handshakeEstablished", {
-      sessionId : this.sessionId
+      sessionId : this.sessionId,
+      channelName: this.parent.node.channelName
     });
 
     Logger.info(`Handshake Established with ${this.sessionId}`);
