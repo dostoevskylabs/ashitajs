@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 /**
  * ashita/API
  *
@@ -5,7 +7,7 @@
  * @author     dostoevskylabs
  */
 "use strict";
-const color     = require('./color.js');
+const color     = require("./color.js");
 const getTime   = () => Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "numeric", second: "numeric"}).format( Date.now() );
 //const verbosity = {};
 
