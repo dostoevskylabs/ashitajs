@@ -8,7 +8,7 @@
 "use strict";
 
 /**
- * Messages
+ * ashita/client/Messages
  * 
  * @package ashita/client
  */
@@ -27,10 +27,10 @@ class Messages {
 }
 
 /**
- * AshitaSocket
+ * ashita/client/AshitaSocket
  * 
- * @extends WebSocket
  * @package ashita/client
+ * @extends WebSocket
  */
 class AshitaSocket extends WebSocket {
   constructor ( nodeId ) {
@@ -118,7 +118,7 @@ class AshitaSocket extends WebSocket {
 }
 
 /**
- * Ashita
+ * ashita/client
  * 
  * @package ashita/client
  */
@@ -164,12 +164,14 @@ class Ashita {
     });
 
     this.state.messages.storePublicMessage({
+      timestamp: Date.now(),
       username : data.username,
       message  : data.message
     });
 
     if ( this.ui ) {
       this.ui.print({
+        "timestamp": Date.now(),
         "username" : data.username,
         "message"  : data.message
       });
@@ -222,6 +224,7 @@ class Ashita {
 
   onPublicMessage ( nodeId, data ) {
     this.nodes.get( nodeId ).messages.storePublicMessage({
+      timestamp: Date.now(),
       username : data.username,
       message  : data.message
     });
@@ -229,6 +232,7 @@ class Ashita {
     if ( this.ui ) {
       if ( this.state.nodeId === nodeId ) {
         this.ui.print({
+          timestamp: Date.now(),
           username : data.username,
           message  : data.message
         });
@@ -245,15 +249,16 @@ class Ashita {
 
     if ( this.ui ) {
       this.ui.print({
-        type    : "notice",
-        message : "New peer discovered: " + nodeId
+        type      : "notice",
+        timestamp : Date.now(),
+        message   : "New peer discovered: " + nodeId
       });
     }
   }
 }
 
 /**
- * UI
+ * ashita/client/UI
  * 
  * @package ashita/client
  */
@@ -359,7 +364,7 @@ class UI {
   createEntry ( data ) {
     let entry;
 
-    const time = new Intl.DateTimeFormat("en-US", {
+    const time = Intl.DateTimeFormat("en-US", {
       hour: "numeric", minute: "numeric", second: "numeric"
     }).format( data.timestamp );
 
@@ -401,17 +406,12 @@ class UI {
   }
 
   print ( data ) {
-    if ( !data ) {
-      data = {
-        username  : "test",
-        message   : "test test test",
-        timestamp : Date.now()
-      };
-    }
-    const newEntry = this.createEntry( data );
-    if ( newEntry ) {
-      this.output.insertAdjacentHTML("beforeend", newEntry);
-      this.output.scrollTop = this.output.scrollHeight;
+    if ( data ) {
+      const newEntry = this.createEntry( data );
+      if ( newEntry ) {
+        this.output.insertAdjacentHTML("beforeend", newEntry);
+        this.output.scrollTop = this.output.scrollHeight;
+      }
     }
   }
 }

@@ -3,6 +3,7 @@
  *
  * @package    ashita
  * @author     dostoevskylabs
+ * @author     mooglesonthecob
  */
 "use strict";
 module.exports = {
