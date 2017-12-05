@@ -20,8 +20,9 @@ class API {
    * @param      socket
    */  
   constructor ( parent, socket ) {
+    console.log(parent.node.channelName);
     this.parent = parent;
-    this.ownerId = this.parent.ownerId;
+    this.ownerId = this.parent.node.nodeId;
     this.socket = socket;
 
     this.socket.on('message', this.onMessage.bind(this) );

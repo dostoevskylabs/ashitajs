@@ -22,10 +22,13 @@ class Core extends WebSocketServer {
   constructor ( Object, port ) {
     super( Object );
     this.on('connection', this.onConnection );
-    this.ownerId = btoa(`127.0.0.1:${port}`);
+    this.node = {
+      nodeId : btoa(`127.0.0.1:${port}`),
+      channelName : "default"
+    };
     this.nodes   = {};
 
-    Logger.notice(`Server started. Visit http://${atob( this.ownerId )}`);
+    Logger.notice(`Server started. Visit http://${atob( this.node.nodeId )}`);
   }
 
   /**
