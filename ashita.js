@@ -12,11 +12,10 @@ const Logger          = require('./logger.js')
 const API             = require('./api.js')
 
 class Core extends WebSocketServer {
-  constructor ( Object ) {
+  constructor ( Object, port ) {
     super( Object );
     this.on('connection', this.onConnection );
-
-    this.ownerId = btoa("127.0.0.1:" + Object["server"]["_connectionKey"].split(":").pop() );
+    this.ownerId = btoa(`127.0.0.1:${port}`);
     this.nodes   = {};
 
     Logger.notice(`Server started. Visit http://${atob( this.ownerId )}`);

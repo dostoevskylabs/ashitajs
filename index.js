@@ -21,4 +21,4 @@ const ashita          = require('./ashita.js');
 
 new ashita.Core({
   server:server
-});
+}, args[0]);
