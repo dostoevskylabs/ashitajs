@@ -21,7 +21,6 @@ class API {
    */  
   constructor ( parent, socket ) {
     this.parent = parent;
-    this.ownerId = this.parent.node.nodeId;
     this.socket = socket;
 
     this.socket.on('message', this.onMessage.bind(this) );
@@ -71,6 +70,7 @@ class API {
    */   
   onClose () {
     console.log("close");
+    this.parent.nodes[this.sessionId].socket = null;
   }
 
   /**
@@ -100,9 +100,6 @@ class API {
    * isOwner
    */ 
   get isOwner () {
-    if ( this.ownerId === this.parent.getNode(this.sessionId).nodeId ) {
-      return true;
-    }
     return false;
   }
 
@@ -171,7 +168,11 @@ class API {
 
     for ( let sessionId in this.parent.getNodeList ) {
       if ( sessionId !== this.sessionId ) {
-        this.parent.getNode( sessionId ).socket.send( JSON.stringify( payload ) );
+        if ( this.parent.getNode( sessionId ).socket !== null ) {
+          this.parent.getNode( sessionId ).socket.send( JSON.stringify( payload ) );
+        } else {
+          Logger.debug(`Socket for ${sessionId} is null`);
+        }
       }
     }
 
@@ -189,13 +190,42 @@ class API {
    * handshake
    */   
   handshake () {
-    if ( this.parent.established || !this.data.content.hasOwnProperty("nodeId") ) {
+    if ( !this.data.content.hasOwnProperty("nodeId") ) {
       Logger.warn(`Invalid handshake received from ${this.sessionId}`);
       return false;
     }
-    
-    Logger.info(`Handshake initialized with ${this.sessionId}`)
+
     this.nodeId = btoa(this.data.content.nodeId);
+
+    if ( this.parent.established ) {
+      this.parent.nodes[this.sessionId].socket = this.socket;
+
+      // send this client all known peers
+      for ( let sessionId in this.parent.getNodeList ) {
+        if ( sessionId !== this.sessionId ) {
+          if ( this.parent.getNode( sessionId ).socket !== null ) {
+            this.sendClientEvent("nodeDiscovered", {
+              "nodeId" : this.parent.getNode( sessionId ).nodeId
+            });
+          }
+        }
+      }     
+      return false;
+    }
+    Logger.info(`Handshake initialized with ${this.sessionId}`);
+
+    // send this client all known peers
+    for ( let sessionId in this.parent.getNodeList ) {
+      if ( sessionId !== this.sessionId && !this.parent.node.nodeIds.includes( atob(this.parent.getNode( sessionId ).nodeId) ) ) {
+        if ( this.parent.getNode( sessionId ).socket !== null ) {
+          this.sendClientEvent("nodeDiscovered", {
+            "nodeId" : this.parent.getNode( sessionId ).nodeId
+          });
+        }
+      }
+    }
+
+
     this.parent.addNode(this.sessionId, {
       "nodeId"   : this.nodeId,
       "username" : "Anonymous",
@@ -206,17 +236,6 @@ class API {
       this.sendClientEvent("nodeOwnerConnected");
     } else {
       this.sendClientEvent("nodeConnected");
-    }
-
-    // send this client all known peers
-    for ( let sessionId in this.parent.getNodeList ) {
-      if ( sessionId !== this.sessionId ) {
-        if ( this.parent.getNode( sessionId ).nodeId !== this.ownerId ) {
-          this.sendClientEvent("nodeDiscovered", {
-            "nodeId" : this.parent.getNode( sessionId ).nodeId
-          });
-        }
-      }
     }
 
     this.sendNodeEvent("nodeDiscovered", {
@@ -234,9 +253,9 @@ class API {
       channelName: this.parent.node.channelName
     });
 
+    this.parent.established = true;
     Logger.info(`Handshake Established with ${this.sessionId}`);
     this.printPeers();
-    this.parent.established = true;
   }
 
   /**

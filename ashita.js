@@ -6,11 +6,13 @@
  * @author     mooglesonthecob
  */
 "use strict";
-const WebSocketServer = require('ws').Server;
-const btoa            = require('btoa');
-const atob            = require('atob');
-const API             = require('./api.js');
-const Logger          = require('./logger.js');
+const os                = require('os');
+const WebSocketServer   = require('ws').Server;
+const networkInterfaces = os.networkInterfaces();
+const btoa              = require('btoa');
+const atob              = require('atob');
+const API               = require('./api.js');
+const Logger            = require('./logger.js');
 
 class Core extends WebSocketServer {
   /**
@@ -23,12 +25,18 @@ class Core extends WebSocketServer {
     super( Object );
     this.on('connection', this.onConnection );
     this.node = {
-      nodeId : btoa(`127.0.0.1:${port}`),
+      nodeIds     : [],
       channelName : "default"
     };
-    this.nodes   = {};
 
-    Logger.notice(`Server started. Visit http://${atob( this.node.nodeId )}`);
+    for ( let i in networkInterfaces ) {
+      for ( let iface in networkInterfaces[i] ) {
+        this.node.nodeIds.push(networkInterfaces[i][iface].address + ":" + port);
+      }
+    }
+    
+    this.nodes   = {};
+    Logger.notice(`Server started. Visit http://127.0.0.1:${port}`);
   }
 
   /**
