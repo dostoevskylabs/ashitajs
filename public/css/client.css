@@ -15,6 +15,7 @@
 	--color-address: #607c8a;
 }
 
+
 body{
 	font-family: 'Open Sans', sans-serif;
 	font-size: 0.90em;
@@ -40,11 +41,6 @@ a:link, a:visited {
 #menu{
 	background-color: var(--color-menu);
 	grid-area: menu;
-	/*
- 	border-right: 1px solid var(--color-border);
-	border-radius:5px;
-	margin: 5px;
-	*/
 }
 
 #logo{
@@ -55,66 +51,35 @@ a:link, a:visited {
 }
 
 .node{
-	font-weight: 600;
-	background-color: var(--color-border);
-	border-radius: 5px;
-	padding: 10px;
-	margin: 2px 5px;
-}
-
-.nodeTest{
 	padding: 5px 10px;
 	display: grid;
 	grid-template-areas: "left center right" "left bottom bottom";
 	grid-template-columns: auto 1fr auto;
 	grid-template-rows: 1fr 1fr;
 }
-.nodeLeft{
+
+.nodeIndicator{
 	width: 0.5em;
 	margin: 10px 0.5em 10px 0;
 	grid-area: left;
-/* 	background: url("../assets/node.svg") center center no-repeat;
-	background-size: 20px */
 	background-color: #4fbc44;
 	border-radius: 3px;
-	
 }
-.nodeCenter{
+
+.nodeTitle{
 	font-weight: bold;
 	font-size: 1.05em;
 	grid-area: center;
 }
+
 .nodeRight{
 	grid-area: right;
 }
-.nodeBottom{
+
+.nodeAddress{
 	color: var(--color-address);
 	font-size: 0.9em;
 	grid-area: bottom;
-}
-
-
-.icon, .address{
-	float: left;
-}
-
-.icon{
-	width: 20px;
-	margin-right: 5px;
-}
-
-.node:after{
-	content: ' ';
-	display: block;
-	clear: both;
-}
-
-.address{
-
-}
-
-.port{
-	color:#bc6897;
 }
 
 #output{
@@ -122,6 +87,7 @@ a:link, a:visited {
 	grid-area: output;
 	height: auto;
 	overflow-y: scroll;
+
 	/*	display: grid;
 	grid-template-columns: 4em 9em auto;
 	grid-gap: 5px;*/
@@ -151,7 +117,7 @@ a:link, a:visited {
 }
 
 .warning .user{
-	color:rgb(175, 175, 37);
+	color: rgb(175, 175, 37);
 }
 
 .notice .user{
@@ -164,10 +130,6 @@ a:link, a:visited {
 	grid-template-areas: 'message';
 }
 
-.entry div{
-	/*display:inline-block;*/
-}
-
 .date{
 	color: #5d5d5d;
 	grid-area: date;
@@ -176,11 +138,13 @@ a:link, a:visited {
 .user{
 	font-weight: 600;
 	grid-area: user;
+
 	/*width: 8rem;*/
 }
 
 .msg{
 	grid-area: message;
+
 	/*display: inline-block*/
 }
 
@@ -195,11 +159,11 @@ a:link, a:visited {
 }
 
 .button{
-	background-color:#1a1a1a;
+	background-color: #1a1a1a;
 	border-radius: 5px;
 	border: 1px solid #2a2a2a;
 	margin: 2px;
-	color:#efefef;
+	color: #efefef;
 }
 
 #input{
@@ -209,5 +173,5 @@ a:link, a:visited {
 	padding-left: 20px;
 	border-radius: 5px;
 	margin: 5px;
-	color:#e9e9e9;
+	color: #e9e9e9;
 }

@@ -59,7 +59,7 @@ class AshitaSocket extends WebSocket {
 
   onOpen ( event ) {
     //console.info("Socket => onOpen", event);
-    this.handshake();
+    this.handshake(event);
   }
 
   onClose ( event ) {
@@ -107,6 +107,7 @@ class AshitaSocket extends WebSocket {
   }
 
   handshake () {
+    
     this.send({
       "type"    : "handshake",
       "content" : {
@@ -283,31 +284,31 @@ class UI {
 
 
     let elNode = UI.HTMLElement("div", {
-      "class"       : "nodeTest",
+      "class"       : "node",
       "data-nodeid" : node.nodeId
     });
 
-    let elIcon = UI.HTMLElement("div", {
-      "class" : "nodeLeft"
+    let elIndicator = UI.HTMLElement("div", {
+      "class" : "nodeIndicator"
     });
 
     let elTitle = UI.HTMLElement("div", {
-      "class" : "nodeCenter"
+      "class" : "nodeTitle"
     }, node.channelName);
 
-    let elIndicator = UI.HTMLElement("div", {
+    let elRight = UI.HTMLElement("div", {
       "class" : "nodeRight"
     });
 
     let elAddress = UI.HTMLElement("div", {
-      "class" : "nodeBottom"
+      "class" : "nodeAddress"
     }, `${parts[0]} : ${parts[1]}`);
 
     elNode.addEventListener("click", this.nodeClick.bind( this ), false);
 
-    elNode.appendChild(elIcon);
-    elNode.appendChild(elTitle);
     elNode.appendChild(elIndicator);
+    elNode.appendChild(elTitle);
+    elNode.appendChild(elRight);
     elNode.appendChild(elAddress);
 
 
