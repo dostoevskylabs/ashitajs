@@ -8,8 +8,8 @@
 const WebSocketServer = require('ws').Server;
 const btoa            = require('btoa');
 const atob            = require('atob');
-const Logger          = require('./logger.js')
-const API             = require('./api.js')
+const API             = require('./api.js');
+const Logger          = require('./logger.js');
 
 class Core extends WebSocketServer {
   constructor ( Object, port ) {
