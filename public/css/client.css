@@ -2,13 +2,17 @@
 
 
 :root{
+	--color-menu: #37474F;
 	--color-text: #FBFBFB;
-	--color-back: #1d1d1d;
+	--color-back: #263238;
 	--color-red: #A30B37;
 	--color-blue: #0D5C63;
 	--color-purple: #842353;
 	--color-border: #0000004d;
 	--color-submenu: #201A23;
+	--color-inputBack: #455A64;
+	--color-input: #263238;
+	--color-address: #607c8a;
 }
 
 body{
@@ -34,9 +38,8 @@ a:link, a:visited {
 }
 
 #menu{
-	background-color: #101010;
+	background-color: var(--color-menu);
 	grid-area: menu;
-
 	/*
  	border-right: 1px solid var(--color-border);
 	border-radius:5px;
@@ -85,7 +88,7 @@ a:link, a:visited {
 	grid-area: right;
 }
 .nodeBottom{
-	color: #6c6c6c;
+	color: var(--color-address);
 	font-size: 0.9em;
 	grid-area: bottom;
 }
@@ -119,7 +122,7 @@ a:link, a:visited {
 	grid-area: output;
 	height: auto;
 	overflow-y: scroll;
-/*	display: grid;
+	/*	display: grid;
 	grid-template-columns: 4em 9em auto;
 	grid-gap: 5px;*/
 }
@@ -182,15 +185,13 @@ a:link, a:visited {
 }
 
 #bottom{
-	/* background-color: #303030; */
+	background-color: #455A64;
 	grid-area: bottom;
 	position: relative;
 	display: grid;
 	grid-template-areas: 'a b c . . . . . . . . . .' 'input input input input input input input input input input input input input';
 	grid-template-columns: 0.2fr 0.2fr 0.2fr 5fr;
 	grid-template-rows: 0.8fr 1fr;
-
-
 }
 
 .button{
@@ -204,7 +205,7 @@ a:link, a:visited {
 #input{
 	grid-area: input;
 	border: none;
-	background-color: #292929;
+	background-color: var(--color-input);
 	padding-left: 20px;
 	border-radius: 5px;
 	margin: 5px;

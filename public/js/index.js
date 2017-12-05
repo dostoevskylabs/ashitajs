@@ -196,7 +196,7 @@ class Ashita {
     this.nodes.set( node.nodeId, node );
 
     if ( this.ui ) {
-      this.ui.addNode( node.nodeId );
+      this.ui.addNode( {nodeId: node.nodeId, channelName: data.channelName} );
     }
 
     if ( this.state === undefined ) {
@@ -278,22 +278,22 @@ class UI {
     this.changeNode( event.currentTarget.dataset.nodeid );
   }
 
-  addNode ( nodeId ) {
-    const parts = atob( nodeId ).split(":");
+  addNode ( node ) {
+    const parts = atob( node.nodeId ).split(":");
 
 
     let elNode = UI.HTMLElement("div", {
       "class"       : "nodeTest",
-      "data-nodeid" : nodeId
+      "data-nodeid" : node.nodeId
     });
 
-    let elIcon = UI.HTMLElement("img", {
+    let elIcon = UI.HTMLElement("div", {
       "class" : "nodeLeft"
     });
 
     let elTitle = UI.HTMLElement("div", {
       "class" : "nodeCenter"
-    }, "Temp Title");
+    }, node.channelName);
 
     let elIndicator = UI.HTMLElement("div", {
       "class" : "nodeRight"
