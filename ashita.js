@@ -30,7 +30,7 @@ class Core extends WebSocketServer {
     };
     
     this.nodes   = {};
-    Logger.notice(`Server started. Visit ${this.nodeHost}`);
+    Logger.notice(`${this.nodeHost}\tServer Started.`);
   }
 
   /**

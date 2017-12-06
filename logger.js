@@ -54,10 +54,28 @@ class Logger {
     }
   }
 
+  static clearPeers() {
+    cli.peerScreen.clearItems();
+  }
+
+  static peer ( message ) {
+    if ( verbosity[INFO] ) {
+      cli.peerScreen.addItem( message );
+    }   
+  }
+  
+  static quit( message ) {
+    cli.logScreen.add( color.Red + `[${getTime()}] ` + message );
+  }
+
   static notice ( ...message ) { 
     if ( verbosity[NOTICE] ) {
       cli.logScreen.add( color.Green + `[${getTime()}] `, ...message );
     }
+  }
+
+  static message( message ) {
+    cli.chatScreen.add( color.White + `[${getTime()}] ` + message );
   }
 
   static security ( ...message ) {
@@ -65,16 +83,6 @@ class Logger {
       cli.securityScreen.add(color.Red + `[${getTime()}] `, ...message );
     }   
   }
-
-  static clearPeers() {
-    cli.peerScreen.setContent('');
-  }
-  
-  static peer ( ...message ) {
-    if ( verbosity[NOTICE] ) {
-      cli.peerScreen.add(color.Green + ``, ...message );
-    }   
-  }  
 
   static info ( ...message ) { 
     if ( verbosity[INFO] ) {

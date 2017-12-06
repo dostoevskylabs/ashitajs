@@ -68,9 +68,11 @@ class API {
    * onClose
    */   
   onClose () {
-    Logger.info(`${this.remoteHost}\tQUIT`);
+    Logger.quit(`${this.remoteHost}\tQUIT`);
     if ( this.parent.getNode( this.sessionId ) ) {
       this.parent.nodes[this.sessionId].socket = null;
+      this.socket = null;
+      return false;
     }
     this.printPeers();
   }
@@ -146,6 +148,9 @@ class API {
       "content" : data
     };
     
+    if ( this.socket === null ) {
+      return false;
+    }
     this.socket.send( JSON.stringify( payload ) );
 
     Logger.debug(`${this.remoteHost}\tSending Client Event: ${event}`)
@@ -285,7 +290,7 @@ class API {
       message : this.data.content.message
     });
 
-    Logger.info(`${this.remoteHost}\t<${this.data.content.username}> ${this.data.content.message}`)
+    Logger.message(`${this.remoteHost}\t<${this.data.content.username}> ${this.data.content.message}`)
   }
 }
 
