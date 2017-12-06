@@ -72,6 +72,7 @@ class API {
     if ( this.parent.getNode( this.sessionId ) ) {
       this.parent.nodes[this.sessionId].socket = null;
     }
+    this.printPeers();
   }
 
   /**
@@ -123,8 +124,11 @@ class API {
    * printPeers
    */ 
   printPeers () {
+    Logger.clearPeers();
     for ( let sessionId in this.parent.getNodeList ) {
-      Logger.peer(atob(this.parent.nodes[sessionId].nodeId));
+      if ( this.parent.nodes[sessionId].socket !== null ) {
+        Logger.peer(atob(this.parent.nodes[sessionId].nodeId));
+      }
     }
   }
 

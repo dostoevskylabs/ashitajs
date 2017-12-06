@@ -66,6 +66,10 @@ class Logger {
     }   
   }
 
+  static clearPeers() {
+    cli.peerScreen.setContent('');
+  }
+  
   static peer ( ...message ) {
     if ( verbosity[NOTICE] ) {
       cli.peerScreen.add(color.Green + ``, ...message );
