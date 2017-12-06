@@ -13,6 +13,7 @@
   "license": "GPL-3.0",
   "dependencies": {
     "atob": "latest",
+    "blessed": "^0.1.81",
     "btoa": "latest",
     "express": "latest",
     "validator": "latest",

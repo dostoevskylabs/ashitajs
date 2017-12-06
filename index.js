@@ -19,6 +19,7 @@ const app               = express();
 const server            = http.createServer( app ).listen( args[0] );
 const ashita            = require('./ashita.js');
 const Logger            = require('./logger.js');
+const cli               = require('./cli.js');
 Logger.setVerbosity(Logger.WARN, Logger.INFO, Logger.NOTICE, Logger.ERROR, Logger.DEBUG);
 let interfaces = os.networkInterfaces();
 let nodeHost = undefined;
@@ -32,12 +33,12 @@ for (let k in interfaces) {
 }
 
 app.get('/', function ( req, res, next ) {
-  console.log(req.headers.host);
   if ( req.headers.host !== nodeHost ) {
     return res.redirect("http://" + nodeHost);
   }
   next();
 });
+
 app.use( express.static( path.join(__dirname, '/public') ) );
 new ashita.Core({
   server:server

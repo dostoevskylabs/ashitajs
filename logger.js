@@ -7,6 +7,7 @@
  */
 /* eslint-disable no-console */
 "use strict";
+const cli               = require('./cli.js');
 const color     = require("./color.js");
 const getTime   = () => Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "numeric", second: "numeric"}).format( Date.now() );
 //const verbosity = {};
@@ -55,31 +56,43 @@ class Logger {
 
   static notice ( ...message ) { 
     if ( verbosity[NOTICE] ) {
-      console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message );
+      cli.logScreen.add( color.Green + `[${getTime()}] `, ...message );
     }
   }
 
+  static security ( ...message ) {
+    if ( verbosity[NOTICE] ) {
+      cli.securityScreen.add(color.Red + `[${getTime()}] `, ...message );
+    }   
+  }
+
+  static peer ( ...message ) {
+    if ( verbosity[NOTICE] ) {
+      cli.peerScreen.add(color.Green + ``, ...message );
+    }   
+  }  
+
   static info ( ...message ) { 
     if ( verbosity[INFO] ) {
-      console.info( color.White + `[INFO\t- ${getTime()}] `, ...message );
+      cli.logScreen.add( color.Blue + `[${getTime()}] `, ...message );
     }
   }   
 
   static warn ( ...message ) { 
     if ( verbosity[WARN] ) {
-      console.log( color.Yellow + `[WARN\t- ${getTime()}] `, ...message );
+      cli.logScreen.add( color.Yellow + `[${getTime()}] `, ...message );
     }
   }
 
   static debug ( ...message ) { 
     if ( verbosity[DEBUG] ) {     
-      console.log( color.Blue + `[DEBUG\t- ${getTime()}] `, ...message );
+      cli.debugScreen.add( color.Yellow + `[${getTime()}] `, ...message );
     }
   } 
 
   static error ( ...message ) { 
     if ( verbosity[ERROR] ) {
-      console.log( color.Red + `[ERROR\t- ${getTime()}] `, ...message );
+      cli.debugScreen.add( color.Red + `[${getTime()}] `, ...message );
     }
   }
 }

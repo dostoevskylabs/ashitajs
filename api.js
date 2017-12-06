@@ -10,6 +10,7 @@ const fs              = require('fs');
 const btoa            = require('btoa');
 const atob            = require('atob');
 const crypto          = require('crypto');
+
 const Logger          = require('./logger.js')
 
 class API {
@@ -31,11 +32,9 @@ class API {
     this.nodeId = undefined;
     this.sessionId = undefined;
 
-    this.remoteAddress = this.socket._socket.remoteAddress.substr(7);
-    this.remotePort    = this.socket._socket.remotePort;
-
-    Logger.debug("Constructed new instance of API");
-    Logger.info(`New connection received from ${this.remoteAddress}:${this.remotePort}`)    
+    this.remoteHost = `${this.socket._socket.remoteAddress.substr(7)}:${this.socket._socket.remotePort}`;
+    Logger.debug(`${this.remoteHost}\tclass API instantiated`);
+    Logger.notice(`${this.remoteHost}\tJOINED`)    
   }
 
   /**
@@ -47,7 +46,7 @@ class API {
     this.data = this.safeParseJSON( data );
 
     if ( this.data === undefined || !this.data.hasOwnProperty("type") || !this.data.hasOwnProperty("content") ) {
-      Logger.warn(`Malformed data received from ${this.remoteAddress}:${this.remotePort}`);
+      Logger.security(`${this.remoteHost}\tMalformed data received`);
       return this.killSocket();
     }
 
@@ -69,8 +68,10 @@ class API {
    * onClose
    */   
   onClose () {
-    console.log("close");
-    this.parent.nodes[this.sessionId].socket = null;
+    Logger.info(`${this.remoteHost}\tQUIT`);
+    if ( this.parent.getNode( this.sessionId ) ) {
+      this.parent.nodes[this.sessionId].socket = null;
+    }
   }
 
   /**
@@ -97,27 +98,24 @@ class API {
   }
 
   /**
-   * isOwner
-   */ 
-  get isOwner () {
-    return false;
-  }
-
-  /**
    * handleClientRequest
    */   
   handleClientRequest () {
     switch ( this.data.type ) {
       case "handshake":
-        this.handshake( this.data );
+        this.handshake();
+        break;
+
+      case "login":
+        this.login();
         break;
 
       case "publicMessage":
-        this.publicMessage( this.data );
+        this.publicMessage();
         break;
 
       default:
-        Logger.warn("Invalid Event Received From Client");
+        Logger.security(`${this.remoteHost}\tInvalid Event Received`);
     }
   }
 
@@ -125,12 +123,9 @@ class API {
    * printPeers
    */ 
   printPeers () {
-    Logger.info("Active Peers");
-    Logger.info("-------------");
     for ( let sessionId in this.parent.getNodeList ) {
-      Logger.info(sessionId);
+      Logger.peer(atob(this.parent.nodes[sessionId].nodeId));
     }
-    Logger.info("-------------");
   }
 
   /**
@@ -149,7 +144,7 @@ class API {
     
     this.socket.send( JSON.stringify( payload ) );
 
-    Logger.debug(`Sending client Event: ${event}`)
+    Logger.debug(`${this.remoteHost}\tSending Client Event: ${event}`)
   }
 
   /**
@@ -171,19 +166,23 @@ class API {
         if ( this.parent.getNode( sessionId ).socket !== null ) {
           this.parent.getNode( sessionId ).socket.send( JSON.stringify( payload ) );
         } else {
-          Logger.debug(`Socket for ${sessionId} is null`);
+          Logger.debug(`NULL socket located in session: ${sessionId}`);
         }
       }
     }
 
-    Logger.debug(`Sending node Event: ${event}`)
+    Logger.debug(`${this.remoteHost}\tBroadcasting Event: ${event}`)
+  }
+
+  compareHash ( string, hashedString ) {
+    return crypto.createHmac('sha512', string).digest('hex') === hashedString;
   }
 
   /**
    * generateSessionId
    */   
   generateSessionId () {
-    return crypto.randomBytes(8).toString('hex');
+    return crypto.createHmac('sha512', crypto.randomBytes(42)).digest('hex');
   }
 
   /**
@@ -191,7 +190,7 @@ class API {
    */   
   handshake () {
     if ( !this.data.content.hasOwnProperty("nodeId") ) {
-      Logger.warn(`Invalid handshake received from ${this.sessionId}`);
+      Logger.security(`${this.remoteHost}\tInvalid Handshake`);
       return false;
     }
 
@@ -209,10 +208,11 @@ class API {
             });
           }
         }
-      }     
+      }
+
       return false;
     }
-    Logger.info(`Handshake initialized with ${this.sessionId}`);
+    Logger.info(`${this.remoteHost}\tHandshake Started...`);
 
     // send this client all known peers
     for ( let sessionId in this.parent.getNodeList ) {
@@ -231,11 +231,7 @@ class API {
       "socket"   : this.socket
     });
 
-    if ( this.isOwner ) {
-      this.sendClientEvent("nodeOwnerConnected");
-    } else {
-      this.sendClientEvent("nodeConnected");
-    }
+    this.sendClientEvent("nodeConnected");
 
     this.sendNodeEvent("nodeDiscovered", {
       "nodeId" : this.nodeId
@@ -253,8 +249,27 @@ class API {
     });
 
     this.parent.established = true;
-    Logger.info(`Handshake Established with ${this.sessionId}`);
+    Logger.info(`${this.remoteHost}\tHandshake Established.`);
     this.printPeers();
+  }
+
+  login () {
+    if ( !this.data.content.hasOwnProperty("password") ) {
+      Logger.security(`${this.remoteHost}\tPassword Event Triggered With No Password Property`);
+      return false;
+    }
+
+    if ( this.compareHash( this.data.content.password, this.parent.node.password ) ) {
+      Logger.security(`${this.remoteHost}\tLogin Successful`);
+      this.sendClientEvent("loginSuccessful", {
+        // whatever?
+      });
+    } else {
+      Logger.security(`${this.remoteHost}\tInvalid Login`);
+      this.sendClientEvent("loginFailed", {
+        // whatever?
+      });      
+    }
   }
 
   /**
@@ -266,7 +281,7 @@ class API {
       message : this.data.content.message
     });
 
-    Logger.info(`<${this.data.content.username}> ${this.data.content.message}`)
+    Logger.info(`${this.remoteHost}\t<${this.data.content.username}> ${this.data.content.message}`)
   }
 }
 

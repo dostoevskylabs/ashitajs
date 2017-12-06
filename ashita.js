@@ -7,7 +7,7 @@
  */
 "use strict";
 const WebSocketServer   = require('ws').Server;
-
+const crypto            = require('crypto');
 const btoa              = require('btoa');
 const atob              = require('atob');
 const API               = require('./api.js');
@@ -25,7 +25,8 @@ class Core extends WebSocketServer {
     this.on('connection', this.onConnection );
     this.nodeHost = nodeHost;
     this.node = {
-      channelName : "default"
+      channelName : "default",
+      password    : "676257ebf7eea3567840f15ab128747cf0153c4296d607f322930b05664246f66a4743724456e6706124c913cc3bb1159522777e95057bd54c5d78b4dd37a6c8"
     };
     
     this.nodes   = {};
@@ -39,7 +40,8 @@ class Core extends WebSocketServer {
    */
   onConnection ( socket ) {
     if ( socket._socket.remoteAddress.substr(7) === "127.0.0.1" ) {
-      Logger.error("Establishing connection to localhost. is forbidden."); return;
+      Logger.error("Establishing connection to localhost. is forbidden.");
+      return false;
     }
     this.established = false;
     new API( this, socket );
@@ -75,7 +77,6 @@ class Core extends WebSocketServer {
      * TODO: Write checks to see if the object already exists/sessionId is valid/etc
      */
     this.nodes[sessionId] = nodeObject;
-    Logger.info(`New peer session: ${sessionId}`)
   }
 }
 
