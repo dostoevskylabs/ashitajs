@@ -1,45 +1,49 @@
-/**
- * ashita/index
- *
- * @package    ashita
- * @author     dostoevskylabs
- * @author     mooglesonthecob
- */
 "use strict";
 const args = process.argv.slice( 2 );
 
 if ( args.length !== 1 ) {
   args[0] = 8000;
 }
+
+const nodeManager       = require('./nodeManager.js');
 const os                = require('os');
 const path              = require('path');
-const http              = require('http');
-const express           = require('express');
-const app               = express();
-const server            = http.createServer( app ).listen( args[0] );
-const ashita            = require('./ashita.js');
-const Logger            = require('./logger.js');
+const net               = require('net');
 const cli               = require('./cli.js');
-Logger.setVerbosity(Logger.WARN, Logger.INFO, Logger.NOTICE, Logger.ERROR, Logger.DEBUG);
-let interfaces = os.networkInterfaces();
+const node              = require('./node.js');
+const client            = require('./client.js');
+const gui               = require('./gui.js');
+
+
+let interfaces          = os.networkInterfaces();
 let nodeHost = undefined;
-for (let k in interfaces) {
-  for (let k2 in interfaces[k]) {
+for ( let k in interfaces ) {
+  for ( let k2 in interfaces[k] ) {
     let address = interfaces[k][k2];
     if ( address.family === 'IPv4' && !address.internal ) {
-      nodeHost = address.address + ":" + args[0];
+      nodeHost = address.address;
     }
   }
 }
 
-app.get('/', function ( req, res, next ) {
-  if ( req.headers.host !== nodeHost ) {
-    return res.redirect("http://" + nodeHost);
+new node.AshitaNode(nodeHost, args[0]);
+
+cli.screens["nodeHost"].on("submit", function( node ) {
+  console.log(node);
+  let host = `${node.split(":")[0]}`; 
+  let port = `${node.split(":")[1]}`;
+  if ( nodeManager.getNode(`${host}:${port}`) ) {
+    cli.screens["nodeHost"].setValue('');
+    cli.screens["AddNode"].setBack();
+    return false;
   }
-  next();
+  
+  new client.AshitaClient(args[0], host, port);
+
+  cli.screens["nodeHost"].setValue('');
+  cli.screens["AddNode"].setBack();  
 });
 
-app.use( express.static( path.join(__dirname, '/public') ) );
-new ashita.Core({
-  server:server
-}, nodeHost);
+
+
+new gui();

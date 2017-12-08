@@ -1,17 +1,4 @@
-/**
- * ashita/client
- *
- * @package    ashita/client
- * @author     dostoevskylabs
- * @author     mooglesonthecob
- */
 "use strict";
-
-/**
- * ashita/client/Messages
- * 
- * @package ashita/client
- */
 class Messages {
   constructor () {
     this.publicMessages  = [];
@@ -26,16 +13,9 @@ class Messages {
   }
 }
 
-/**
- * ashita/client/AshitaSocket
- * 
- * @package ashita/client
- * @extends WebSocket
- */
 class AshitaSocket extends WebSocket {
-  constructor ( nodeId ) {
-    super("ws://" + nodeId);
-    this.nodeId = btoa( nodeId );
+  constructor () {
+    super("ws://127.0.0.1:60000");
     this.addEventListener("open", this.onOpen);
     this.addEventListener("close", this.onClose);
     this.addEventListener("message", this.onMessage);
@@ -43,27 +23,20 @@ class AshitaSocket extends WebSocket {
 
     this.onReceiveMOTD = undefined;
     this.onPublicMessage = undefined;
-    this.onNodeDiscovery = undefined;
-    this.onHandshakeEstablished = undefined;
+    this.onPeerDiscovery = undefined;
     this.messages = new Messages();
   }
 
   send ( data ) {
-    //console.info("AshitaSocket => send", data);
-
-    data = JSON.stringify(data);
+    data = JSON.stringify( data );
     if ( this.readyState === this.OPEN ) {
       super.send( data );
     }
   }
 
-  onOpen ( event ) {
-    //console.info("Socket => onOpen", event);
-    this.handshake(event);
-  }
+  onOpen ( event ) {}
 
   onClose ( event ) {
-    //console.info("Socket => onClose", event);
     if ( event.code === 3001 ) {
       //console.log("disconnected");
     } else {
@@ -72,100 +45,82 @@ class AshitaSocket extends WebSocket {
   }
 
   onMessage ( event ) {
-    //console.info("Socket => onMessage", event);
-
     let data = JSON.parse( event.data );
-
     if ( this.readyState === this.OPEN ) {
       switch ( data.type ) {
-        case "nodeOwnerConnected":
-          //console.info("nodeOwnerConnected Event Received");
-          break;
         case "MOTD":
-          this.onReceiveMOTD( this.nodeId, data.content );
+          console.log(data);
+          this.onReceiveMOTD( data );
           break;
-        case "nodeConnected":
-          //console.info("nodeConnected Event Received");
+
+        case "peerDiscovered":
+          this.onPeerDiscovery( data );
           break;
-        case "nodeDiscovered":
-          this.onNodeDiscovery( data.content.nodeId );
-          break;
+
         case "publicMessage":
-          this.onPublicMessage( this.nodeId, data.content );
-          break;
-        case "handshakeEstablished":
-          this.onHandshakeEstablished( this, data.content );
+          this.onPublicMessage( data );
           break;
         default:
-          //console.log("Unhandled Event");
+          // pass
       }
     }
   }
 
-  onError ( event ) {
-    console.error("Socket => onError", event);
-  }
-
-  handshake () {
-    
-    this.send({
-      "type"    : "handshake",
-      "content" : {
-        "sessionId" : localStorage.getItem(this.nodeId),
-        "nodeId"    : location.host
-      }
-    });
-  }
+  onError ( event ) {}
 }
 
-/**
- * ashita/client
- * 
- * @package ashita/client
- */
 class Ashita {
   constructor ( ui = undefined ) {
-    this.nodes = new Map();
     this.ui = ui;
     this.state = undefined;
-    this.addNode( location.host );
+
+    this.node = new AshitaSocket();
+
+    this.peers = new Map();
+
+    this.addPeer( "127.0.0.1:8000" );
+
+    this.node.onReceiveMOTD = this.onReceiveMOTD.bind( this );
+    this.node.onPublicMessage = this.onPublicMessage.bind( this );
+    this.node.onPeerDiscovery = this.onPeerDiscovery.bind( this );
+
     this.ui.onInput = this.onUiInput.bind( this );
-    this.ui.changeNode = this.onUiChangeNode.bind( this );
+    this.ui.changePeer = this.onUiChangePeer.bind( this );
   }
 
-  onUiChangeNode ( nodeId ) {
-    if ( !this.nodes.has( nodeId ) ) {
+  onUiChangePeer ( peerId ) {
+    if ( !this.peers.has( peerId ) ) {
       return false;
     }
-    let node = this.nodes.get( nodeId );
-    this.state = node;
+    let peer = this.peers.get( peerId );
+    this.state = peer;
     // hack
     if ( this.ui ) {
       let output = document.getElementById("output");
       output.innerHTML = "";
-      for ( let i = 0; i < this.state.messages.getPublicMessages.length; i++ ) {
+      for ( let i = 0; i < this.node.messages.getPublicMessages.length; i++ ) {
         let entry = {};
-        for ( let key in this.state.messages.getPublicMessages[i] ) {
-          entry[key] = this.state.messages.getPublicMessages[i][key];
+        for ( let key in this.node.messages.getPublicMessages[i] ) {
+          entry[key] = this.node.messages.getPublicMessages[i][key];
         }
         this.ui.print( entry );        
       }
     }
-    //console.info("onUiChangeNode", this.state);
   }
 
   onUiInput ( data ) {
-    this.state.send({
+    this.node.send({
       type     : "publicMessage",
       content  : {
-        sessionId : localStorage.getItem(this.state.nodeId),
+        peerId   : this.state,
         username : data.username,
         message  : data.message,
       }
     });
-
-    this.state.messages.storePublicMessage({
+    console.log(data);
+    this.node.messages.storePublicMessage({
       timestamp: Date.now(),
+      peerId   : this.state,
       username : data.username,
       message  : data.message
     });
@@ -173,65 +128,59 @@ class Ashita {
     if ( this.ui ) {
       this.ui.print({
         "timestamp": Date.now(),
+        "peerId"   : this.state,
         "username" : data.username,
         "message"  : data.message
       });
     }    
   }
 
-  addNode ( nodeId ) {
-    if ( this.nodes.has( btoa( nodeId ) ) ) {
+  addPeer ( peerId ) {
+    if ( this.peers.has( btoa( peerId ) ) ) {
       return false;
     }
-    let node = new AshitaSocket( nodeId );
-    node.onReceiveMOTD = this.onReceiveMOTD.bind( this );
-    node.onPublicMessage = this.onPublicMessage.bind( this );
-    node.onNodeDiscovery = this.onNodeDiscovery.bind( this );
-    node.onHandshakeEstablished = this.onHandshakeEstablished.bind( this );
-  }
+    peerId = btoa(peerId);
 
-  onHandshakeEstablished ( node, data ) {
-    if ( this.nodes.has( node.nodeId ) ) {
-      return false;
-    }
-    this.nodes.set( node.nodeId, node );
 
+    this.peers.set( peerId, "test");
     if ( this.ui ) {
-      this.ui.addNode( {nodeId: node.nodeId, channelName: data.channelName} );
+      this.ui.addPeer({peerId: peerId, channelName: "default"});
+
+      if ( this.state === undefined ) {
+        this.state = peerId;
+      }
     }
 
-    if ( this.state === undefined ) {
-      this.state = node;
-    }
-    localStorage.setItem(node.nodeId, data.sessionId);
   }
 
-  onReceiveMOTD ( nodeId, data ) {
-    //console.log("onReceiveMOTD", this);
-    this.nodes.get( nodeId ).messages.storePublicMessage({
+  onReceiveMOTD ( data ) {
+    this.node.messages.storePublicMessage({
       type     : "blank",
+      peerId   : data.peerId,
       message  : data.MOTD
     });     
-    
+
     if ( this.ui ) {
-      if ( this.state.nodeId === nodeId ) {
+      if ( this.state === data.peerId ) {
         this.ui.print({
           type    : "blank",
+          peerId  : data.peerId,
           message : data.MOTD
         });
       }
     }    
   }
 
-  onPublicMessage ( nodeId, data ) {
-    this.nodes.get( nodeId ).messages.storePublicMessage({
+  onPublicMessage ( data ) {
+    this.node.messages.storePublicMessage({
       timestamp: Date.now(),
+      peerId   : data.peerId,
       username : data.username,
       message  : data.message
     });
 
     if ( this.ui ) {
-      if ( this.state.nodeId === nodeId ) {
+      if ( this.state === data.peerId ) {
         this.ui.print({
           timestamp: Date.now(),
           username : data.username,
@@ -241,51 +190,47 @@ class Ashita {
     }     
   }
 
-  onNodeDiscovery ( nodeId ) {
-    if ( this.nodes.has( nodeId ) || this.state.nodeId === nodeId ) {
+  onPeerDiscovery ( data ) {
+    if ( this.peers.has( data.peerId ) || this.state === data.peerId ) {
       return false;
     }
 
-    this.addNode( atob( nodeId ) );
+    this.addPeer( atob( data.peerId ) );
 
     if ( this.ui ) {
       this.ui.print({
         type      : "notice",
+        peerId    : data.peerId,
         timestamp : Date.now(),
-        message   : "New peer discovered: " + nodeId
+        message   : "New peer discovered: " + data.peerId
       });
     }
   }
 }
 
-/**
- * ashita/client/UI
- * 
- * @package ashita/client
- */
 class UI {
   constructor () {
     this.input = document.getElementById("input");
     this.output = document.getElementById("output");
     this.menu = document.getElementById("menu");
 
-    this.changeNode = undefined;
+    this.changePeer = undefined;
     this.onInput = undefined;
 
     this.input.addEventListener( "keydown", this.inputKeydown.bind( this ) );
   }
 
-  nodeClick ( event ) {
-    this.changeNode( event.currentTarget.dataset.nodeid );
+  peerClick ( event ) {
+    this.changePeer( event.currentTarget.dataset.peerid );
   }
 
-  addNode ( node ) {
-    const parts = atob( node.nodeId ).split(":");
+  addPeer ( data ) {
+    const parts = atob( data.peerId ).split(":");
 
 
     let elNode = UI.HTMLElement("div", {
       "class"       : "node",
-      "data-nodeid" : node.nodeId
+      "data-peerid" : data.peerId
     });
 
     let elIndicator = UI.HTMLElement("div", {
@@ -294,7 +239,7 @@ class UI {
 
     let elTitle = UI.HTMLElement("div", {
       "class" : "nodeTitle"
-    }, node.channelName);
+    }, data.channelName);
 
     let elRight = UI.HTMLElement("div", {
       "class" : "nodeRight"
@@ -304,37 +249,12 @@ class UI {
       "class" : "nodeAddress"
     }, `${parts[0]} : ${parts[1]}`);
 
-    elNode.addEventListener("click", this.nodeClick.bind( this ), false);
+    elNode.addEventListener("click", this.peerClick.bind( this ), false);
 
     elNode.appendChild(elIndicator);
     elNode.appendChild(elTitle);
     elNode.appendChild(elRight);
     elNode.appendChild(elAddress);
-
-
-    // let elNode = UI.HTMLElement("div", {
-    //   "class"       : "node",
-    //   "data-nodeid" : nodeId
-    // });
-
-    // let elIcon = UI.HTMLElement("img", {
-    //   "class" : "icon",
-    //   "src"   : "./assets/node.svg"
-    // });
-
-    // let elAddress = UI.HTMLElement("div", {
-    //   "class" : "address"
-    // }, parts[0]);
-
-    // let elPort = UI.HTMLElement("span", {
-    //   "class" : "port"
-    // }, parts[1]);
-
-    // elNode.addEventListener("click", this.nodeClick.bind( this ), false);
-
-    // elAddress.appendChild( elPort );
-    // elNode.appendChild( elIcon );
-    // elNode.appendChild( elAddress );
 
     this.menu.appendChild( elNode );
   }
