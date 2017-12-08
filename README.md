@@ -6,7 +6,7 @@ ashitajs [![gplv3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICE
 
 ashitajs intends to be a fully decentralized P2P network (though not there yet) designed to be deployed anywhere. It's still in its infancy and a lot of work still needs to be done. Currently a PoC so security may be non-existent. Run at your own risk.
 
-![PoC](https://i.imgur.com/vJkAZoN.png)
+![PoC](https://i.imgur.com/UCh35u5.png)
 
 As a test case you can run
 ```javascript
