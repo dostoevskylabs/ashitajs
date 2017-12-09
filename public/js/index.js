@@ -15,7 +15,7 @@ class Messages {
 
 class AshitaSocket extends WebSocket {
   constructor () {
-    super("ws://127.0.0.1:60000");
+    super("ws://" + location.host);
     this.addEventListener("open", this.onOpen);
     this.addEventListener("close", this.onClose);
     this.addEventListener("message", this.onMessage);
@@ -49,16 +49,32 @@ class AshitaSocket extends WebSocket {
     if ( this.readyState === this.OPEN ) {
       switch ( data.type ) {
         case "MOTD":
-          console.log(data);
-          this.onReceiveMOTD( data );
+          this.onReceiveMOTD( data.content );
           break;
 
+        case "availablePeers":
+          console.log(data.content);
+          break;
+
+        case "subscribeSuccessful":
+          console.log(data);
+          break;
+
+        case "subscribeFailed":
+          console.log(data);
+          break;          
+
         case "peerDiscovered":
-          this.onPeerDiscovery( data );
+          this.onPeerDiscovery( data.content );
+          console.log(data);
           break;
 
         case "publicMessage":
-          this.onPublicMessage( data );
+          this.onPublicMessage( data.content );
+          break;
+
+        case "invalidEvent":
+          console.log("Unknown Event", data.content );
           break;
         default:
           // pass
@@ -77,9 +93,7 @@ class Ashita {
     this.node = new AshitaSocket();
 
     this.peers = new Map();
-
-    this.addPeer( "127.0.0.1:8000" );
-
+    
     this.node.onReceiveMOTD = this.onReceiveMOTD.bind( this );
     this.node.onPublicMessage = this.onPublicMessage.bind( this );
     this.node.onPeerDiscovery = this.onPeerDiscovery.bind( this );
@@ -136,10 +150,9 @@ class Ashita {
   }
 
   addPeer ( peerId ) {
-    if ( this.peers.has( btoa( peerId ) ) ) {
+    if ( this.peers.has( peerId ) ) {
       return false;
     }
-    peerId = btoa(peerId);
 
 
     this.peers.set( peerId, "test");
@@ -195,7 +208,7 @@ class Ashita {
       return false;
     }
 
-    this.addPeer( atob( data.peerId ) );
+    this.addPeer( data.peerId );
 
     if ( this.ui ) {
       this.ui.print({
@@ -225,8 +238,6 @@ class UI {
   }
 
   addPeer ( data ) {
-    const parts = atob( data.peerId ).split(":");
-
 
     let elNode = UI.HTMLElement("div", {
       "class"       : "node",
@@ -247,7 +258,7 @@ class UI {
 
     let elAddress = UI.HTMLElement("div", {
       "class" : "nodeAddress"
-    }, `${parts[0]} : ${parts[1]}`);
+    }, `${data.peerId}`);
 
     elNode.addEventListener("click", this.peerClick.bind( this ), false);
 

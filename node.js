@@ -34,7 +34,7 @@ class AshitaNode extends net.Server {
     data = this.safeParseJSON(data);
     if ( data.hasOwnProperty("newNode") ) {
       let host = data.newNode;
-      if ( nodeManager.getNode( host ) ) {
+      if ( nodeManager.getNode( nodeManager.generatePeerId( host ) ) ) {
         return false;
       }
 

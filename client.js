@@ -21,6 +21,7 @@ class AshitaClient extends net.Socket {
 
   onConnect( ) {
     nodeManager.addNode(`${this.nodeIp}:${this.nodePort}`, this);
+    cli.screens["Log"].add("here we go adding", this.nodeIp, this.nodePort);
     cli.screens["Debug"].add("Handshake completed with", `${this.nodeIp}:${this.nodePort}`);    
   }
 
@@ -31,13 +32,16 @@ class AshitaClient extends net.Socket {
   onTimeout () {
     cli.screens["Log"].add("Idle");
   }
+
   onError ( error ) {
     cli.screens["Debug"].add( error );
     this.destroy();
   }
+
   onClose(){
     cli.screens["Log"].add("Socket closed");
   }
+
   onEnd () {
     cli.screens["Log"].add("Socket received FIN");
   }

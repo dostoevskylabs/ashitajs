@@ -1,19 +1,24 @@
 "use strict";
 const args = process.argv.slice( 2 );
 
-if ( args.length !== 1 ) {
+if ( args.length < 1 ) {
   args[0] = 8000;
+}
+
+if ( args.length !== 2 ) {
+  args[1] = 60000;
 }
 
 const nodeManager       = require('./nodeManager.js');
 const os                = require('os');
-const path              = require('path');
 const net               = require('net');
 const cli               = require('./cli.js');
 const node              = require('./node.js');
 const client            = require('./client.js');
 const gui               = require('./gui.js');
 
+
+nodeManager.init(new gui(args));
 
 let interfaces          = os.networkInterfaces();
 let nodeHost = undefined;
@@ -43,7 +48,3 @@ cli.screens["nodeHost"].on("submit", function( node ) {
   cli.screens["nodeHost"].setValue('');
   cli.screens["AddNode"].setBack();  
 });
-
-
-
-new gui();
