@@ -1,6 +1,6 @@
 ashitajs [![gplv3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![rtfm](https://img.shields.io/readthedocs/pip/stable.svg)](README.md)
-[![nodejs](https://img.shields.io/badge/using-nodejs-green.svg)](README.md)
+[![nodejs](https://img.shields.io/badge/nodejs-v9.2.0-green.svg)](README.md)
 [![p2p](https://img.shields.io/badge/using-p2p-green.svg)](README.md)
 ================================
 
