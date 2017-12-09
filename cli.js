@@ -1,3 +1,4 @@
+"use strict";
 const blessed = require("blessed");
 const screen = blessed.screen({
   smartCSR:true

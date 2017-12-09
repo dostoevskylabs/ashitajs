@@ -1,3 +1,4 @@
+"use strict";
 const net             = require('net');
 const cli             = require('./cli.js');
 const client          = require('./client.js');

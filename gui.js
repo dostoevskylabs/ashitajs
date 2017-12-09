@@ -1,3 +1,4 @@
+"use strict";
 const cli               = require('./cli.js');
 const path              = require('path');
 const fs                = require('fs');

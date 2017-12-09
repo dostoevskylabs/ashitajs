@@ -1,3 +1,4 @@
+"use strict";
 const cli     = require('./cli.js');
 const crypto  = require('crypto');
 const nodes   = new Map();

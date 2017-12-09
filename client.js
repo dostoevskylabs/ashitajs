@@ -1,3 +1,4 @@
+"use strict";
 const net             = require('net');
 const cli             = require('./cli.js');
 const nodeManager     = require('./nodeManager.js');
