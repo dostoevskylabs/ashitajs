@@ -1,6 +1,6 @@
 "use strict";
-const cli     = require('./cli.js');
-const crypto  = require('crypto');
+const cli     = require("./cli.js");
+const crypto  = require("crypto");
 const nodes   = new Map();
 let gui       = undefined;
 class nodeManager {
@@ -19,24 +19,8 @@ class nodeManager {
     gui.peerDiscovered( nodeId );
   }
 
-  static peerObserver () {
-    return {
-      "get" : ( target, property, receiver ) => {
-        let proxyGet = Reflect.get( target, property, receiver );
-        if ( typeof proxyGet === "function" ) {
-          proxyGet = proxyGet.bind( target );    
-        }                                
-        return proxyGet;
-      },
-
-      "set" : ( target, property, value, receiver ) => {
-        return Reflect.set( target, property, value, receiver );
-      }
-    };
-  }
-
   static alertPeers ( host ) {
-    nodes.forEach(function(peerSocket, peer) {
+    nodes.forEach(function ( peerSocket, peer ) {
       if ( peer !== host ) {
         peerSocket.write(JSON.stringify({"newNode":host}));
       }
@@ -44,7 +28,7 @@ class nodeManager {
   }
 
   static generatePeerId ( peerId ) {
-    return crypto.createHmac('sha1', peerId).digest('hex')
+    return crypto.createHmac("sha1", peerId).digest("hex");
   }
 
   static getNodes () {

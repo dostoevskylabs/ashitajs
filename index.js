@@ -9,23 +9,22 @@ if ( args.length !== 2 ) {
   args[1] = 60000;
 }
 
-const nodeManager       = require('./nodeManager.js');
-const os                = require('os');
-const net               = require('net');
-const cli               = require('./cli.js');
-const node              = require('./node.js');
-const client            = require('./client.js');
-const gui               = require('./gui.js');
-
+const nodeManager       = require("./nodeManager.js");
+const os                = require("os");
+const cli               = require("./cli.js");
+const node              = require("./node.js");
+const client            = require("./client.js");
+const gui               = require("./gui.js");
 
 nodeManager.init(new gui(args));
 
+/** quick hack to get the internal IP address of the host */
 let interfaces          = os.networkInterfaces();
 let nodeHost = undefined;
-for ( let k in interfaces ) {
-  for ( let k2 in interfaces[k] ) {
-    let address = interfaces[k][k2];
-    if ( address.family === 'IPv4' && !address.internal ) {
+for ( let iface in interfaces ) {
+  for ( let property in interfaces[iface] ) {
+    let address = interfaces[iface][property];
+    if ( address.family === "IPv4" && !address.internal ) {
       nodeHost = address.address;
     }
   }
@@ -33,18 +32,17 @@ for ( let k in interfaces ) {
 
 new node.AshitaNode(nodeHost, args[0]);
 
-cli.screens["nodeHost"].on("submit", function( node ) {
-  console.log(node);
+cli.screens["nodeHost"].on("submit", function ( node ) {
   let host = `${node.split(":")[0]}`; 
   let port = `${node.split(":")[1]}`;
   if ( nodeManager.getNode(`${host}:${port}`) ) {
-    cli.screens["nodeHost"].setValue('');
+    cli.screens["nodeHost"].setValue("");
     cli.screens["AddNode"].setBack();
     return false;
   }
   
   new client.AshitaClient(args[0], host, port);
 
-  cli.screens["nodeHost"].setValue('');
+  cli.screens["nodeHost"].setValue("");
   cli.screens["AddNode"].setBack();  
 });

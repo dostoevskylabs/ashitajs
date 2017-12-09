@@ -15,7 +15,7 @@ const theme   = {
 };
 
 class ScreenManager extends blessed { 
-  static buildMenu (name, p) {
+  static buildMenu ( name, p ) {
     screens[name] = this.Listbar({
       autoCommandKeys:true,
       parent:p,
@@ -33,7 +33,7 @@ class ScreenManager extends blessed {
     });
   }
 
-  static generateList(name, p, t, l, b, r, w, h) {
+  static generateList ( name, p, t, l, b, r, w, h ) {
     screens[name] = this.list({
       parent:p,
       padding: 1,
@@ -43,7 +43,7 @@ class ScreenManager extends blessed {
       scrollonInput: true,
       mouse:true,
       keys:true,
-      selectedBg: 'black',
+      selectedBg: "black",
       fg: 255,
       search:true,
       top: t,
@@ -262,7 +262,7 @@ ScreenManager.generateText("nodeHost", screens["AddNode"], "center", "center", "
 
 screens["Dashboard"].setFront();
 
-screens["menu"].on('select', function( event ){
+screens["menu"].on("select", function( event ) {
   screens[event.$.cmd.text].setFront();
 });
 

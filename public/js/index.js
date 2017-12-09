@@ -76,6 +76,7 @@ class AshitaSocket extends WebSocket {
         case "invalidEvent":
           console.log("Unknown Event", data.content );
           break;
+
         default:
           // pass
       }

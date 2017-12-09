@@ -1,14 +1,14 @@
 "use strict";
-const cli               = require('./cli.js');
-const path              = require('path');
-const fs                = require('fs');
-const ws                = require('ws').Server;
-const nodeManager       = require('./nodeManager.js');
-const http              = require('http');
-const express           = require('express');
+const cli               = require("./cli.js");
+const path              = require("path");
+const fs                = require("fs");
+const ws                = require("ws").Server;
+const nodeManager       = require("./nodeManager.js");
+const http              = require("http");
+const express           = require("express");
 const app               = express();
 const server            = http.createServer( app );
-app.use( express.static( path.join(__dirname, '/public') ) );
+app.use( express.static( path.join(__dirname, "/public") ) );
 
 class GUI extends ws {
   constructor ( args ) {
@@ -18,10 +18,10 @@ class GUI extends ws {
 
     super({ server : guiServer });
 
-    this.on('error', (error) => {
+    this.on("error", (error) => {
       // temporary
       if ( error.code === "EADDRINUSE" ) {
-        console.log(`port ${args[1]} is already in use.\nTry: node index.js 8000 ${args[1]++}`)
+        console.log(`[!] gui listening port ${args[1]} is already in use.\nTry: node index.js ${args[0]} ${args[1]++}`)
         process.exit();
       }
       process.exit();
@@ -32,7 +32,7 @@ class GUI extends ws {
     this.clientIP     = undefined;
     this.knownPeers   = nodeManager.getNodes();
     this.subscribedTo = [];
-    this.on('connection', this.onConnection);
+    this.on("connection", this.onConnection);
   }
 
 
@@ -48,9 +48,9 @@ class GUI extends ws {
     this.socket = socket;
     this.knownPeers = nodeManager.getNodes();
     this.clientIP = this.socket._socket.remoteAddress.substr(7);
-    this.socket.on('message', this.onMessage.bind(this));
-    this.socket.on('error', this.onError.bind(this));
-    this.socket.on('close', this.onClose.bind(this));
+    this.socket.on("message", this.onMessage.bind(this));
+    this.socket.on("error", this.onError.bind(this));
+    this.socket.on("close", this.onClose.bind(this));
     
     this.peerDiscovered(nodeManager.generatePeerId(`${this.clientIP}:${this.nodePort}`));
     
@@ -105,7 +105,7 @@ class GUI extends ws {
     // pass
   }
 
-  sendClientEvent( event, object ) {
+  sendClientEvent ( event, object ) {
     this.send({
       "type"    : event,
       "content" : object
