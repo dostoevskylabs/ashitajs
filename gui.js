@@ -39,6 +39,16 @@ class GUI extends ws {
     }
   }
 
+  safeParseJSON ( data ) {
+    try {
+      let obj = JSON.parse( data );
+      if ( obj && typeof obj === "object" ) {
+        return obj;
+      }
+    } catch ( error ) {}
+    return {};
+  }
+
   onConnection ( socket ) {
     if ( this.socket !== undefined ) {
       /* handle error, trying to open multiple instances of the GUI */
@@ -64,7 +74,7 @@ class GUI extends ws {
   }
 
   onMessage ( data ) {
-    data = JSON.parse(data);
+    data = this.safeParseJSON(data);
     switch ( data.type ) {
       case "getAvailablePeers":
         this.sendClientEvent("availablePeers", {
