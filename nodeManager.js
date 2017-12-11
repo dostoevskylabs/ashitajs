@@ -67,7 +67,7 @@ class nodeManager {
       } else if ( cli.screens[keys[i-1]].left + cli.screens[keys[i-1]].width >= cli.screens["NodeList"].width - cli.screens[keys[i-1]].width ) {
         cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], cli.screens[keys[i-1]].top + cli.screens[keys[0]].height, 0, 0, 0, 25, 8);    
       } else {
-        cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], cli.screens[keys[i-1]].top -1, cli.screens[keys[i-1]].left + cli.screens[keys[0]].width, 0, 0, 25, 8);          
+        cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], cli.screens[keys[i-1]].top - 1, cli.screens[keys[i-1]].left + cli.screens[keys[0]].width, 0, 0, 25, 8);          
       }
     }
   }
