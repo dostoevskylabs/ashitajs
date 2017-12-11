@@ -49,7 +49,8 @@ class AshitaClient extends net.Socket {
   }
 
   onClose () {
-    cli.screens["Log"].add("Socket closed");
+    /* TODO: Handling removing peer with nodeManager */
+    cli.screens["Log"].add(this.nodePort);
   }
 
   onEnd () {

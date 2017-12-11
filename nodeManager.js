@@ -6,6 +6,7 @@ let gui       = undefined;
 let nodeHost  = undefined;
 let nodePort  = undefined;
 class nodeManager {
+  /* TODO: Handle removing peer from nodes, and send an update to gui to let it know the peer is no longer available */
   static setGui( guiInstance ) {
     gui = guiInstance;
   }
@@ -17,7 +18,7 @@ class nodeManager {
   static get getNodeHost () {
     return nodeHost;
   }
-  
+
   static setNodePort ( port ) {
     nodePort = port;
   }
