@@ -40,6 +40,10 @@ class GUI extends ws {
   }
 
   onConnection ( socket ) {
+    if ( this.socket !== undefined ) {
+      /* handle error, trying to open multiple instances of the GUI */
+      return false;
+    }
     this.socket = socket;
     this.knownPeers = nodeManager.getNodes();
     this.clientIP = this.socket._socket.remoteAddress.substr(7);
@@ -97,6 +101,8 @@ class GUI extends ws {
   }
 
   onClose () {
+    this.socket = undefined;
+    this.close();
     // pass
   }
 
