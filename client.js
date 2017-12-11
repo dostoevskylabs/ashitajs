@@ -1,10 +1,11 @@
 "use strict";
 const net             = require("net");
+const node            = require("./node.js");
 const cli             = require("./cli.js");
 const nodeManager     = require("./nodeManager.js");
 
 class AshitaClient extends net.Socket {
-  constructor ( myPort, nodeIp, nodePort ) {
+  constructor ( nodeIp, nodePort ) {
     super();
     this.nodeIp = nodeIp;
     this.nodePort = nodePort;
@@ -16,14 +17,22 @@ class AshitaClient extends net.Socket {
     this.on("close", this.onClose.bind(this));
     this.on("end", this.onEnd.bind(this));
 
-    this.write(JSON.stringify({"newNode":`${this.nodeIp}:${myPort}`}));
+
+    this.send({
+      "newNode":`${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
+    });
     cli.screens["Debug"].add("AshitaClient initialized with", this.nodeIp, this.nodePort);
   }
 
   onConnect () {
     nodeManager.addNode(`${this.nodeIp}:${this.nodePort}`, this);
     cli.screens["Log"].add("here we go adding", this.nodeIp, this.nodePort);
-    cli.screens["Debug"].add("Handshake completed with", `${this.nodeIp}:${this.nodePort}`);    
+    cli.screens["Debug"].add("Handshake completed with", `${this.nodeIp}:${this.nodePort}`);  
+  }
+
+  send ( data ) {
+    data = JSON.stringify(data);
+    this.write(data);
   }
 
   onData ( data ) {
@@ -48,6 +57,4 @@ class AshitaClient extends net.Socket {
   }
 }
 
-module.exports = {
-  "AshitaClient" : AshitaClient
-};
+module.exports = AshitaClient;

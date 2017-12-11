@@ -3,11 +3,29 @@ const cli     = require("./cli.js");
 const crypto  = require("crypto");
 const nodes   = new Map();
 let gui       = undefined;
+let nodeHost  = undefined;
+let nodePort  = undefined;
 class nodeManager {
-  static init ( guiInstance ) {
-    gui = guiInstance; 
+  static setGui( guiInstance ) {
+    gui = guiInstance;
   }
   
+  static setNodeHost ( host ) {
+    nodeHost = host;
+  }
+
+  static get getNodeHost () {
+    return nodeHost;
+  }
+  
+  static setNodePort ( port ) {
+    nodePort = port;
+  }
+
+  static get getNodePort () {
+    return nodePort;
+  }
+
   static addNode ( host, socket ) {   
     cli.screens["Peers"].addItem(host);
     let nodeId = this.generatePeerId(host);
@@ -15,8 +33,10 @@ class nodeManager {
     nodes.get( nodeId ).host = host;
     this.drawNodes();
     this.alertPeers( nodeId );
-    gui.knownPeers.push( nodeId );
-    gui.peerDiscovered( nodeId );
+    if ( gui !== undefined ) {
+      gui.knownPeers.push( nodeId );
+      gui.peerDiscovered( nodeId );
+    }
   }
 
   static alertPeers ( host ) {

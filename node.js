@@ -1,26 +1,27 @@
 "use strict";
+let   port            = 8000;
 const net             = require("net");
 const cli             = require("./cli.js");
 const client          = require("./client.js");
 const nodeManager     = require("./nodeManager.js");
 
 class AshitaNode extends net.Server {
-  constructor ( nodeHost, nodePort ) {
+  constructor () {
     super();
-    this.on("error", ( error ) => {
+    nodeManager.setNodePort( port );
+    this.listen(nodeManager.getNodePort, nodeManager.getNodeHost, () => {
+      cli.screens["Log"].add(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
+    });
+    this.on("error", (error) => {
       // temporary
       if ( error.code === "EADDRINUSE" ) {
-        console.log(`[!] node listening port ${nodePort} is already in use.\nTry: node index.js ${nodePort++}`)
-        process.exit();
+        port++;
+        return new AshitaNode();
       }
-      process.exit();
     });
-    this.nodePort = nodePort;
-    this.listen(this.nodePort, nodeHost);
+
     this.socket = undefined;
     this.on("connection", this.onConnection.bind(this));
-    cli.screens["Debug"].add("AshitaNode initialized.");
-
   }
 
   onConnection ( socket ) {
@@ -47,7 +48,7 @@ class AshitaNode extends net.Server {
         return false;
       }
 
-      new client.AshitaClient(this.nodePort, host.split(":")[0], host.split(":")[1]);
+      new client(host.split(":")[0], host.split(":")[1]);
 
     } else {
       cli.screens["Log"].add(data);
@@ -59,6 +60,4 @@ class AshitaNode extends net.Server {
   }
 }
 
-module.exports = {
-  "AshitaNode" : AshitaNode
-};
+module.exports = AshitaNode;

@@ -1,41 +1,36 @@
 "use strict";
+let port                = 60000;
 const cli               = require("./cli.js");
 const path              = require("path");
 const fs                = require("fs");
 const ws                = require("ws").Server;
 const nodeManager       = require("./nodeManager.js");
+const node              = require("./node.js");
 const http              = require("http");
 const express           = require("express");
 const app               = express();
-const server            = http.createServer( app );
 app.use( express.static( path.join(__dirname, "/public") ) );
 
 class GUI extends ws {
-  constructor ( args ) {
-    const guiServer = server.listen( args[1], () => {
-      cli.screens["Log"].add(`Listening on http://192.168.1.19:${args[1]}`);
+  constructor () {
+    const guiServer = http.createServer( app ).listen( port, () => {
+      cli.screens["Log"].add(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
     });
-
     super({ server : guiServer });
-
     this.on("error", (error) => {
       // temporary
       if ( error.code === "EADDRINUSE" ) {
-        console.log(`[!] gui listening port ${args[1]} is already in use.\nTry: node index.js ${args[0]} ${args[1]++}`)
-        process.exit();
+        port++;
+        return new GUI();
       }
-      process.exit();
     });
-    
-    this.nodePort     = args[0];
+    nodeManager.setGui(this);
     this.socket       = undefined;
     this.clientIP     = undefined;
     this.knownPeers   = nodeManager.getNodes();
     this.subscribedTo = [];
     this.on("connection", this.onConnection);
   }
-
-
 
   send ( data ) {
     if ( this.socket !== undefined ) {
@@ -52,11 +47,11 @@ class GUI extends ws {
     this.socket.on("error", this.onError.bind(this));
     this.socket.on("close", this.onClose.bind(this));
     
-    this.peerDiscovered(nodeManager.generatePeerId(`${this.clientIP}:${this.nodePort}`));
+    this.peerDiscovered(nodeManager.generatePeerId(`${nodeManager.getNodeHost}:${nodeManager.getNodePort}`));
     
     fs.readFile("./etc/issue", "utf8", ( error, data ) => {
       this.sendClientEvent("MOTD", {
-        "peerId"  : nodeManager.generatePeerId(`${this.clientIP}:${this.nodePort}`),
+        "peerId"  : nodeManager.generatePeerId(`${nodeManager.getNodeHost}:${nodeManager.getNodePort}`),
         "MOTD"    : data.toString()
       });
     });
