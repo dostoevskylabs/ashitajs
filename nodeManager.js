@@ -7,7 +7,7 @@ let nodeHost  = undefined;
 let nodePort  = undefined;
 class nodeManager {
   /* TODO: Handle removing peer from nodes, and send an update to gui to let it know the peer is no longer available */
-  static setGui( guiInstance ) {
+  static setGui ( guiInstance ) {
     gui = guiInstance;
   }
   
@@ -27,23 +27,47 @@ class nodeManager {
     return nodePort;
   }
 
-  static addNode ( host, socket ) {   
-    cli.screens["Peers"].addItem(host);
-    let nodeId = this.generatePeerId(host);
-    nodes.set( nodeId, socket );
-    nodes.get( nodeId ).host = host;
-    this.drawNodes();
-    this.alertPeers( nodeId );
-    if ( gui !== undefined ) {
-      gui.knownPeers.push( nodeId );
-      gui.peerDiscovered( nodeId );
+  static get getNodeId () {
+    if ( nodeHost !== undefined && nodePort !== undefined ) {
+      return this.generatePeerId( nodeHost + ":" + nodePort );
     }
   }
 
-  static alertPeers ( host ) {
-    nodes.forEach(function ( peerSocket, peer ) {
-      if ( peer !== host ) {
-        peerSocket.write(JSON.stringify({"newNode":host}));
+  static addNode ( clientInstance ) {
+    let host = `${clientInstance.nodeIp}:${clientInstance.nodePort}`;
+    nodes.set( clientInstance.nodeId, clientInstance );
+
+    cli.screens["Peers"].addItem( host );
+
+    this.drawNodes();
+
+    this.sendNodeEvent("newNode", { "nodeHost"  : host });
+
+    if ( gui.instanced ) {
+      gui.knownPeers.push( clientInstance.nodeId );
+      gui.peerDiscovered( clientInstance.nodeId );
+    }
+  }
+
+  static removeNode ( nodeId ) {
+    // remove cli.screens["Peers"]
+    // delete nodeId from nodes
+    if ( gui.instanced ) {
+      //gui.knownPeers = this.getNodes();
+      //gui.peerDisconnected( nodeId );
+    }
+  }
+
+  static sendNodeEvent ( event, object ) {
+    let message = {
+      "type"      : event,
+      "content"   : object
+    };
+
+    nodes.forEach( ( peerSocket, peer ) => {
+      if ( peer !== this.getNodeId ) {
+        message = JSON.stringify( message );
+        peerSocket.write( message );
       }
     });
   }
@@ -59,8 +83,9 @@ class nodeManager {
   static drawNodes () {
     let keys = [];
     this.getNodes().map( (key) => {
-      keys.push(nodes.get(key).host);
+      keys.push(nodes.get(key).nodeIp + ":" + nodes.get(key).nodePort );
     });
+
     for ( let i = 0; i < keys.length; i++ ) {
       if ( i === 0 ) {
         cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], 0, 0, 0, 0, 25, 8);

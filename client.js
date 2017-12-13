@@ -1,14 +1,15 @@
 "use strict";
 const net             = require("net");
-const node            = require("./node.js");
 const cli             = require("./cli.js");
 const nodeManager     = require("./nodeManager.js");
 
 class AshitaClient extends net.Socket {
   constructor ( nodeIp, nodePort ) {
     super();
-    this.nodeIp = nodeIp;
-    this.nodePort = nodePort;
+    this.nodeIp     = nodeIp;
+    this.nodePort   = nodePort;
+    this.nodeId     = nodeManager.generatePeerId (`${this.nodeIp}:${this.nodePort}`);
+
     this.connect(this.nodePort, this.nodeIp);
     this.on("connect", this.onConnect.bind(this));
     this.on("data", this.onData.bind(this));
@@ -18,16 +19,42 @@ class AshitaClient extends net.Socket {
     this.on("end", this.onEnd.bind(this));
 
 
-    this.send({
-      "newNode":`${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
+    this.sendClientEvent("newNode", {
+      "nodeHost": `${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
     });
-    cli.screens["Debug"].add("AshitaClient initialized with", this.nodeIp, this.nodePort);
+
+    cli.screens["Debug"].add("AshitaClient initialized with", this.nodeId);
   }
 
   onConnect () {
-    nodeManager.addNode(`${this.nodeIp}:${this.nodePort}`, this);
-    cli.screens["Log"].add("here we go adding", this.nodeIp, this.nodePort);
-    cli.screens["Debug"].add("Handshake completed with", `${this.nodeIp}:${this.nodePort}`);  
+    if ( nodeManager.getNode( this.nodeId ) ) {
+      return false;
+    }
+
+    nodeManager.addNode(this);
+    
+    cli.screens["Debug"].add("Handshake completed with", `${this.nodeId}`);  
+  }
+
+  onData ( data ) {
+    // pass
+  }
+
+  onTimeout () {
+    // pass
+  }
+
+  onError ( error ) {
+    // pass
+  }
+
+  onClose () {
+    /* TODO: Handling removing peer with nodeManager */
+    // nodeManager.removeNode( this.nodeId );
+  }
+
+  onEnd () {
+    // pass
   }
 
   send ( data ) {
@@ -35,26 +62,13 @@ class AshitaClient extends net.Socket {
     this.write(data);
   }
 
-  onData ( data ) {
-    cli.screens["Log"].add( data );
-  }
+  sendClientEvent ( event, object ) {
+    let message = {
+      "type"    : event,
+      "content" : object
+    };
 
-  onTimeout () {
-    cli.screens["Log"].add("Idle");
-  }
-
-  onError ( error ) {
-    cli.screens["Debug"].add( error );
-    this.destroy();
-  }
-
-  onClose () {
-    /* TODO: Handling removing peer with nodeManager */
-    cli.screens["Log"].add(this.nodePort);
-  }
-
-  onEnd () {
-    cli.screens["Log"].add("Socket received FIN");
+    this.send(message);
   }
 }
 

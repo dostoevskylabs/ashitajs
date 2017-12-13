@@ -9,25 +9,56 @@ class AshitaNode extends net.Server {
   constructor () {
     super();
     nodeManager.setNodePort( port );
+
     this.listen(nodeManager.getNodePort, nodeManager.getNodeHost, () => {
       cli.screens["Log"].add(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
     });
+
     this.on("error", (error) => {
-      // temporary
       if ( error.code === "EADDRINUSE" ) {
         port++;
         return new AshitaNode();
       }
     });
 
-    this.socket = undefined;
     this.on("connection", this.onConnection.bind(this));
+
+    this.socket = undefined;
   }
 
   onConnection ( socket ) {
     this.socket = socket;
     this.socket.on("data", this.onData.bind(this));
     this.socket.on("error", this.onError.bind(this));   
+  }
+
+  onData ( data ) {
+    data = this.safeParseJSON(data);
+
+    if ( !data.hasOwnProperty("type") ||
+         !data.hasOwnProperty("content") ) {
+      // missing basic structure
+      return false;
+    }
+
+    switch ( data.type ) {
+      case "newNode":
+        var host   = data.content.nodeHost;
+        var peerId = nodeManager.generatePeerId( host );
+        if ( nodeManager.getNode( peerId ) ) {
+          return false;
+        }
+
+        new client(host.split(":")[0], host.split(":")[1]);
+        break;
+      
+      default:
+        // pass
+    }   
+  }
+
+  onError ( error ) {
+    // pass
   }
 
   safeParseJSON ( data ) {
@@ -38,26 +69,7 @@ class AshitaNode extends net.Server {
       }
     } catch ( error ) {}
     return {};
-  }
-
-  onData ( data ) {
-    data = this.safeParseJSON(data);
-    if ( data.hasOwnProperty("newNode") ) {
-      let host = data.newNode;
-      if ( nodeManager.getNode( nodeManager.generatePeerId( host ) ) ) {
-        return false;
-      }
-
-      new client(host.split(":")[0], host.split(":")[1]);
-
-    } else {
-      cli.screens["Log"].add(data);
-    }     
-  }
-
-  onError ( error ) {
-    cli.screens["Debug"].add( error );
-  }
+  }  
 }
 
 module.exports = AshitaNode;

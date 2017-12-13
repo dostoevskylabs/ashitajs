@@ -5,7 +5,6 @@ const path              = require("path");
 const fs                = require("fs");
 const ws                = require("ws").Server;
 const nodeManager       = require("./nodeManager.js");
-const node              = require("./node.js");
 const http              = require("http");
 const express           = require("express");
 const app               = express();
@@ -17,55 +16,48 @@ class GUI extends ws {
       cli.screens["Log"].add(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
     });
     super({ server : guiServer });
+
     this.on("error", (error) => {
-      // temporary
       if ( error.code === "EADDRINUSE" ) {
         port++;
         return new GUI();
       }
     });
+
     nodeManager.setGui(this);
+
+    this.instanced    = false;
     this.socket       = undefined;
+    this.nodeId       = undefined;
     this.clientIP     = undefined;
     this.knownPeers   = nodeManager.getNodes();
     this.subscribedTo = [];
+
     this.on("connection", this.onConnection);
   }
 
-  send ( data ) {
-    if ( this.socket !== undefined ) {
-      data = JSON.stringify(data);
-      this.socket.send(data);
-    }
-  }
 
-  safeParseJSON ( data ) {
-    try {
-      let obj = JSON.parse( data );
-      if ( obj && typeof obj === "object" ) {
-        return obj;
-      }
-    } catch ( error ) {}
-    return {};
-  }
 
   onConnection ( socket ) {
-    if ( this.socket !== undefined ) {
+    if ( this.instanced ) {
       /* handle error, trying to open multiple instances of the GUI */
       return false;
     }
-    this.socket = socket;
+
+    this.instanced  = true;
+    this.socket     = socket;
     this.knownPeers = nodeManager.getNodes();
-    this.clientIP = this.socket._socket.remoteAddress.substr(7);
+    this.clientIP   = this.socket._socket.remoteAddress.substr(7);
+
     this.socket.on("message", this.onMessage.bind(this));
     this.socket.on("error", this.onError.bind(this));
     this.socket.on("close", this.onClose.bind(this));
     
-    this.peerDiscovered(nodeManager.generatePeerId(`${nodeManager.getNodeHost}:${nodeManager.getNodePort}`));
+    this.peerDiscovered( nodeManager.getNodeId );
     
     fs.readFile("./etc/issue", "utf8", ( error, data ) => {
       this.sendClientEvent("MOTD", {
-        "peerId"  : nodeManager.generatePeerId(`${nodeManager.getNodeHost}:${nodeManager.getNodePort}`),
+        "peerId"  : nodeManager.getNodeId,
         "MOTD"    : data.toString()
       });
     });
@@ -74,7 +66,17 @@ class GUI extends ws {
   }
 
   onMessage ( data ) {
+    if ( this.instanced === false ) {
+      return false;
+    }
+
     data = this.safeParseJSON(data);
+
+    if ( !data.hasOwnProperty("type") ||
+         !data.hasOwnProperty("content") ) {
+      // missing basic structure
+    }
+
     switch ( data.type ) {
       case "getAvailablePeers":
         this.sendClientEvent("availablePeers", {
@@ -90,12 +92,16 @@ class GUI extends ws {
           this.sendClientEvent("subscribeFailed", {
             peerId  : data.content.peerId
           });
+
           return false;
         }
+
         this.subscribedTo.push(data.content.peerId);
+
         this.sendClientEvent("subscribeSuccessful", {
           peerId    :  data.content.peerId
         });
+
         cli.screens["Log"].add("GUI subscribed to ", data.content.peerId);
         break;
 
@@ -111,24 +117,54 @@ class GUI extends ws {
   }
 
   onClose () {
-    this.socket = undefined;
-    this.close();
+    this.socket.close();
+    this.socket    = undefined;
+    this.instanced = false;
+    //this.close();
     // pass
   }
 
+  send ( data ) {
+    if ( this.instanced === false ) {
+      return false;
+    }
+
+    data = JSON.stringify(data);
+    this.socket.send(data);
+  }
+
   sendClientEvent ( event, object ) {
+    if ( this.instanced === false ) {
+      return false;
+    }
+
     this.send({
       "type"    : event,
       "content" : object
-    })
+    });
+
     cli.screens["Debug"].add("Sending Client Event: ", event);
   }
 
   peerDiscovered ( peerId ) {
+    if ( this.instanced === false ) {
+      return false;
+    }
+
     this.sendClientEvent("peerDiscovered", {
       "peerId"    : peerId
     });
   }
+
+  safeParseJSON ( data ) {
+    try {
+      let obj = JSON.parse( data );
+      if ( obj && typeof obj === "object" ) {
+        return obj;
+      }
+    } catch ( error ) {}
+    return {};
+  }  
 }
 
 module.exports = GUI;
