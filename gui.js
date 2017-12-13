@@ -13,7 +13,7 @@ app.use( express.static( path.join(__dirname, "/public") ) );
 class GUI extends ws {
   constructor () {
     const guiServer = http.createServer( app ).listen( port, () => {
-      cli.screens["Log"].add(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
+      cli.Logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
     });
     super({ server : guiServer });
 
@@ -62,7 +62,7 @@ class GUI extends ws {
       });
     });
 
-    cli.screens["Debug"].add("New GUI Session with", this.clientIP);
+    cli.Logger.debug("New GUI Session with", this.clientIP);
   }
 
   onMessage ( data ) {
@@ -102,7 +102,7 @@ class GUI extends ws {
           peerId    :  data.content.peerId
         });
 
-        cli.screens["Log"].add("GUI subscribed to ", data.content.peerId);
+        cli.Logger.debug("GUI subscribed to ", data.content.peerId);
         break;
 
       default:
@@ -143,7 +143,7 @@ class GUI extends ws {
       "content" : object
     });
 
-    cli.screens["Debug"].add("Sending Client Event: ", event);
+    cli.Logger.debug("Sending Client Event: ", event);
   }
 
   peerDiscovered ( peerId ) {

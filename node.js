@@ -11,7 +11,7 @@ class AshitaNode extends net.Server {
     nodeManager.setNodePort( port );
 
     this.listen(nodeManager.getNodePort, nodeManager.getNodeHost, () => {
-      cli.screens["Log"].add(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
+      cli.Logger.notice(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
     });
 
     this.on("error", (error) => {

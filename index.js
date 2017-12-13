@@ -1,12 +1,10 @@
 "use strict";
-const nodeManager       = require("./nodeManager.js");
 const os                = require("os");
-const cli               = require("./cli.js");
 const node              = require("./node.js");
-const client            = require("./client.js");
+const nodeManager       = require("./nodeManager.js");
 const gui               = require("./gui.js");
-
-
+const cli               = require("./cli.js");
+const client            = require("./client.js");
 
 /** quick hack to get the internal IP address of the host */
 let interfaces          = os.networkInterfaces();
@@ -19,8 +17,10 @@ for ( let iface in interfaces ) {
     }
   }
 }
+
 nodeManager.setNodeHost( nodeHost );
 nodeManager.setNodePort( 8000 );
+
 new gui();
 new node();
 
@@ -33,7 +33,7 @@ cli.screens["nodeHost"].on("submit", function ( node ) {
     return false;
   }
   
-  new client(host, port);
+  new client( host, port );
 
   cli.screens["nodeHost"].setValue("");
   cli.screens["AddNode"].setBack();  

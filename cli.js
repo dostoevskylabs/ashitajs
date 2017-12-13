@@ -1,26 +1,29 @@
 "use strict";
-const blessed = require("blessed");
-const screen = blessed.screen({
-  smartCSR:true
-});
-screen.key(["escape", "q", "C-c"], function(ch, key) {
-  return process.exit(0);
-});
-
-const screens = {};
-const theme   = {
+const color             = require("./color.js");
+const blessed           = require("blessed");
+const getTime           = () => Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "numeric", second: "numeric"}).format( Date.now() );
+const screens           = {};
+const theme             = {
   bgcolor:16,
   border:234,
   overlay:243
 };
 
+const screen            = blessed.screen({
+  smartCSR:true
+});
+
+screen.key(["escape", "q", "C-c"], function(ch, key) {
+  return process.exit(0);
+});
+
 class ScreenManager extends blessed { 
   static buildMenu ( name, p ) {
     screens[name] = this.Listbar({
-      autoCommandKeys:true,
+      autoCommandpeers:true,
       parent:p,
       mouse:true,
-      keys:true,      
+      peers:true,      
       top:0,
       left:0,
       right:0,
@@ -42,7 +45,7 @@ class ScreenManager extends blessed {
       scrollable: true,
       scrollonInput: true,
       mouse:true,
-      keys:true,
+      peers:true,
       selectedBg: "black",
       fg: 255,
       search:true,
@@ -87,7 +90,7 @@ class ScreenManager extends blessed {
       scrollable: true,
       scrollonInput: true,
       mouse:true,
-      keys:true,
+      peers:true,
       label: name,
       top: t,
       left: l,
@@ -130,7 +133,7 @@ class ScreenManager extends blessed {
       scrollable: true,
       scrollonInput: true,
       mouse:true,
-      keys:true,
+      peers:true,
       label: name,
       top: t,
       left: l,
@@ -170,7 +173,7 @@ class ScreenManager extends blessed {
       parent:p,
       inputOnFocus:true,
       mouse:true,
-      keys:true,
+      peers:true,
       label: name,
       top: t,
       left: l,
@@ -206,7 +209,7 @@ class ScreenManager extends blessed {
     screens[name] = this.box({
       parent:p,
       mouse:true,
-      keys:true,
+      peers:true,
       label: name,
       top: t,
       left: l,
@@ -261,15 +264,57 @@ ScreenManager.generateList("Peers", screens["Dashboard"], 0, "85%", 0, 0, "15%-2
 ScreenManager.generateText("nodeHost", screens["AddNode"], "center", "center", "center", "center", 35, 3);
 
 screens["Dashboard"].setFront();
+screen.render();
 
 screens["menu"].on("select", function( event ) {
   screens[event.$.cmd.text].setFront();
 });
 
 
-screen.render();
+
+class Logger {
+  static drawNodes ( peers ) {
+    for ( let i = 0; i < peers.length; i++ ) {
+      if ( i === 0 ) {
+        ScreenManager.generateNode(peers[i], screens["NodeList"], 0, 0, 0, 0, 25, 8);
+      } else if ( screens[peers[i-1]].left + screens[peers[i-1]].width >= screens["NodeList"].width - screens[peers[i-1]].width ) {
+        ScreenManager.generateNode(peers[i], screens["NodeList"], screens[peers[i-1]].top + screens[peers[0]].height, 0, 0, 0, 25, 8);    
+      } else {
+        ScreenManager.generateNode(peers[i], screens["NodeList"], screens[peers[i-1]].top - 1, screens[peers[i-1]].left + screens[peers[0]].width, 0, 0, 25, 8);          
+      }
+    }
+  }
+
+  static addPeer ( peer ) {
+    screens["Peers"].addItem ( color.Green + peer + color.Reset );
+  }
+
+  static notice ( ...message ) { 
+    screens["Log"].add(color.Green + `[${getTime()}]`, ...message, color.Reset);
+    //console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message );
+    
+  }
+
+  static info ( ...message ) { 
+    screens["Log"].add(color.White + `[${getTime()}]`, ...message, color.Reset);
+    //console.info( color.White + `[INFO\t- ${getTime()}] `, ...message );
+  }   
+
+  static warn ( ...message ) { 
+    //console.log( color.Yellow + `[WARN\t- ${getTime()}] `, ...message );
+  }
+
+  static debug ( ...message ) {
+    screens["Debug"].add(color.Blue + `[${getTime()}]`, ...message, color.Reset);
+    //console.log( color.Blue + `[DEBUG\t- ${getTime()}] `, ...message );
+  } 
+
+  static error ( ...message ) { 
+    //console.log( color.Red + `[ERROR\t- ${getTime()}] `, ...message );
+  }
+}
 
 module.exports = {
-  "screens"           : screens,
-  "ScreenManager"     : ScreenManager
+"Logger"  : Logger,
+"screens" : screens
 };

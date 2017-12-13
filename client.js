@@ -1,7 +1,7 @@
 "use strict";
 const net             = require("net");
-const cli             = require("./cli.js");
 const nodeManager     = require("./nodeManager.js");
+const cli             = require("./cli.js");
 
 class AshitaClient extends net.Socket {
   constructor ( nodeIp, nodePort ) {
@@ -24,7 +24,8 @@ class AshitaClient extends net.Socket {
          nodeManager.getNodeId === this.nodeId ) {
       return false;
     }
-    cli.screens["Debug"].add("AshitaClient initialized with", this.nodeId);
+
+    cli.Logger.debug("AshitaClient initialized with", this.nodeId);
     
     nodeManager.addNode(this);
 
@@ -32,7 +33,7 @@ class AshitaClient extends net.Socket {
       "nodeHost": `${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
     });
 
-    cli.screens["Debug"].add("Handshake completed with", `${this.nodeId}`);  
+    cli.Logger.debug("Handshake completed with", `${this.nodeId}`);  
   }
 
   onData ( data ) {

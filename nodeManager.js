@@ -38,11 +38,11 @@ class nodeManager {
         clientInstance.nodeId === this.getNodeId ) {
       return false;
     }
-    
+
     let host = `${clientInstance.nodeIp}:${clientInstance.nodePort}`;
     nodes.set( clientInstance.nodeId, clientInstance );
 
-    cli.screens["Peers"].addItem( host );
+    cli.Logger.addPeer( host );
 
     this.drawNodes();
 
@@ -55,7 +55,7 @@ class nodeManager {
   }
 
   static removeNode ( nodeId ) {
-    // remove cli.screens["Peers"]
+    // remove cli.Logger.screens["Peers"]
     // delete nodeId from nodes
     if ( gui.instanced ) {
       //gui.knownPeers = this.getNodes();
@@ -90,16 +90,7 @@ class nodeManager {
     this.getNodes().map( (key) => {
       keys.push(nodes.get(key).nodeIp + ":" + nodes.get(key).nodePort );
     });
-
-    for ( let i = 0; i < keys.length; i++ ) {
-      if ( i === 0 ) {
-        cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], 0, 0, 0, 0, 25, 8);
-      } else if ( cli.screens[keys[i-1]].left + cli.screens[keys[i-1]].width >= cli.screens["NodeList"].width - cli.screens[keys[i-1]].width ) {
-        cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], cli.screens[keys[i-1]].top + cli.screens[keys[0]].height, 0, 0, 0, 25, 8);    
-      } else {
-        cli.ScreenManager.generateNode(keys[i], cli.screens["NodeList"], cli.screens[keys[i-1]].top - 1, cli.screens[keys[i-1]].left + cli.screens[keys[0]].width, 0, 0, 25, 8);          
-      }
-    }
+    cli.Logger.drawNodes( keys );
   }
 
   static getNode ( host ) {
