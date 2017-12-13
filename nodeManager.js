@@ -88,7 +88,7 @@ class nodeManager {
   static drawNodes () {
     let keys = [];
     this.getNodes().map( (key) => {
-      keys.push(nodes.get(key).nodeIp + ":" + nodes.get(key).nodePort );
+      keys.push(`${nodes.get(key).nodeIp}:${nodes.get(key).nodePort}`);
     });
     cli.Logger.drawNodes( keys );
   }
