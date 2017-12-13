@@ -17,22 +17,21 @@ class AshitaClient extends net.Socket {
     this.on("error", this.onError.bind(this));
     this.on("close", this.onClose.bind(this));
     this.on("end", this.onEnd.bind(this));
+  }
 
+  onConnect () {
+    if ( nodeManager.getNode( this.nodeId ) ||
+         nodeManager.getNodeId === this.nodeId ) {
+      return false;
+    }
+    cli.screens["Debug"].add("AshitaClient initialized with", this.nodeId);
+    
+    nodeManager.addNode(this);
 
     this.sendClientEvent("newNode", {
       "nodeHost": `${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
     });
 
-    cli.screens["Debug"].add("AshitaClient initialized with", this.nodeId);
-  }
-
-  onConnect () {
-    if ( nodeManager.getNode( this.nodeId ) ) {
-      return false;
-    }
-
-    nodeManager.addNode(this);
-    
     cli.screens["Debug"].add("Handshake completed with", `${this.nodeId}`);  
   }
 

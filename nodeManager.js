@@ -34,6 +34,11 @@ class nodeManager {
   }
 
   static addNode ( clientInstance ) {
+    if ( this.getNode ( clientInstance.nodeId ) ||
+        clientInstance.nodeId === this.getNodeId ) {
+      return false;
+    }
+    
     let host = `${clientInstance.nodeIp}:${clientInstance.nodePort}`;
     nodes.set( clientInstance.nodeId, clientInstance );
 
