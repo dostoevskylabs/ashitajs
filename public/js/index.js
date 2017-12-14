@@ -105,7 +105,9 @@ class AshitaSocket extends WebSocket {
 class Ashita {
   constructor ( ui = undefined ) {
     this.ui = ui;
-    this.state = undefined;
+    this.ui.addTab({"tabId":"Dashboard","tabName":"Dashboard"});
+    this.ui.addTab({"tabId":"ChannelList","tabName":"ChannelList"});
+    this.state = "Dashboard";
 
     this.node = new AshitaSocket();
 
@@ -117,29 +119,49 @@ class Ashita {
     this.node.onSubscribeSuccessful = this.onSubscribeSuccessful.bind( this );
 
     this.ui.onInput = this.onUiInput.bind( this );
-    this.ui.changePeer = this.onUiChangePeer.bind( this );
+    this.ui.changeTab = this.onUiChangeTab.bind( this );
   }
 
-  onUiChangePeer ( peerId ) {
-    if ( !this.peers.has( peerId ) ) {
-      return false;
-    }
-    this.state = peerId;
-    // hack
+  onUiChangeTab ( peerId ) {
+    
+
     if ( this.ui ) {
+      // hack
+      document.getElementById( this.state ).style = "background:#37474F;";
+      this.state = peerId;
+      document.getElementById( this.state ).style = "background:#455A64;";
+
+      // hack - switch to 'channel list ui'
+      if ( this.state === "ChannelList" ) {
+        let output = document.getElementById("output");
+        output.innerHTML = "List Channels here";
+        return true;
+      }
+
+      // otherwise print out messages stored in the messages array ie: "Dashboard" messages, or channel messages, private messages
       let output = document.getElementById("output");
       output.innerHTML = "";
       for ( let i = 0; i < this.node.messages.getPublicMessages.length; i++ ) {
         let entry = {};
-        for ( let key in this.node.messages.getPublicMessages[i] ) {
-          entry[key] = this.node.messages.getPublicMessages[i][key];
+        if ( this.node.messages.getPublicMessages[i].peerId === this.state ) {
+          for ( let key in this.node.messages.getPublicMessages[i] ) {
+            entry[key] = this.node.messages.getPublicMessages[i][key];
+          }
+          this.ui.print( entry ); 
         }
-        this.ui.print( entry );        
       }
     }
   }
 
   onUiInput ( data ) {
+    // hack if dashboard or channel list, don't send input to the node
+    // maybe storeSystemMessages()
+    // store channelList cache
+    // store private messages, etc
+    if ( this.state === "Dashboard" || this.state === "ChannelList" ) {
+      return false;
+    }
+
     this.node.send({
       type     : "publicMessage",
       content  : {
@@ -148,7 +170,7 @@ class Ashita {
         message  : data.message,
       }
     });
-    console.log(data);
+
     this.node.messages.storePublicMessage({
       timestamp: Date.now(),
       peerId   : this.state,
@@ -174,7 +196,7 @@ class Ashita {
 
     this.peers.set( peerId, "test");
     if ( this.ui ) {
-      this.ui.addPeer({peerId: peerId, channelName: "default"});
+      this.ui.addTab({tabId: peerId, tabName: "default"});
 
       if ( this.state === undefined ) {
         this.state = peerId;
@@ -207,8 +229,8 @@ class Ashita {
 
   onPublicMessage ( data ) {
     this.node.messages.storePublicMessage({
-      timestamp: Date.now(),
       peerId   : data.peerId,
+      timestamp: Date.now(),      
       username : data.username,
       message  : data.message
     });
@@ -231,6 +253,13 @@ class Ashita {
 
     this.addPeer( data.peerId );
 
+    this.node.messages.storePublicMessage({
+      type     : "notice",
+      peerId   : "Dashboard",
+      timestamp: Date.now(),
+      message  : "New peer discovered: " + data.peerId
+    });
+
     if ( this.ui ) {
       this.ui.print({
         type      : "notice",
@@ -248,21 +277,22 @@ class UI {
     this.output = document.getElementById("output");
     this.menu = document.getElementById("menu");
 
-    this.changePeer = undefined;
+    this.changeTab = undefined;
     this.onInput = undefined;
 
     this.input.addEventListener( "keydown", this.inputKeydown.bind( this ) );
   }
 
-  peerClick ( event ) {
-    this.changePeer( event.currentTarget.dataset.peerid );
+  tabClick ( event ) {
+    this.changeTab( event.currentTarget.dataset.tabid );
   }
 
-  addPeer ( data ) {
+  addTab ( data ) {
 
     let elNode = UI.HTMLElement("div", {
       "class"       : "node",
-      "data-peerid" : data.peerId
+      "id"          : data.tabId,
+      "data-tabid" : data.tabId
     });
 
     let elIndicator = UI.HTMLElement("div", {
@@ -271,7 +301,7 @@ class UI {
 
     let elTitle = UI.HTMLElement("div", {
       "class" : "nodeTitle"
-    }, data.channelName);
+    }, data.tabName);
 
     let elRight = UI.HTMLElement("div", {
       "class" : "nodeRight"
@@ -279,9 +309,9 @@ class UI {
 
     let elAddress = UI.HTMLElement("div", {
       "class" : "nodeAddress"
-    }, `${data.peerId}`);
+    }, `${data.tabId}`);
 
-    elNode.addEventListener("click", this.peerClick.bind( this ), false);
+    elNode.addEventListener("click", this.tabClick.bind( this ), false);
 
     elNode.appendChild(elIndicator);
     elNode.appendChild(elTitle);
