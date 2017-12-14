@@ -4,7 +4,7 @@
   "description": "decentralized p2p network",
   "main": "index.js",
   "scripts": {
-    "debug": "node --nolazy --inspect-brk=9229 index.js 8000"
+    "debug": "node --nolazy --inspect-brk=9229 index"
   },
   "author": "dostoevskylabs",
   "contributors": [
