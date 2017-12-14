@@ -24,6 +24,7 @@ class AshitaSocket extends WebSocket {
     this.onReceiveMOTD = undefined;
     this.onPublicMessage = undefined;
     this.onPeerDiscovery = undefined;
+    this.onSubscribeSuccessful = undefined;
     this.messages = new Messages();
   }
 
@@ -53,27 +54,42 @@ class AshitaSocket extends WebSocket {
           break;
 
         case "availablePeers":
+          // known peers
+          console.log(data.content);
+          break;
+
+        case "subscriptions":
+          // your subscriptions
           console.log(data.content);
           break;
 
         case "subscribeSuccessful":
-          console.log(data);
+          // your sub was acknowledged
+          this.onSubscribeSuccessful( data.content );
           break;
 
         case "subscribeFailed":
+          // your sub failed
           console.log(data);
           break;          
 
         case "peerDiscovered":
+          // a new peer discovered
           this.onPeerDiscovery( data.content );
-          console.log(data);
           break;
 
-        case "publicMessage":
+        case "publicMessageSuccessful":
+          // your public message was accepted
           this.onPublicMessage( data.content );
           break;
 
+        case "publicMessageFailed":
+          // your public message failed to send
+          console.log( data.content );
+          break;
+
         case "invalidEvent":
+          // you sent an unknown event
           console.log("Unknown Event", data.content );
           break;
 
@@ -98,6 +114,7 @@ class Ashita {
     this.node.onReceiveMOTD = this.onReceiveMOTD.bind( this );
     this.node.onPublicMessage = this.onPublicMessage.bind( this );
     this.node.onPeerDiscovery = this.onPeerDiscovery.bind( this );
+    this.node.onSubscribeSuccessful = this.onSubscribeSuccessful.bind( this );
 
     this.ui.onInput = this.onUiInput.bind( this );
     this.ui.changePeer = this.onUiChangePeer.bind( this );
@@ -107,8 +124,7 @@ class Ashita {
     if ( !this.peers.has( peerId ) ) {
       return false;
     }
-    let peer = this.peers.get( peerId );
-    this.state = peer;
+    this.state = peerId;
     // hack
     if ( this.ui ) {
       let output = document.getElementById("output");
@@ -183,6 +199,10 @@ class Ashita {
         });
       }
     }    
+  }
+
+  onSubscribeSuccessful ( data ) {
+    this.addPeer( data.peerId );
   }
 
   onPublicMessage ( data ) {

@@ -42,6 +42,10 @@ class AshitaNode extends net.Server {
     }
 
     switch ( data.type ) {
+      case "publicMessage":
+        cli.Logger.debug(data.content);
+        break;
+        
       case "newNode":
         var host   = data.content.nodeHost;
         var peerId = nodeManager.generatePeerId( host );

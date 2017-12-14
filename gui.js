@@ -84,7 +84,22 @@ class GUI extends ws {
         });
         break;
 
+      case "getSubscribed":
+        this.sendClientEvent("subscriptions", {
+          "subscriptions" : this.subscribedTo
+        });
+        break;
+
       case "publicMessage":
+        this.sendClientEvent("publicMessageSuccessful", {
+          "peerId"  : data.content.peerId
+        });
+
+        nodeManager.sendNodeEvent("publicMessage", {
+          "peerId"  : data.content.peerId,
+          "username": data.content.username,
+          "message" : data.content.message
+        })
         break;
 
       case "subscribe":
