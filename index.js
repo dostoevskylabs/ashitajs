@@ -8,16 +8,7 @@ const client            = require("./client.js");
 
 /** quick hack to get the internal IP address of the host */
 let interfaces          = os.networkInterfaces();
-let nodeHost            = interfaces["eno1"][0].address; //undefined;
-console.log(nodeHost);
-// for ( let iface in interfaces ) {
-//   for ( let property in interfaces[iface] ) {
-//     let address = interfaces[iface][property];
-//     if ( address.family === "IPv4" && !address.internal ) {
-//       nodeHost = address.address;
-//     }
-//   }
-// }
+let nodeHost            = interfaces[Object.keys(interfaces)[1]][0].address;
 
 nodeManager.setNodeHost( nodeHost );
 nodeManager.setNodePort( 8000 );
