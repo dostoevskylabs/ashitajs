@@ -1,6 +1,7 @@
 "use strict";
 class Messages {
   constructor () {
+    this.privateMessages = [];
     this.publicMessages  = [];
   }
 
@@ -108,10 +109,11 @@ class Ashita {
     this.ui.addTab({"tabId":"Dashboard","tabName":"Dashboard"});
     this.ui.addTab({"tabId":"ChannelList","tabName":"ChannelList"});
     this.state = "Dashboard";
-
+    document.getElementById( this.state ).style = "background:#455A64;";
     this.node = new AshitaSocket();
 
     this.peers = new Map();
+    this.subscribedTo = [];
     
     this.node.onReceiveMOTD = this.onReceiveMOTD.bind( this );
     this.node.onPublicMessage = this.onPublicMessage.bind( this );
@@ -123,32 +125,45 @@ class Ashita {
   }
 
   onUiChangeTab ( peerId ) {
-    
-
     if ( this.ui ) {
       // hack
       document.getElementById( this.state ).style = "background:#37474F;";
       this.state = peerId;
       document.getElementById( this.state ).style = "background:#455A64;";
-
-      // hack - switch to 'channel list ui'
-      if ( this.state === "ChannelList" ) {
-        let output = document.getElementById("output");
-        output.innerHTML = "List Channels here";
-        return true;
-      }
-
-      // otherwise print out messages stored in the messages array ie: "Dashboard" messages, or channel messages, private messages
       let output = document.getElementById("output");
-      output.innerHTML = "";
-      for ( let i = 0; i < this.node.messages.getPublicMessages.length; i++ ) {
-        let entry = {};
-        if ( this.node.messages.getPublicMessages[i].peerId === this.state ) {
-          for ( let key in this.node.messages.getPublicMessages[i] ) {
-            entry[key] = this.node.messages.getPublicMessages[i][key];
+      switch ( this.state ) {
+        case "ChannelList":
+          output.innerHTML = "";
+          for ( let peer of this.peers ) {
+            let channel = document.createElement("a");
+            channel.setAttribute("style", "display:block;background-color:#37474F;magin:5px;padding:10px;");
+            channel.setAttribute("id", peer[0] + "-ChannelList");
+            channel.innerText = peer[1].channelName + " - " + peer[0];
+            output.appendChild( channel );
+
+            document.getElementById(peer[0] + "-ChannelList").addEventListener('click', () => {
+              if ( this.subscribedTo.includes(peer[0]) ) {
+                return false;
+              }
+              this.ui.addTab({tabId: peer[0], tabName: peer[1].channelName});
+              this.subscribedTo.push(peer[0]);
+              this.onUiChangeTab( peer[0] );
+            });
           }
-          this.ui.print( entry ); 
-        }
+          break;
+
+        default:
+          // otherwise print out messages stored in the messages array ie: "Dashboard" messages, or channel messages, private messages
+          output.innerHTML = "";
+          for ( let i = 0; i < this.node.messages.getPublicMessages.length; i++ ) {
+            let entry = {};
+            if ( this.node.messages.getPublicMessages[i].peerId === this.state ) {
+              for ( let key in this.node.messages.getPublicMessages[i] ) {
+                entry[key] = this.node.messages.getPublicMessages[i][key];
+              }
+              this.ui.print( entry ); 
+            }
+          }
       }
     }
   }
@@ -194,9 +209,12 @@ class Ashita {
     }
 
 
-    this.peers.set( peerId, "test");
+    this.peers.set( peerId, {
+      "channelName" : "default"
+    });
+    
     if ( this.ui ) {
-      this.ui.addTab({tabId: peerId, tabName: "default"});
+      
 
       if ( this.state === undefined ) {
         this.state = peerId;
@@ -224,6 +242,7 @@ class Ashita {
   }
 
   onSubscribeSuccessful ( data ) {
+    console.log( data );
     this.addPeer( data.peerId );
   }
 

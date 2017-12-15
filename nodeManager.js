@@ -45,8 +45,11 @@ class nodeManager {
     cli.Logger.addPeer( host );
 
     this.drawNodes();
-
-    this.sendNodeEvent("newNode", { "nodeHost"  : host });
+  
+    this.sendNodeEvent("newNode", {
+      "nodeId"    : clientInstance.nodeId,
+      "nodeHost"  : host
+    });
 
     if ( gui.instanced ) {
       gui.knownPeers.push( clientInstance.nodeId );
@@ -70,7 +73,7 @@ class nodeManager {
     };
 
     nodes.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId ) {
+      if ( peer !== this.getNodeId && peer !== object.nodeId ) {
         message = JSON.stringify( message );
         peerSocket.write( message );
       }
@@ -91,6 +94,10 @@ class nodeManager {
       keys.push(`${nodes.get(key).nodeIp}:${nodes.get(key).nodePort}`);
     });
     cli.Logger.drawNodes( keys );
+  }
+
+  static getNodeTest ( peerId ) {
+    return nodes.get( peerId );
   }
 
   static getNode ( host ) {

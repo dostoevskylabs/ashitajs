@@ -4,6 +4,7 @@ const net             = require("net");
 const cli             = require("./cli.js");
 const client          = require("./client.js");
 const nodeManager     = require("./nodeManager.js");
+const fs              = require("fs");
 
 class AshitaNode extends net.Server {
   constructor () {
@@ -24,12 +25,25 @@ class AshitaNode extends net.Server {
     this.on("connection", this.onConnection.bind(this));
 
     this.socket = undefined;
+    this.MOTD   = undefined;
   }
 
   onConnection ( socket ) {
     this.socket = socket;
     this.socket.on("data", this.onData.bind(this));
-    this.socket.on("error", this.onError.bind(this));   
+    this.socket.on("error", this.onError.bind(this)); 
+    fs.readFile("./etc/issue", "utf8", ( error, data ) => {
+      if ( !error ) {
+        this.MOTD = data.toString()
+      }
+
+      this.socket.write(JSON.stringify({
+        "type":"connectionSuccessful",
+        "content":{
+          "MOTD": this.MOTD
+        }
+      }));
+    });    
   }
 
   onData ( data ) {
@@ -43,7 +57,7 @@ class AshitaNode extends net.Server {
 
     switch ( data.type ) {
       case "publicMessage":
-        cli.Logger.debug(data.content);
+        cli.Logger.debug(data);
         break;
         
       case "newNode":
@@ -52,6 +66,8 @@ class AshitaNode extends net.Server {
         if ( nodeManager.getNode( peerId ) ) {
           return false;
         }
+
+
 
         new client(host.split(":")[0], host.split(":")[1]);
         break;

@@ -48,6 +48,7 @@ class GUI extends ws {
     this.socket     = socket;
     this.knownPeers = nodeManager.getNodes();
     this.clientIP   = this.socket._socket.remoteAddress.substr(7);
+    this.MOTD       = undefined;
 
     this.socket.on("message", this.onMessage.bind(this));
     this.socket.on("error", this.onError.bind(this));
@@ -56,9 +57,13 @@ class GUI extends ws {
     this.peerDiscovered( nodeManager.getNodeId );
     
     fs.readFile("./etc/issue", "utf8", ( error, data ) => {
+      if ( !error ) {
+        this.MOTD = data.toString()
+      }
+
       this.sendClientEvent("MOTD", {
         "peerId"  : nodeManager.getNodeId,
-        "MOTD"    : data.toString()
+        "MOTD"    : this.MOTD
       });
     });
 
@@ -114,7 +119,8 @@ class GUI extends ws {
         this.subscribedTo.push(data.content.peerId);
 
         this.sendClientEvent("subscribeSuccessful", {
-          peerId    :  data.content.peerId
+          peerId    :  data.content.peerId,
+          MOTD      : nodeManager.getNodeTest( data.content.peerId ).MOTD
         });
 
         cli.Logger.debug("GUI subscribed to ", data.content.peerId);

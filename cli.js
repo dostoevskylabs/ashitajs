@@ -137,7 +137,7 @@ screens["AddNode"] = blessed.box({
 
 
 
-screens["Peers"] = blessed.log({ //name, p, t, l, b, r, w, h
+screens["Peers"] = blessed.List({ //name, p, t, l, b, r, w, h
   ...theme.templates.log,
   parent: screens["Dashboard"],
   label: "Peers",
