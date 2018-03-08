@@ -50,6 +50,8 @@ class GUI extends ws {
     this.clientIP   = this.socket._socket.remoteAddress.substr(7);
     this.MOTD       = undefined;
 
+    cli.Logger.debug(this.knownPeers);
+
     this.socket.on("message", this.onMessage.bind(this));
     this.socket.on("error", this.onError.bind(this));
     this.socket.on("close", this.onClose.bind(this));
