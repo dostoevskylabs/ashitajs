@@ -31,6 +31,7 @@ class GUI extends ws {
     this.nodeId       = undefined;
     this.clientIP     = undefined;
     this.knownPeers   = undefined;
+    this.MOTD         = undefined;
     this.subscribedTo = [];
 
     this.on("connection", this.onConnection);
@@ -58,9 +59,12 @@ class GUI extends ws {
     }
     
     fs.readFile("./etc/issue", "utf8", ( error, data ) => {
+      if ( !error ) {
+        this.MOTD = data.toString();
+      }
       this.sendClientEvent("MOTD", {
         "peerId"  : nodeManager.getNodeId,
-        "MOTD"    : data.toString()
+        "MOTD"    : this.MOTD
       });
     });
 
@@ -114,11 +118,18 @@ class GUI extends ws {
         }
 
         this.subscribedTo.push(data.content.peerId);
-        cli.Logger.debug(nodeManager.getNodeTest( data.content.peerId) );
-        this.sendClientEvent("subscribeSuccessful", {
-          peerId    :  data.content.peerId,
-          MOTD      : nodeManager.getNodeTest( data.content.peerId ).MOTD
-        });
+
+        if ( nodeManager.getNodeTest(data.content.peerId) === undefined ) {
+          this.sendClientEvent("subscribeSuccessful", {
+            peerId    :  data.content.peerId,
+            MOTD      : this.MOTD
+          });
+        } else {
+          this.sendClientEvent("subscribeSuccessful", {
+            peerId    :  data.content.peerId,
+            MOTD      : nodeManager.getNodeTest( data.content.peerId ).MOTD
+          });          
+        }
 
         cli.Logger.debug("GUI subscribed to ", data.content.peerId);
         break;
