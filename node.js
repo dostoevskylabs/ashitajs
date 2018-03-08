@@ -58,7 +58,7 @@ class AshitaNode extends net.Server {
     switch ( data.type ) {
       case "publicMessage":
         cli.Logger.debug(data);
-        nodeManager.sendGuiMessage(JSON.stringify({peerId: data.content.peerId, username: data.content.username, message: data.content.message }));
+        nodeManager.sendGuiMessage({peerId: data.content.peerId, username: data.content.username, message: data.content.message });
         break;
         
       case "newNode":
