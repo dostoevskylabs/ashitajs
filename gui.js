@@ -172,16 +172,15 @@ class GUI extends ws {
       "content" : object
     });
 
-    cli.Logger.debug("Sending Client Event: ", event);
+    cli.Logger.debug("Sending Client Event: ", event, object);
   }
 
   sendMessage ( data ) {
-    console.log("wut", data);
-    this.sendClientEvent("publicMessage", JSON.stringify({
+    this.sendClientEvent("publicMessage", {
       "peerId"  : data.peerId,
       "username": data.username,
       "message" : data.message
-    }));
+    });
   }
 
   peerDiscovered ( peerId ) {

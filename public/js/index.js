@@ -75,7 +75,8 @@ class AshitaSocket extends WebSocket {
           break;          
 
         case "publicMessage":
-          this.onPublicMessage(data.content);
+          console.log("Pie");
+          this.onPublicMessage( data.content );
         break;
         case "peerDiscovered":
           // a new peer discovered
@@ -260,7 +261,6 @@ class Ashita {
   }
 
   onPublicMessage ( data ) {
-    console.log(data);
     this.node.messages.storePublicMessage({
       peerId   : data.peerId,
       timestamp: Date.now(),      
