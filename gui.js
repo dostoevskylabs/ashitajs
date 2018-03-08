@@ -56,7 +56,8 @@ class GUI extends ws {
     
     this.peerDiscovered( nodeManager.getNodeId );
 
-    for ( let peer in this.knownPeers ) {
+    for ( let peer of this.knownPeers ) {
+      console.log(peer);
       this.peerDiscovered( peer );
     }
     
