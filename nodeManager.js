@@ -82,6 +82,10 @@ class nodeManager {
     return Array.from(nodes.keys());
   }
 
+  static getNodeTest ( peerId ) {
+    return nodes.get( peerId );
+  }
+
   static getNode ( host ) {
     if ( nodes.has( host ) ) {
       return true;

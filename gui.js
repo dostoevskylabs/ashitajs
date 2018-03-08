@@ -36,8 +36,6 @@ class GUI extends ws {
     this.on("connection", this.onConnection);
   }
 
-
-
   onConnection ( socket ) {
     if ( this.instanced ) {
       /* handle error, trying to open multiple instances of the GUI */
@@ -48,9 +46,6 @@ class GUI extends ws {
     this.socket     = socket;
     this.knownPeers = nodeManager.getNodes();
     this.clientIP   = this.socket._socket.remoteAddress.substr(7);
-    this.MOTD       = undefined;
-
-    cli.Logger.debug(this.knownPeers);
 
     this.socket.on("message", this.onMessage.bind(this));
     this.socket.on("error", this.onError.bind(this));
@@ -59,7 +54,6 @@ class GUI extends ws {
     this.peerDiscovered( nodeManager.getNodeId );
 
     for ( let peer of this.knownPeers ) {
-      console.log(peer);
       this.peerDiscovered( peer );
     }
     
@@ -120,7 +114,7 @@ class GUI extends ws {
         }
 
         this.subscribedTo.push(data.content.peerId);
-
+        cli.Logger.debug(nodeManager.getNodeTest( data.content.peerId) );
         this.sendClientEvent("subscribeSuccessful", {
           peerId    :  data.content.peerId,
           MOTD      : nodeManager.getNodeTest( data.content.peerId ).MOTD
