@@ -145,6 +145,12 @@ class Ashita {
               if ( this.subscribedTo.includes(peer[0]) ) {
                 return false;
               }
+              this.node.send({
+                type     : "subscribe",
+                content  : {
+                  peerId   : peer[0]
+                }
+              });              
               this.ui.addTab({tabId: peer[0], tabName: peer[1].channelName});
               this.subscribedTo.push(peer[0]);
               this.onUiChangeTab( peer[0] );
