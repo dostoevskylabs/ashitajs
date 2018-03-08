@@ -175,6 +175,14 @@ class GUI extends ws {
     cli.Logger.debug("Sending Client Event: ", event);
   }
 
+  sendMessage ( data ) {
+    this.sendClientEvent("publicMessage", {
+      "peerId"  : data.content.peerId,
+      "username": data.username,
+      "message" : data.message
+    });
+  }
+
   peerDiscovered ( peerId ) {
     if ( this.instanced === false ) {
       return false;

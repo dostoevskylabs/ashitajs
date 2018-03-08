@@ -74,6 +74,9 @@ class AshitaSocket extends WebSocket {
           console.log(data);
           break;          
 
+        case "publicMessage":
+          this.onPublicMessage(data.content);
+        break;
         case "peerDiscovered":
           // a new peer discovered
           this.onPeerDiscovery( data.content );
@@ -81,7 +84,7 @@ class AshitaSocket extends WebSocket {
 
         case "publicMessageSuccessful":
           // your public message was accepted
-          this.onPublicMessage( data.content );
+          //
           break;
 
         case "publicMessageFailed":

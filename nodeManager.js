@@ -53,6 +53,12 @@ class nodeManager {
     }
   }
 
+  static sendGuiMessage ( data ) {
+    if ( gui.instanced ) {
+      gui.sendMessage( data );
+    }
+  }
+
   static removeNode ( nodeId ) {
     if ( gui.instanced ) {
       //gui.knownPeers = this.getNodes();
