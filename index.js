@@ -5,8 +5,8 @@ const nodeManager       = require("./nodeManager.js");
 const gui               = require("./gui.js");
 const cli               = require("./cli.js");
 const client            = require("./client.js");
-const readline = require('readline');
-const rl = readline.createInterface({
+const readline          = require('readline');
+const rl                = readline.createInterface({
   input: process.stdin,
   output: process.stdout
 });
@@ -22,11 +22,15 @@ nodeManager.setNodePort( 8000 );
 new gui();
 new node();
 
-cli.Logger.info("Enter a peer to connect to\nEg: 192.168.1.148:8001");
+cli.Logger.notice("Enter a peer to connect to (Eg: 192.168.1.148:8001)");
 rl.on('line', (line) => {
   let host = line.split(":")[0];
   let port = line.split(":")[1];
   if ( !nodeManager.getNode(`${host}:${port}`) ) {
-    new client( host, port );
+    try {
+      new client( host, port );
+    } catch ( e ) {
+      cli.Logger.debug(`Failed to connect to ${host}:${port}`);
+    }
   }
 });
