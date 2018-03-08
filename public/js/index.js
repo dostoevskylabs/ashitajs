@@ -260,6 +260,7 @@ class Ashita {
   }
 
   onPublicMessage ( data ) {
+    console.log(data);
     this.node.messages.storePublicMessage({
       peerId   : data.peerId,
       timestamp: Date.now(),      
