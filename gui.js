@@ -177,7 +177,7 @@ class GUI extends ws {
 
   sendMessage ( data ) {
     this.sendClientEvent("publicMessage", {
-      "peerId"  : data.content.peerId,
+      "peerId"  : data.peerId,
       "username": data.username,
       "message" : data.message
     });
