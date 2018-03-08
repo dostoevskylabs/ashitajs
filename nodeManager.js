@@ -10,7 +10,7 @@ class nodeManager {
   static setGui ( guiInstance ) {
     gui = guiInstance;
   }
-  
+
   static setNodeHost ( host ) {
     nodeHost = host;
   }
@@ -54,8 +54,6 @@ class nodeManager {
   }
 
   static removeNode ( nodeId ) {
-    // remove cli.Logger.screens["Peers"]
-    // delete nodeId from nodes
     if ( gui.instanced ) {
       //gui.knownPeers = this.getNodes();
       //gui.peerDisconnected( nodeId );

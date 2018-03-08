@@ -27,10 +27,6 @@ rl.on('line', (line) => {
   let host = line.split(":")[0];
   let port = line.split(":")[1];
   if ( !nodeManager.getNode(`${host}:${port}`) ) {
-    try {
-      new client( host, port );
-    } catch ( e ) {
-      cli.Logger.debug(`Failed to connect to ${host}:${port}`);
-    }
+    new client( host, port );
   }
 });

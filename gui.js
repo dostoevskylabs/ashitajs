@@ -30,7 +30,7 @@ class GUI extends ws {
     this.socket       = undefined;
     this.nodeId       = undefined;
     this.clientIP     = undefined;
-    this.knownPeers   = nodeManager.getNodes();
+    this.knownPeers   = undefined;
     this.subscribedTo = [];
 
     this.on("connection", this.onConnection);
@@ -55,15 +55,15 @@ class GUI extends ws {
     this.socket.on("close", this.onClose.bind(this));
     
     this.peerDiscovered( nodeManager.getNodeId );
+
+    for ( peer in this.knownPeers ) {
+      this.peerDiscovered( peer );
+    }
     
     fs.readFile("./etc/issue", "utf8", ( error, data ) => {
-      if ( !error ) {
-        this.MOTD = data.toString()
-      }
-
       this.sendClientEvent("MOTD", {
         "peerId"  : nodeManager.getNodeId,
-        "MOTD"    : this.MOTD
+        "MOTD"    : data.toString()
       });
     });
 
