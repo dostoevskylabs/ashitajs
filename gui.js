@@ -176,11 +176,12 @@ class GUI extends ws {
   }
 
   sendMessage ( data ) {
-    this.sendClientEvent("publicMessage", {
+    console.log("wut", data);
+    this.sendClientEvent("publicMessage", JSON.stringify({
       "peerId"  : data.peerId,
       "username": data.username,
       "message" : data.message
-    });
+    }));
   }
 
   peerDiscovered ( peerId ) {
