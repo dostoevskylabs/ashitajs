@@ -22,10 +22,10 @@ nodeManager.setNodePort( 8000 );
 new gui();
 new node();
 
+cli.Logger.info("Enter a peer to connect to\nEg: 192.168.1.148:8001");
 rl.on('line', (line) => {
   let host = line.split(":")[0];
   let port = line.split(":")[1];
-  console.log(`Received: ${line}`);
   if ( !nodeManager.getNode(`${host}:${port}`) ) {
     new client( host, port );
   }

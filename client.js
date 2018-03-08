@@ -38,7 +38,6 @@ class AshitaClient extends net.Socket {
     if ( data.type === "connectionSuccessful" ) {
       this.instanced = true;
       this.MOTD = data.content.MOTD;
-      cli.Logger.info(this.MOTD);
       nodeManager.addNode(this);
       cli.Logger.debug("Handshake completed with", `${this.nodeId}`);   
       this.sendClientEvent("newNode", {
