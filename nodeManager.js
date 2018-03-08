@@ -41,10 +41,6 @@ class nodeManager {
 
     let host = `${clientInstance.nodeIp}:${clientInstance.nodePort}`;
     nodes.set( clientInstance.nodeId, clientInstance );
-
-    cli.Logger.addPeer( host );
-
-    this.drawNodes();
   
     this.sendNodeEvent("newNode", {
       "nodeId"    : clientInstance.nodeId,
@@ -86,14 +82,6 @@ class nodeManager {
 
   static getNodes () {
     return Array.from(nodes.keys());
-  }
-
-  static drawNodes () {
-    let keys = [];
-    this.getNodes().map( (key) => {
-      keys.push(`${nodes.get(key).nodeIp}:${nodes.get(key).nodePort}`);
-    });
-    cli.Logger.drawNodes( keys );
   }
 
   static getNodeTest ( peerId ) {

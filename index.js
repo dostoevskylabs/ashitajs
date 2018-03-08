@@ -5,6 +5,12 @@ const nodeManager       = require("./nodeManager.js");
 const gui               = require("./gui.js");
 const cli               = require("./cli.js");
 const client            = require("./client.js");
+const readline = require('readline');
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
 
 /** quick hack to get the internal IP address of the host */
 let interfaces          = os.networkInterfaces();
@@ -16,17 +22,11 @@ nodeManager.setNodePort( 8000 );
 new gui();
 new node();
 
-cli.screens["nodeHost"].on("submit", function ( node ) {
-  let host = `${node.split(":")[0]}`; 
-  let port = `${node.split(":")[1]}`;
-  if ( nodeManager.getNode(`${host}:${port}`) ) {
-    cli.screens["nodeHost"].setValue("");
-    cli.screens["AddNode"].setBack();
-    return false;
+rl.on('line', (line) => {
+  let host = line.split(":")[0];
+  let port = line.split(":")[1];
+  console.log(`Received: ${line}`);
+  if ( !nodeManager.getNode(`${host}:${port}`) ) {
+    new client( host, port );
   }
-  
-  new client( host, port );
-
-  cli.screens["nodeHost"].setValue("");
-  cli.screens["AddNode"].setBack();  
 });
