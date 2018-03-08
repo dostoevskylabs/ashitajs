@@ -246,15 +246,14 @@ class Ashita {
   }
 
   onSubscribeSuccessful ( data ) {
-    console.log( data );
     this.addPeer( data.peerId );
     this.ui.addTab({
       tabId: data.peerId,
       tabName: "default"
     });
+    this.onReceiveMOTD({peerId:data.peerId, MOTD:data.MOTD});
     this.subscribedTo.push(data.peerId);
     this.onUiChangeTab( data.peerId );
-    this.onReceiveMOTD({peerId:data.peerId, message:data.MOTD});  
   }
 
   onPublicMessage ( data ) {
