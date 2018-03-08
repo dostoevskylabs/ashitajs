@@ -151,9 +151,7 @@ class Ashita {
                   peerId   : peer[0]
                 }
               });              
-              this.ui.addTab({tabId: peer[0], tabName: peer[1].channelName});
-              this.subscribedTo.push(peer[0]);
-              this.onUiChangeTab( peer[0] );
+
             });
           }
           break;
@@ -250,6 +248,13 @@ class Ashita {
   onSubscribeSuccessful ( data ) {
     console.log( data );
     this.addPeer( data.peerId );
+    this.ui.addTab({
+      tabId: data.peerId,
+      tabName: "default"
+    });
+    this.subscribedTo.push(data.peerId);
+    this.onUiChangeTab( data.peerId );
+    this.onReceiveMOTD({peerId:data.peerId, message:data.MOTD});  
   }
 
   onPublicMessage ( data ) {

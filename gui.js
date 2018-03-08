@@ -105,7 +105,7 @@ class GUI extends ws {
         break;
 
       case "subscribe":
-        if ( !nodeManager.getNode( data.content.peerId ) ) {
+        if ( !nodeManager.getNode( data.content.peerId ) && data.content.peerId !== this.nodeId ) {
           this.sendClientEvent("subscribeFailed", {
             peerId  : data.content.peerId
           });
