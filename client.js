@@ -11,13 +11,13 @@ class AshitaClient extends net.Socket {
     this.nodeId     = nodeManager.generatePeerId (`${this.nodeIp}:${this.nodePort}`);
     this.MOTD       = undefined;
     this.instanced  = false;
-    this.connect(this.nodePort, this.nodeIp);
-    this.on("connect", this.onConnect.bind(this));
-    this.on("data", this.onData.bind(this));
-    this.on("timeout", this.onTimeout.bind(this));
-    this.on("error", this.onError.bind(this));
-    this.on("close", this.onClose.bind(this));
-    this.on("end", this.onEnd.bind(this));
+    this.connect( this.nodePort, this.nodeIp );
+    this.on("connect", this.onConnect.bind( this ));
+    this.on("data", this.onData.bind( this ));
+    this.on("timeout", this.onTimeout.bind( this ));
+    this.on("error", this.onError.bind( this ));
+    this.on("close", this.onClose.bind( this ));
+    this.on("end", this.onEnd.bind( this ));
   }
 
   onConnect () {
@@ -29,6 +29,7 @@ class AshitaClient extends net.Socket {
          nodeManager.getNodeId === this.nodeId ) {
       return false;
     }
+
     logger.debug("AshitaClient initialized with", this.nodeId);
 
   }
@@ -38,8 +39,11 @@ class AshitaClient extends net.Socket {
     if ( data.type === "connectionSuccessful" ) {
       this.instanced = true;
       this.MOTD = data.content.MOTD;
-      nodeManager.addNode(this);
-      logger.debug("Handshake completed with", `${this.nodeId}`);   
+
+      nodeManager.addNode( this );
+
+      logger.debug("Handshake completed with", `${this.nodeId}`);
+
       this.sendClientEvent("newNode", {
         "nodeHost": `${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
       });         
@@ -65,8 +69,8 @@ class AshitaClient extends net.Socket {
   }
 
   send ( data ) {
-    data = JSON.stringify(data);
-    this.write(data);
+    data = JSON.stringify( data );
+    this.write( data );
   }
 
   sendClientEvent ( event, object ) {
@@ -75,7 +79,7 @@ class AshitaClient extends net.Socket {
       "content" : object
     };
 
-    this.send(message);
+    this.send( message );
   }
 }
 

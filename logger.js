@@ -4,18 +4,18 @@ const color     = require("./color.js");
 const getTime   = () => Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "numeric", second: "numeric"}).format( Date.now() );
 //const verbosity = {};
 
-const NOTICE = Symbol("NOTICE");
-const WARN = Symbol("WARN");
-const INFO = Symbol("INFO");
-const DEBUG = Symbol("DEBUG");
-const ERROR = Symbol("ERROR");
+const NOTICE  = Symbol("NOTICE");
+const WARN    = Symbol("WARN");
+const INFO    = Symbol("INFO");
+const DEBUG   = Symbol("DEBUG");
+const ERROR   = Symbol("ERROR");
 
 const verbosity = {
-  [NOTICE]: false,
-  [WARN]  : false,
-  [INFO]  : false,
-  [DEBUG] : false,
-  [ERROR] : false
+  [NOTICE]  : false,
+  [WARN]    : false,
+  [INFO]    : false,
+  [DEBUG]   : false,
+  [ERROR]   : false
 };
 
 class Logger {

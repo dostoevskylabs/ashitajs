@@ -8,24 +8,23 @@ const fs              = require("fs");
 class AshitaNode extends net.Server {
   constructor () {
     super();
+
     this.listen({
       port:nodeManager.getNodePort,
       host:nodeManager.getNodeHost,
       exclusive:true
-    }, () => {
-      logger.notice(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
-    });
+    }, () => logger.notice(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`) );
 
-    this.on("error", (error) => {
+    this.on("error", ( error ) => {
       if ( error.code === "EADDRINUSE" ) {
         this.close();
-        nodeManager.setNodePort(nodeManager.getNodePort++);
+        nodeManager.setNodePort( nodeManager.getNodePort++ );
         nodeManager.setNodePort( nodeManager.getNodePort );
         return new AshitaNode();
       }
     });
 
-    this.on("connection", this.onConnection.bind(this));
+    this.on("connection", this.onConnection.bind( this ));
 
     this.socket = undefined;
     this.MOTD   = undefined;
@@ -33,24 +32,24 @@ class AshitaNode extends net.Server {
 
   onConnection ( socket ) {
     this.socket = socket;
-    this.socket.on("data", this.onData.bind(this));
-    this.socket.on("error", this.onError.bind(this)); 
+    this.socket.on("data", this.onData.bind( this ));
+    this.socket.on("error", this.onError.bind( this )); 
     fs.readFile("./etc/issue", "utf8", ( error, data ) => {
       if ( !error ) {
         this.MOTD = data.toString()
       }
 
-      this.socket.write(JSON.stringify({
+      this.socket.write( JSON.stringify({
         "type":"connectionSuccessful",
         "content":{
           "MOTD": this.MOTD
         }
-      }));
+      }) );
     });    
   }
 
   onData ( data ) {
-    data = this.safeParseJSON(data);
+    data = this.safeParseJSON( data );
 
     if ( !data.hasOwnProperty("type") ||
          !data.hasOwnProperty("content") ) {
@@ -61,8 +60,12 @@ class AshitaNode extends net.Server {
     switch ( data.type ) {
       case "publicMessage":
         logger.debug(data);
-        nodeManager.sendGuiMessage({peerId: data.content.peerId, username: data.content.username, message: data.content.message });
-        break;
+        nodeManager.sendGuiMessage({
+          peerId    : data.content.peerId,
+          username  : data.content.username,
+          message   : data.content.message
+        });
+      break;
         
       case "newNode":
         var host   = data.content.nodeHost;
@@ -71,10 +74,8 @@ class AshitaNode extends net.Server {
           return false;
         }
 
-
-
         new client(host.split(":")[0], host.split(":")[1]);
-        break;
+      break;
       
       default:
         // pass

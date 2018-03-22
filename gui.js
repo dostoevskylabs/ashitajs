@@ -12,12 +12,10 @@ app.use( express.static( path.join(__dirname, "/public") ) );
 
 class GUI extends ws {
   constructor () {
-    const guiServer = http.createServer( app ).listen( port, () => {
-      logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
-    });
+    const guiServer = http.createServer( app ).listen( port, () => logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`) );
     super({ server : guiServer });
 
-    this.on("error", (error) => {
+    this.on("error", ( error ) => {
       if ( error.code === "EADDRINUSE" ) {
         this.close();
         port++;
@@ -25,7 +23,7 @@ class GUI extends ws {
       }
     });
 
-    nodeManager.setGui(this);
+    nodeManager.setGui( this );
 
     this.instanced    = false;
     this.socket       = undefined;
@@ -49,9 +47,9 @@ class GUI extends ws {
     this.knownPeers = nodeManager.getNodes();
     this.clientIP   = this.socket._socket.remoteAddress.substr(7);
 
-    this.socket.on("message", this.onMessage.bind(this));
-    this.socket.on("error", this.onError.bind(this));
-    this.socket.on("close", this.onClose.bind(this));
+    this.socket.on("message", this.onMessage.bind( this ));
+    this.socket.on("error", this.onError.bind( this ));
+    this.socket.on("close", this.onClose.bind( this ));
     
     this.peerDiscovered( nodeManager.getNodeId );
 
@@ -77,7 +75,7 @@ class GUI extends ws {
       return false;
     }
 
-    data = this.safeParseJSON(data);
+    data = this.safeParseJSON( data );
 
     if ( !data.hasOwnProperty("type") ||
          !data.hasOwnProperty("content") ) {
@@ -89,13 +87,13 @@ class GUI extends ws {
         this.sendClientEvent("availablePeers", {
           "peers" : this.knownPeers
         });
-        break;
+      break;
 
       case "getSubscribed":
         this.sendClientEvent("subscriptions", {
           "subscriptions" : this.subscribedTo
         });
-        break;
+      break;
 
       case "publicMessage":
         this.sendClientEvent("publicMessageSuccessful", {
@@ -107,7 +105,7 @@ class GUI extends ws {
           "username": data.content.username,
           "message" : data.content.message
         })
-        break;
+      break;
 
       case "subscribe":
         if ( !nodeManager.getNode( data.content.peerId ) && data.content.peerId !== nodeManager.getNodeId ) {
@@ -118,22 +116,22 @@ class GUI extends ws {
           return false;
         }
 
-        this.subscribedTo.push(data.content.peerId);
+        this.subscribedTo.push( data.content.peerId );
 
-        if ( nodeManager.getNodeTest(data.content.peerId) === undefined ) {
+        if ( nodeManager.getNodeTest( data.content.peerId ) === undefined ) {
           this.sendClientEvent("subscribeSuccessful", {
-            peerId    :  data.content.peerId,
+            peerId    : data.content.peerId,
             MOTD      : this.MOTD
           });
         } else {
           this.sendClientEvent("subscribeSuccessful", {
-            peerId    :  data.content.peerId,
+            peerId    : data.content.peerId,
             MOTD      : nodeManager.getNodeTest( data.content.peerId ).MOTD
           });          
         }
 
         logger.debug("GUI subscribed to ", data.content.peerId);
-        break;
+      break;
 
       default:
         this.sendClientEvent("invalidEvent", {
@@ -159,8 +157,8 @@ class GUI extends ws {
       return false;
     }
 
-    data = JSON.stringify(data);
-    this.socket.send(data);
+    data = JSON.stringify( data );
+    this.socket.send( data );
   }
 
   sendClientEvent ( event, object ) {
@@ -190,7 +188,7 @@ class GUI extends ws {
     }
 
     this.sendClientEvent("peerDiscovered", {
-      "peerId"    : peerId
+      "peerId" : peerId
     });
   }
 
