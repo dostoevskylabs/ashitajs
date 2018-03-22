@@ -12,10 +12,15 @@
   ],
   "license": "GPL-3.0",
   "dependencies": {
-    "blessed": "^0.1.81",
+    "os": "latest",
+    "fs": "latest",
+    "net": "latest",
+    "ws": "latest",
+    "http": "latest",
+    "path": "latest",
     "express": "latest",
     "validator": "latest",
-    "ws": "latest"
+    "readline": "latest"
   },
   "devDependencies": {
     "eslint": "latest"

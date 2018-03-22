@@ -1,6 +1,6 @@
 ashitajs [![gplv3](https://img.shields.io/badge/license-GPLv3-red.svg)](LICENSE)
-[![nodejs](https://img.shields.io/badge/nodejs-v9.2.0-blue.svg)](README.md)
-[![npm](https://img.shields.io/badge/npm-v5.5.1-blue.svg)](README.md)
+[![nodejs](https://img.shields.io/badge/nodejs-v9.8.0-blue.svg)](README.md)
+[![npm](https://img.shields.io/badge/npm-v5.6.0-blue.svg)](README.md)
 [![p2p](https://img.shields.io/badge/p2p-enabled-green.svg)](README.md)
 ================================
 
