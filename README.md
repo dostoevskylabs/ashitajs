@@ -22,6 +22,9 @@ Diagram
 	/
 [remote host]
 ```
+
+![Image](https://i.imgur.com/wBfvnlx.png)
+
 As a test case you can run
 ```javascript
 npm install
