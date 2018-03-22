@@ -1,7 +1,6 @@
 "use strict";
-let   port            = 8000;
 const net             = require("net");
-const cli             = require("./cli.js");
+const logger          = require("./logger.js");
 const client          = require("./client.js");
 const nodeManager     = require("./nodeManager.js");
 const fs              = require("fs");
@@ -9,15 +8,19 @@ const fs              = require("fs");
 class AshitaNode extends net.Server {
   constructor () {
     super();
-    nodeManager.setNodePort( port );
-
-    this.listen(nodeManager.getNodePort, nodeManager.getNodeHost, () => {
-      cli.Logger.notice(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
+    this.listen({
+      port:nodeManager.getNodePort,
+      host:nodeManager.getNodeHost,
+      exclusive:true
+    }, () => {
+      logger.notice(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`);
     });
 
     this.on("error", (error) => {
       if ( error.code === "EADDRINUSE" ) {
-        port++;
+        this.close();
+        nodeManager.setNodePort(nodeManager.getNodePort++);
+        nodeManager.setNodePort( nodeManager.getNodePort );
         return new AshitaNode();
       }
     });
@@ -57,7 +60,7 @@ class AshitaNode extends net.Server {
 
     switch ( data.type ) {
       case "publicMessage":
-        cli.Logger.debug(data);
+        logger.debug(data);
         nodeManager.sendGuiMessage({peerId: data.content.peerId, username: data.content.username, message: data.content.message });
         break;
         

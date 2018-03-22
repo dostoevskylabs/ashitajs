@@ -1,5 +1,5 @@
 "use strict";
-const cli     = require("./cli.js");
+const logger  = require("./logger.js");
 const crypto  = require("crypto");
 const nodes   = new Map();
 let gui       = undefined;

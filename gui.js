@@ -1,6 +1,6 @@
 "use strict";
 let port                = 60000;
-const cli               = require("./cli.js");
+const logger            = require("./logger.js");
 const path              = require("path");
 const fs                = require("fs");
 const ws                = require("ws").Server;
@@ -13,12 +13,13 @@ app.use( express.static( path.join(__dirname, "/public") ) );
 class GUI extends ws {
   constructor () {
     const guiServer = http.createServer( app ).listen( port, () => {
-      cli.Logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
+      logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`);
     });
     super({ server : guiServer });
 
     this.on("error", (error) => {
       if ( error.code === "EADDRINUSE" ) {
+        this.close();
         port++;
         return new GUI();
       }
@@ -68,7 +69,7 @@ class GUI extends ws {
       });
     });
 
-    cli.Logger.debug("New GUI Session with", this.clientIP);
+    logger.debug("New GUI Session with", this.clientIP);
   }
 
   onMessage ( data ) {
@@ -131,7 +132,7 @@ class GUI extends ws {
           });          
         }
 
-        cli.Logger.debug("GUI subscribed to ", data.content.peerId);
+        logger.debug("GUI subscribed to ", data.content.peerId);
         break;
 
       default:
@@ -172,7 +173,7 @@ class GUI extends ws {
       "content" : object
     });
 
-    cli.Logger.debug("Sending Client Event: ", event, object);
+    logger.debug("Sending Client Event: ", event);
   }
 
   sendMessage ( data ) {

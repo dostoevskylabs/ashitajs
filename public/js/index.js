@@ -75,9 +75,9 @@ class AshitaSocket extends WebSocket {
           break;          
 
         case "publicMessage":
-          console.log("Pie");
           this.onPublicMessage( data.content );
         break;
+        
         case "peerDiscovered":
           // a new peer discovered
           this.onPeerDiscovery( data.content );
