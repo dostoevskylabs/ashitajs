@@ -42,31 +42,31 @@ class Logger {
   }
   static notice ( ...message ) { 
     if ( verbosity[NOTICE] ) {
-      console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message );
+      console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message, color.Reset );
     }
   }
 
   static info ( ...message ) { 
     if ( verbosity[INFO] ) {
-      console.info( color.White + `[INFO\t- ${getTime()}] `, ...message );
+      console.info( color.White + `[INFO\t- ${getTime()}] `, ...message, color.Reset );
     }
   }   
 
   static warn ( ...message ) { 
     if ( verbosity[WARN] ) {
-      console.log( color.Yellow + `[WARN\t- ${getTime()}] `, ...message );
+      console.log( color.Yellow + `[WARN\t- ${getTime()}] `, ...message, color.Reset );
     }
   }
 
   static debug ( ...message ) { 
     if ( verbosity[DEBUG] ) {     
-      console.log( color.Blue + `[DEBUG\t- ${getTime()}] `, ...message );
+      console.log( color.Blue + `[DEBUG\t- ${getTime()}] `, ...message, color.Reset );
     }
   } 
 
   static error ( ...message ) { 
     if ( verbosity[ERROR] ) {
-      console.log( color.Red + `[ERROR\t- ${getTime()}] `, ...message );
+      console.log( color.Red + `[ERROR\t- ${getTime()}] `, ...message, color.Reset );
     }
   }   
 

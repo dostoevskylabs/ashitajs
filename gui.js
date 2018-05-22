@@ -1,5 +1,4 @@
 "use strict";
-let port                = 60000;
 const logger            = require("./logger.js");
 const path              = require("path");
 const fs                = require("fs");
@@ -12,13 +11,13 @@ app.use( express.static( path.join(__dirname, "/public") ) );
 
 class GUI extends ws {
   constructor () {
-    const guiServer = http.createServer( app ).listen( port, () => logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${port}`) );
+    const guiServer = http.createServer( app ).listen( nodeManager.getGuiPort, () => logger.notice(`GUI is Listening on http://${nodeManager.getNodeHost}:${nodeManager.getGuiPort}`) );
     super({ server : guiServer });
 
     this.on("error", ( error ) => {
       if ( error.code === "EADDRINUSE" ) {
         this.close();
-        port++;
+        nodeManager.setGuiPort(nodeManager.getGuiPort++);
         return new GUI();
       }
     });

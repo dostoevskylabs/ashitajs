@@ -15,7 +15,8 @@ let interfaces          = os.networkInterfaces();
 let nodeHost            = interfaces[Object.keys(interfaces)[0]][0].address;
 
 nodeManager.setNodeHost( nodeHost );
-nodeManager.setNodePort( 8000 );
+nodeManager.setNodePort( 8001 );
+nodeManager.setGuiPort( 60001 );
 
 new node();
 new gui();

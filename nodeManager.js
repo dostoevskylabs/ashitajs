@@ -1,10 +1,11 @@
 "use strict";
 const logger    = require("./logger.js");
 const crypto    = require("crypto");
-const nodes     = new Map();
-const gui       = undefined;
-const nodeHost  = undefined;
-const nodePort  = undefined;
+let nodes       = new Map();
+let gui         = undefined;
+let nodeHost    = undefined;
+let nodePort    = undefined;
+let guiPort     = undefined;
 class nodeManager {
   /* TODO: Handle removing peer from nodes, and send an update to gui to let it know the peer is no longer available */
   static setGui ( guiInstance ) {
@@ -25,6 +26,14 @@ class nodeManager {
 
   static get getNodePort () {
     return nodePort;
+  }
+
+  static setGuiPort ( port ) {
+    guiPort = port;
+  }
+
+  static get getGuiPort () {
+    return guiPort;
   }
 
   static get getNodeId () {
