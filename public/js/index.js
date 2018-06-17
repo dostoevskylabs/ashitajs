@@ -54,6 +54,9 @@ class AshitaSocket extends WebSocket {
           this.onReceiveMOTD( data.content );
           break;
 
+        case "connected":
+          console.log("connected");
+          break;
         case "availablePeers":
           // known peers
           console.log(data.content);
@@ -177,11 +180,33 @@ class Ashita {
   }
 
   onUiInput ( data ) {
-    // hack if dashboard or channel list, don't send input to the node
-    // maybe storeSystemMessages()
-    // store channelList cache
-    // store private messages, etc
-    if ( this.state === "Dashboard" || this.state === "ChannelList" ) {
+    if ( this.state === "Dashboard" ) {
+      let messageData = data.message.split(" ");
+
+      switch ( messageData[0] ) {
+        case "/connect":
+          this.connectToNode( messageData[1], messageData[2] );
+
+          if ( this.ui ) {
+            this.ui.print({
+              timestamp: Date.now(),
+              username : "SYSTEM",
+              message  : "Connecting to node"
+            });
+          }
+        break;
+        default:
+          if ( this.ui ) {
+            this.ui.print({
+              timestamp: Date.now(),
+              username : "SYSTEM",
+              message  : "Unknown command"
+            });
+          }        
+      }     
+      return;
+    }
+    if ( this.state === "ChannelList" ) {
       return false;
     }
 
@@ -209,6 +234,16 @@ class Ashita {
         "message"  : data.message
       });
     }    
+  }
+
+  connectToNode ( host, port ) {
+    this.node.send({
+      type     : "connectToNode",
+      content  : {
+        host   : host,
+        port   : port
+      }
+    }); 
   }
 
   addPeer ( peerId ) {
@@ -255,7 +290,11 @@ class Ashita {
       tabId: data.peerId,
       tabName: "default"
     });
-    this.onReceiveMOTD({peerId:data.peerId, MOTD:data.MOTD});
+
+    if ( data.peerId !== this.peers.keys().next().value ) {
+      this.onReceiveMOTD({peerId:data.peerId, MOTD:data.MOTD});
+    }
+    
     this.subscribedTo.push(data.peerId);
     this.onUiChangeTab( data.peerId );
   }

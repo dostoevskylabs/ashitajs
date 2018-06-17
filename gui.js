@@ -82,6 +82,13 @@ class GUI extends ws {
     }
 
     switch ( data.type ) {
+      case "connectToNode":
+        const host = data.content.host;
+        const port = data.content.port;
+        nodeManager.connectToNode( host, port );
+        this.sendClientEvent("connected", {});
+      break;
+
       case "getAvailablePeers":
         this.sendClientEvent("availablePeers", {
           "peers" : this.knownPeers

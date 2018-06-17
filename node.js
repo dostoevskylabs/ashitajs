@@ -74,7 +74,7 @@ class AshitaNode extends net.Server {
           return false;
         }
 
-        new client(host.split(":")[0], host.split(":")[1]);
+        new client(host.split(":")[0], host.split(":")[1], nodeManager);
       break;
       
       default:

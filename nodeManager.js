@@ -1,6 +1,7 @@
 "use strict";
 const logger    = require("./logger.js");
 const crypto    = require("crypto");
+const client    = require("./client.js");
 let nodes       = new Map();
 let gui         = undefined;
 let nodeHost    = undefined;
@@ -39,6 +40,12 @@ class nodeManager {
   static get getNodeId () {
     if ( nodeHost !== undefined && nodePort !== undefined ) {
       return this.generatePeerId( nodeHost + ":" + nodePort );
+    }
+  }
+
+  static connectToNode( host, port ) {
+    if ( !nodeManager.getNode(`${host}:${port}`) ) {
+      new client( host, port, nodeManager );
     }
   }
 

@@ -1,16 +1,16 @@
 "use strict";
 const net             = require("net");
-const nodeManager     = require("./nodeManager.js");
 const logger          = require("./logger.js");
 
 class AshitaClient extends net.Socket {
-  constructor ( nodeIp, nodePort ) {
+  constructor ( nodeIp, nodePort, nodeManager ) {
     super();
-    this.nodeIp     = nodeIp;
-    this.nodePort   = nodePort;
-    this.nodeId     = nodeManager.generatePeerId (`${this.nodeIp}:${this.nodePort}`);
-    this.MOTD       = undefined;
-    this.instanced  = false;
+    this.nodeManager = nodeManager;
+    this.nodeIp      = nodeIp;
+    this.nodePort    = nodePort;
+    this.nodeId      = this.nodeManager.generatePeerId (`${this.nodeIp}:${this.nodePort}`);
+    this.MOTD        = undefined;
+    this.instanced   = false;
     this.connect( this.nodePort, this.nodeIp );
     this.on("connect", this.onConnect.bind( this ));
     this.on("data", this.onData.bind( this ));
@@ -25,8 +25,8 @@ class AshitaClient extends net.Socket {
       return false;
     }
 
-    if ( nodeManager.getNode( this.nodeId ) ||
-         nodeManager.getNodeId === this.nodeId ) {
+    if ( this.nodeManager.getNode( this.nodeId ) ||
+         this.nodeManager.getNodeId === this.nodeId ) {
       return false;
     }
 
@@ -40,12 +40,12 @@ class AshitaClient extends net.Socket {
       this.instanced = true;
       this.MOTD = data.content.MOTD;
 
-      nodeManager.addNode( this );
+      this.nodeManager.addNode( this );
 
       logger.debug("Handshake completed with", `${this.nodeId}`);
 
       this.sendClientEvent("newNode", {
-        "nodeHost": `${nodeManager.getNodeHost}:${nodeManager.getNodePort}`
+        "nodeHost": `${this.nodeManager.getNodeHost}:${this.nodeManager.getNodePort}`
       });         
     }
     // pass
