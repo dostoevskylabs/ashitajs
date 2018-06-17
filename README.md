@@ -26,7 +26,7 @@ Diagram
 ![Image](https://i.imgur.com/wBfvnlx.png)
 
 As a test case you can run
-```javascript
+```bash
 npm install
 nodejs index.js # peer 1 on 8000 (node) / 60000 (gui)
 nodejs index.js # peer 2 on 8001 (node) / 60001 (gui)
@@ -36,4 +36,4 @@ nodejs index.js # peer 2 on 8001 (node) / 60001 (gui)
 
 Then open your browser to http://127.0.0.1:60000/ and http://127.0.0.1:60001/
 
-Currently there is a hacky way to connect to another peer just type ip:port from the console. For example if you want to connect to 8001 from 8000 you would type 127.0.0.1:8001
+From the dashboard of ```:60000``` type ```/connect 127.0.0.1 8001```
