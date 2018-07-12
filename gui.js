@@ -17,7 +17,9 @@ class GUI extends ws {
     this.on("error", ( error ) => {
       if ( error.code === "EADDRINUSE" ) {
         this.close();
-        nodeManager.setGuiPort(nodeManager.getGuiPort++);
+	let port = nodeManager.getGuiPort;
+	port++;
+        nodeManager.setGuiPort(port);
         return new GUI();
       }
     });

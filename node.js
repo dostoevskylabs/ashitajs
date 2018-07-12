@@ -18,8 +18,9 @@ class AshitaNode extends net.Server {
     this.on("error", ( error ) => {
       if ( error.code === "EADDRINUSE" ) {
         this.close();
-        nodeManager.setNodePort( nodeManager.getNodePort++ );
-        nodeManager.setNodePort( nodeManager.getNodePort );
+	let port = nodeManager.getNodePort;
+	port++;
+        nodeManager.setNodePort( port );
         return new AshitaNode();
       }
     });
