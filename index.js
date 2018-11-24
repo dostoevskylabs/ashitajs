@@ -6,7 +6,7 @@ const node              = require("./node.js");
 const cli               = require("./cli.js");
 const client            = require("./client.js");
 const adapter           = process.argv[2];
-
+var sleep               = require('sleep');
 let interfaces          = os.networkInterfaces();
 let nodeHost            = interfaces[adapter][0].family === 'IPv4' ? interfaces[adapter][0].address : interfaces[adapter][1].address;
 
@@ -41,12 +41,48 @@ if ( !nodeManager.getPublicKey || !nodeManager.getPrivateKey ) {
   }, 500);
 }
 
+let peers = [];
+
+function discoverPeers( repeat ) {
+  var mdns = require('mdns');
+  var ad = mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort);
+  ad.start();
+   
+  // watch all http servers
+  var browser = mdns.createBrowser(mdns.tcp('ashitajs'));
+  browser.on('serviceUp', function(service) {
+    try {
+      let nodeId = nodeManager.generatePeerId(`${service.addresses[1]}:${service.port}`);
+
+      if ( nodeId !== nodeManager.getNodeId  && !nodeManager.getNode( nodeId ) ) {
+        nodeManager.connectToNode( service.addresses[1], service.port );
+      }
+    } catch ( e ) {}
+  });
+  browser.on('serviceDown', function(service) {
+    try {
+      nodeManager.removeNode( nodeManager.generatePeerId(`${service.addresses[1]}:${service.port}`) );
+    } catch ( e ) {}
+  });
+  browser.start();
+
+  repeat();
+}
+
 function encryptionEnabled() {
   cli.Panel.security("Encryption Enabled.");
   new node();
 
   // set myself as leader
   nodeManager.setLeader( nodeManager.getNodeId );
+
+    (function repeat(){
+      setTimeout(function(){
+        discoverPeers( repeat );
+      }, 10000);
+    })();
+
+   
 
   function handleInput( input ) {
     const commands = input.split(" ");
@@ -59,10 +95,8 @@ function encryptionEnabled() {
 
       case "/peers":
         let peers = nodeManager.getNodes();
-
-        for ( let i = 0; i < peers.length; i++ ) {
-          cli.Panel.debug(`Active Peer Sessions\n${peers[i]}`)
-        }
+        cli.Panel.debug(`Active Peer Sessions\n${peers.join('\n')}`)
+  
         
         cli.screens["Test"].clearValue();
         cli.screens["Test"].focus();    

@@ -11,12 +11,14 @@
   "dependencies": {
     "blessed": "^0.1.81",
     "fs": "latest",
+    "mdns": "^2.4.0",
     "net": "latest",
     "node-gyp": "^3.8.0",
     "node-rsa": "^1.0.1",
     "os": "latest",
     "pty.js": "^0.3.1",
     "skiff": "^1.10.0",
+    "sleep": "^5.2.3",
     "term.js": "0.0.7"
   },
   "devDependencies": {

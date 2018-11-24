@@ -14,6 +14,7 @@ class AshitaClient extends net.Socket {
     this.publicKey   = undefined;
     this.instanced   = false;
     this.leaderId    = undefined;
+
     this.connect( this.nodePort, this.nodeIp );
     this.on("connect", this.onConnect.bind( this ));
     this.on("data", this.onData.bind( this ));
@@ -34,12 +35,10 @@ class AshitaClient extends net.Socket {
       return false;
     }
 
-    cli.Panel.debug("AshitaClient initialized with", this.nodeId);
-
   }
 
   onData ( data ) {
-    data = JSON.parse( data );
+    data = this.safeParseJSON( data );
 
     switch ( data.type ) {
 
@@ -50,8 +49,11 @@ class AshitaClient extends net.Socket {
        *
        */
       case "getPublicKey":
+        cli.Panel.debug("Attempting connection with", this.nodeId + "...");
+        
         this.sendClientEvent("publicKey", {
-          "publicKey" : this.nodeManager.getPublicKey
+          "publicKey" : this.nodeManager.getPublicKey,
+          "peerId"    : this.nodeManager.getNodeId
         });
       break;
 
@@ -74,9 +76,7 @@ class AshitaClient extends net.Socket {
           this.nodeManager.setLeader( this.nodeManager.getNodeId );
         }
 
-        this.nodeManager.addNode ( this );
-
-        
+        this.nodeManager.addNode ( this );        
 
 
         cli.Panel.debug("Handshake completed with", `${this.nodeId}`);
@@ -84,9 +84,11 @@ class AshitaClient extends net.Socket {
 
 
         cli.Panel.debug("Leader found: " + this.nodeManager.getLeader);
-        this.sendClientEvent("newNode", {
-          "nodeHost": `${this.nodeManager.getNodeHost}:${this.nodeManager.getNodePort}`
+
+        this.sendClientEvent("connectionEstablished", {
+          "peerId" : this.nodeManager.getNodeId
         });
+
       break;
 
       default:

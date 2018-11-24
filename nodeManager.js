@@ -15,6 +15,11 @@ let manifest = new Map(); // my direct peers (not distributed)
 
 
 class nodeManager {
+  static removeAwaiting( peerId ) {
+    let item = awaitingConns.indexOf( peerId );
+    awaitingConns.splice(item, 1);
+  }
+
   static setUsername( user ) {
     username = user;
   }
@@ -46,7 +51,9 @@ class nodeManager {
   }
 
   static connectToNode( host, port ) {
-    if ( !nodeManager.getNode(`${host}:${port}`) ) {
+    let nodeId = this.generatePeerId(`${host}:${port}`);
+
+    if ( !this.getNode( nodeId ) && this.getNodeId !== nodeId ) {
       new client( host, port, nodeManager );
     }
   }
@@ -89,7 +96,9 @@ class nodeManager {
   }
 
   static removeNode ( nodeId ) {
-    manifest.delete( nodeId );
+    if ( this.getNode( nodeId ) ) {
+      manifest.delete( nodeId );
+    }
   }
 
   static sendNodeEvent ( event, object ) {
@@ -120,6 +129,57 @@ class nodeManager {
         peerSocket.write(payload);
       }
     });
+  }
+
+  static sendNewPeerMessage ( peerId ) {
+    let peers = [this.getNodeId];
+    manifest.forEach( ( peerSocket, peer ) => {
+      if ( peer !== this.getNodeId && peer !== peerId ) {
+        peers.push( peer );
+      }
+    });
+
+    manifest.forEach( ( peerSocket, peer ) => {
+      if ( peer !== this.getNodeId && peer !== peerId ) {
+        let payload = {
+          "type"      : "peerJoined",
+          "content"   : {
+            "peers"   : peers,
+            "peerId"   : peerId
+          }
+        };
+
+        payload = JSON.stringify( payload );
+        peerSocket.write( payload );
+      }
+    });
+  }
+
+  static relayNewPeerMessage( peerId, peerArray ) {
+    let peers = peerArray.slice();
+
+    manifest.forEach( ( peerSocket, peer ) => {
+      if ( peer !== this.getNodeId && !peers.includes( peer ) ) {
+        peers.push( peer );
+      }
+    });
+
+    manifest.forEach( ( peerSocket, peer ) => {
+      if ( peer !== this.getNodeId ) {
+        if ( !peerArray.includes( peer ) ) {
+          let payload = {
+            "type"      : "peerJoined",
+            "content"   : {
+              "peers"   : peers,
+              "peerId"  : peerId
+            }
+          };
+
+          payload = JSON.stringify( payload );
+          peerSocket.write( payload );
+        }
+      }
+    });    
   }
 
   static sendPrivateMessage( peerId, username, message ) {

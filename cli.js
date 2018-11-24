@@ -135,7 +135,13 @@ class Panel {
   }
 
   static notice ( ...message ) { 
-    screens["Log"].add(color.White + `[${getTime()}] ` + color.Yellow + `[NOTICE]` + color.White, ...message, color.Reset);
+    screens["Log"].add(color.White + `[${getTime()}] ` + color.Green + `[NOTICE]` + color.White, ...message, color.Reset);
+    //console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message );
+    
+  }
+
+  static alert ( ...message ) { 
+    screens["Log"].add(color.White + `[${getTime()}] ` + color.Red + `[ALERT]` + color.White, ...message, color.Reset);
     //console.log( color.Green + `[NOTICE\t- ${getTime()}] `, ...message );
     
   }

@@ -5,6 +5,7 @@ const client          = require("./client.js");
 const nodeManager     = require("./nodeManager.js");
 const fs              = require("fs");
 const max_conns       = 1;
+let busy              = false;
 
 class AshitaNode extends net.Server {
   constructor () {
@@ -27,15 +28,12 @@ class AshitaNode extends net.Server {
     });
 
     this.on("connection", this.onConnection.bind( this ));
-
-    this.socket = undefined;
   }
 
   onConnection ( socket ) {
     this.socket = socket;
     this.socket.on("data", this.onData.bind( this ));
     this.socket.on("error", this.onError.bind( this ));
-
 
     // request public key of client
     this.socket.write( JSON.stringify({
@@ -60,8 +58,20 @@ class AshitaNode extends net.Server {
       case "disconnecting":
         // send dc event to nodes?
         // pass
-        cli.Panel.debug( `${data.content.nodeId} disconnected` );
+        cli.Panel.alert( `${data.content.nodeId} disconnected` );
         nodeManager.removeNode( data.content.nodeId );
+      break;
+
+      case "peerJoined":
+          {
+          cli.Panel.notice( `${data.content.peerId} joined the network.` );
+
+          nodeManager.relayNewPeerMessage(data.content.peerId, data.content.peers);
+        }; 
+      break;
+
+      case "connectionEstablished":
+        cli.Panel.notice(`${data.content.peerId} has joined your node.`);
       break;
 
       case "publicKey":
@@ -72,6 +82,7 @@ class AshitaNode extends net.Server {
             "publicKey" : nodeManager.getPublicKey
           }
         }));
+        //nodeManager.sendNewPeerMessage( data.content.peerId );
       break;
 
       case "privateMessage":
