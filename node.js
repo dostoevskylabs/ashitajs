@@ -1,9 +1,10 @@
 "use strict";
 const net             = require("net");
-const logger          = require("./logger.js");
+const cli             = require('./cli.js');
 const client          = require("./client.js");
 const nodeManager     = require("./nodeManager.js");
 const fs              = require("fs");
+const max_conns       = 1;
 
 class AshitaNode extends net.Server {
   constructor () {
@@ -13,13 +14,13 @@ class AshitaNode extends net.Server {
       port:nodeManager.getNodePort,
       host:nodeManager.getNodeHost,
       exclusive:true
-    }, () => logger.notice(`Node Listening on http://${nodeManager.getNodeHost}:${nodeManager.getNodePort}`) );
+    }, () => cli.Panel.notice(`Node Listening @${nodeManager.getNodeHost}:${nodeManager.getNodePort}`) );
 
     this.on("error", ( error ) => {
       if ( error.code === "EADDRINUSE" ) {
         this.close();
-	let port = nodeManager.getNodePort;
-	port++;
+        let port = nodeManager.getNodePort;
+        port++;
         nodeManager.setNodePort( port );
         return new AshitaNode();
       }
@@ -28,44 +29,65 @@ class AshitaNode extends net.Server {
     this.on("connection", this.onConnection.bind( this ));
 
     this.socket = undefined;
-    this.MOTD   = undefined;
   }
 
   onConnection ( socket ) {
     this.socket = socket;
     this.socket.on("data", this.onData.bind( this ));
-    this.socket.on("error", this.onError.bind( this )); 
-    fs.readFile("./etc/issue", "utf8", ( error, data ) => {
-      if ( !error ) {
-        this.MOTD = data.toString()
-      }
+    this.socket.on("error", this.onError.bind( this ));
 
-      this.socket.write( JSON.stringify({
-        "type":"connectionSuccessful",
-        "content":{
-          "MOTD": this.MOTD
-        }
-      }) );
-    });    
+
+    // request public key of client
+    this.socket.write( JSON.stringify({
+        "type":"getPublicKey",
+        "content":{}
+    }));
   }
 
   onData ( data ) {
     data = this.safeParseJSON( data );
-
+    const crypto = require("crypto");
     if ( !data.hasOwnProperty("type") ||
          !data.hasOwnProperty("content") ) {
       // missing basic structure
       return false;
     }
 
+    /**
+      TODO: implement security controls to confirm a peer connection has been established properly before accepting commands
+    */
     switch ( data.type ) {
+      case "disconnecting":
+        // send dc event to nodes?
+        // pass
+        cli.Panel.debug( `${data.content.nodeId} disconnected` );
+        nodeManager.removeNode( data.content.nodeId );
+      break;
+
+      case "publicKey":
+        this.socket.write( JSON.stringify({
+          "type":"connectionSuccessful",
+          "content":{
+            "leaderId"  : nodeManager.getNodes().length > max_conns ? null : nodeManager.getLeader,
+            "publicKey" : nodeManager.getPublicKey
+          }
+        }));
+      break;
+
+      case "privateMessage":
+        {
+          let message = crypto.privateDecrypt(nodeManager.getPrivateKey, Buffer.from(data.content.message, 'utf-8'));
+          cli.Panel.privateMessageRecieved( data.content.peerId, data.content.username, message.toString() );
+        };
+      break;
+
       case "publicMessage":
-        logger.debug(data);
-        nodeManager.sendGuiMessage({
-          peerId    : data.content.peerId,
-          username  : data.content.username,
-          message   : data.content.message
-        });
+        {
+          let message = crypto.privateDecrypt(nodeManager.getPrivateKey, Buffer.from(data.content.message, 'utf-8'));
+          cli.Panel.publicMessage( data.content.peerId[0], data.content.username, message.toString() );
+
+          nodeManager.relayPublicMessage(data.content.peerId, data.content.username, message.toString());
+        };
       break;
         
       case "newNode":
@@ -74,7 +96,7 @@ class AshitaNode extends net.Server {
         if ( nodeManager.getNode( peerId ) ) {
           return false;
         }
-
+        
         new client(host.split(":")[0], host.split(":")[1], nodeManager);
       break;
       

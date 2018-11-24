@@ -1,6 +1,8 @@
 "use strict";
 const net             = require("net");
-const logger          = require("./logger.js");
+const fs              = require('fs');
+const cli             = require('./cli.js');
+
 
 class AshitaClient extends net.Socket {
   constructor ( nodeIp, nodePort, nodeManager ) {
@@ -9,8 +11,9 @@ class AshitaClient extends net.Socket {
     this.nodeIp      = nodeIp;
     this.nodePort    = nodePort;
     this.nodeId      = this.nodeManager.generatePeerId (`${this.nodeIp}:${this.nodePort}`);
-    this.MOTD        = undefined;
+    this.publicKey   = undefined;
     this.instanced   = false;
+    this.leaderId    = undefined;
     this.connect( this.nodePort, this.nodeIp );
     this.on("connect", this.onConnect.bind( this ));
     this.on("data", this.onData.bind( this ));
@@ -25,30 +28,70 @@ class AshitaClient extends net.Socket {
       return false;
     }
 
+    // prevent duplicate links
     if ( this.nodeManager.getNode( this.nodeId ) ||
          this.nodeManager.getNodeId === this.nodeId ) {
       return false;
     }
 
-    logger.debug("AshitaClient initialized with", this.nodeId);
+    cli.Panel.debug("AshitaClient initialized with", this.nodeId);
 
   }
 
   onData ( data ) {
     data = JSON.parse( data );
-    if ( data.type === "connectionSuccessful" ) {
-      this.instanced = true;
-      this.MOTD = data.content.MOTD;
 
-      this.nodeManager.addNode( this );
+    switch ( data.type ) {
 
-      logger.debug("Handshake completed with", `${this.nodeId}`);
+      /**
+       * When a connection is made to a node, the first message in the handshake will
+       * be a request for our node's publicKey which will land in our "requestPublicKey"
+       * statement.
+       *
+       */
+      case "getPublicKey":
+        this.sendClientEvent("publicKey", {
+          "publicKey" : this.nodeManager.getPublicKey
+        });
+      break;
 
-      this.sendClientEvent("newNode", {
-        "nodeHost": `${this.nodeManager.getNodeHost}:${this.nodeManager.getNodePort}`
-      });         
+      /**
+       * Next, we recieve connectionSuccessful, stating that they accepted our key to their chain,
+       * they will return their key to us and we can now add it to our chain.
+       *
+       */
+      case "connectionSuccessful":
+        this.instanced = true;
+        this.publicKey = data.content.publicKey;
+
+        /**
+          If a leader is sent from the node we connected to, we set it as our leader
+          if none is set we set ourselves to the leader
+        */
+        if ( data.content.leaderId ) {
+          this.nodeManager.setLeader( data.content.leaderId );
+        } else {
+          this.nodeManager.setLeader( this.nodeManager.getNodeId );
+        }
+
+        this.nodeManager.addNode ( this );
+
+        
+
+
+        cli.Panel.debug("Handshake completed with", `${this.nodeId}`);
+        cli.Panel.debug("Recieved key for node\n", this.publicKey);
+
+
+        cli.Panel.debug("Leader found: " + this.nodeManager.getLeader);
+        this.sendClientEvent("newNode", {
+          "nodeHost": `${this.nodeManager.getNodeHost}:${this.nodeManager.getNodePort}`
+        });
+      break;
+
+      default:
+        // derp
     }
-    // pass
   }
 
   onTimeout () {
@@ -56,6 +99,7 @@ class AshitaClient extends net.Socket {
   }
 
   onError ( error ) {
+    cli.Panel.debug( error );
     // pass
   }
 
@@ -65,7 +109,7 @@ class AshitaClient extends net.Socket {
   }
 
   onEnd () {
-    // pass
+
   }
 
   send ( data ) {
@@ -81,6 +125,17 @@ class AshitaClient extends net.Socket {
 
     this.send( message );
   }
+
+  
+  safeParseJSON ( data ) {
+    try {
+      let obj = JSON.parse( data );
+      if ( obj && typeof obj === "object" ) {
+        return obj;
+      }
+    } catch ( error ) {}
+    return {};
+  }  
 }
 
 module.exports = AshitaClient;

@@ -1,0 +1,111 @@
+terminoogy:
+
+entire system: fleet
+new peer is "joining the fleet"
+fleet admiral = node leader?
+left the fleet = disconnected peer, remove public key, remove node link?
+
+all peers connect to a max of 5 other peers (settings for this?)
+which peers you connect to are based on which peers have the least amount of connections || random
+first link is considered a 'founder' link ?
+
+public key ledger = manifesto
+distributed js object key/value pair of peers/id (also counts as a distribution of peers for spreading the network?)
+    could hold metadata such as active connections but the distribution would be updated too often,
+        well it would only be updated on a new connection
+        so if you dont recieve or init a new conn you may have an old listing of peers until the next time you update
+            which means some sync issues? na, controls will prevent duplicates so upon update you will only connect to new hosts, if you want
+
+            ;; how should peers propogate messages?
+            ;; send to all direct links not inc themselves
+            ;; notify each peer they send a message to who they already sent messages to
+            ;; each peer sends to all their links if they dont match as a mutual link
+            ;; each peer will always know all available peers, but may not connect directly to them depending on how we do it
+            ;; max peers may be a good way to start ie
+            ;; 5 peers max
+            ;; peer 1 -> 2,3,4,5,6
+            ;; peer 2 -> 1,3,4,5,6
+            ;; peer 3 -> 1,2,4,5,6
+            ;; peer 4 -> 1,2,3,5,6
+            ;; peer 5 -> 1,2,3,4,6
+            ;; peer 6 -> 1,2,3,4,5
+            ;; peer 7 -> 1,2,3,4,5
+            ;; peer 8 -> 1,2,3,4,5
+            ;; peer 300 -> peer 1,2,3,4,5
+
+            need to learn how to properly span peers outwards evenly?
+            do we need leaders or can everyone be equal?
+
+            zzzzzzzzzZz
+
+;>
+[peerId][Bob Marley][public] Hey guys ..broadcast thru network
+[peerId][Joseph][private] hey Bob. ..peer -> peer comms
+[peerId][Bob Marley][#channel] this message is only broadcast to peers associated with a channel, which is tracked by the peer hosting the channel
+..message is sent directly to peer owning channel, owning peer relays it to other channel members? (rework this);
+
+[;]cat /etc/issue
+[bob] gnu blah blah (new tab with file?)blah who cares you're going off in left field with your ideas again
+
+todo;;
+Control for duplicate usernames (differentiate with peer id?)
+peer 2 peer message passing (queues of sorts?)
+public keys + consensus acl/permissions
+mdns broadcast heartbeat
+mdns catch heartbeat, init connection
+mdns checks peer is not already in the chain before connecting (altho, it can connect if it wants to? max peers?)
+
+peer is not fully joined until public key is added to the 'ledger'
+
+controls for verifying ownership of public key and associating it with an IP, originating IP can change but has to be valid and only the last valid one is trusted
+
+private messaging via pulling public key and signing a message individually, direct peer 2 peer interactions via /msg ?
+
+
+poc;;
+public key ledger
+
+{
+    $PeerID : {
+        "publicKey" : "AAAAAAAXYZ"
+    }
+
+    $PeerID2 : {
+        "publicKey" : AWFWEFFEEFWF"
+    }
+}
+
+
+add to ledger
+peerid = { publicKey };
+
+send message
+
+for key in keys(ledger) {
+    encrypt all the keys ( msg );
+}
+
+send msg;
+
+
+
+
+
+peer a "originaintg message" > peer q, peer e
+                                 |
+                               peer f
+
+
+  ----------------------
+ |                      |
+peer a-----peer q     passed
+ |   |          |       |
+peer e     peer f    originating message
+
+
+
+peer b  (originating msg)
+   |
+peer c ( passed message )
+   |
+peer d  ( passed message)
