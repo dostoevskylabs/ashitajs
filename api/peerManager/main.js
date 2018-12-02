@@ -1,23 +1,26 @@
 "use strict";
 const crypto    = require("crypto");
-const client    = require("./client.js");
-const cli       = require("./cli.js");
+const client    = require("../../lib/client/main.js");
+const cli       = require("../../lib/ui/main.js");
 let username    = "Anonymous";
 let publicKey   = undefined;
 let privateKey  = undefined;
 let nodeHost    = undefined;
 let nodePort    = undefined;
+let activePeers       = [];
 
 // Hmm, okay.
 
 let leaderId    = undefined; // who am i following || null
 let manifest = new Map(); // my direct peers (not distributed)
 
-
 class nodeManager {
-  static removeAwaiting( peerId ) {
-    let item = awaitingConns.indexOf( peerId );
-    awaitingConns.splice(item, 1);
+  static addPeer ( peer ) {
+    if ( !activePeers.includes( peer ) ) activePeers.push( peer );
+  }
+
+  static get getPeers () {
+    return activePeers;
   }
 
   static setUsername( user ) {
@@ -45,17 +48,11 @@ class nodeManager {
   }
 
   static get getNodeId () {
-    if ( nodeHost !== undefined && nodePort !== undefined ) {
-      return this.generatePeerId( nodeHost + ":" + nodePort );
-    }
+    return this.generatePeerId( publicKey );
   }
 
   static connectToNode( host, port ) {
-    let nodeId = this.generatePeerId(`${host}:${port}`);
-
-    if ( !this.getNode( nodeId ) && this.getNodeId !== nodeId ) {
-      new client( host, port, nodeManager );
-    }
+    new client( host, port, nodeManager );
   }
 
   static setPublicKey ( key ) {
@@ -88,11 +85,7 @@ class nodeManager {
       return false;
     }
 
-    let host = `${clientInstance.nodeIp}:${clientInstance.nodePort}`;
     manifest.set( clientInstance.nodeId, clientInstance );
-  
-
-    //cli.screens["Peers"].add( host );
   }
 
   static removeNode ( nodeId ) {
@@ -210,7 +203,7 @@ class nodeManager {
 
     manifest.forEach( ( peerSocket, peer ) => {
       if ( peer !== this.getNodeId ) {
-        let encrypted = crypto.publicEncrypt( this.getNodeKey( peer ), Buffer.from( message, 'utf-8') );
+        let encrypted = crypto.privateEncrypt( privateKey, Buffer.from( message, 'utf-8') );
         let payload = {
           "type"      : "publicMessage",
           "content"   : {
@@ -257,8 +250,8 @@ class nodeManager {
     });
   }
 
-  static generatePeerId ( peerId ) {
-    return crypto.createHmac("sha1", peerId).digest("hex");
+  static generatePeerId ( key ) {
+    return crypto.createHmac("sha256", key).digest("hex");
   }
 
   static addKeyToChain ( peerId, publicKey ) {

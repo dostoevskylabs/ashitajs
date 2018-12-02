@@ -1,12 +1,13 @@
 "use strict";
 const fs                = require("fs");
-const nodeManager       = require("./nodeManager.js");
 const os                = require("os");
-const node              = require("./node.js");
-const cli               = require("./cli.js");
-const client            = require("./client.js");
-const adapter           = process.argv[2];
 var sleep               = require('sleep');
+const nodeManager       = require("./api/peerManager/main.js");
+const node              = require("./lib/node/main.js");
+const client            = require("./lib/client/main.js");
+const cli               = require("./lib/ui/main.js");
+const adapter           = process.argv[2];
+
 let interfaces          = os.networkInterfaces();
 let nodeHost            = interfaces[adapter][0].family === 'IPv4' ? interfaces[adapter][0].address : interfaces[adapter][1].address;
 
@@ -17,8 +18,8 @@ nodeManager.setNodeHost( nodeHost );
 nodeManager.setNodePort( 8000 );  
 
 try {
-  nodeManager.setPublicKey( fs.readFileSync("./node.pub", "utf-8") );
-  nodeManager.setPrivateKey( fs.readFileSync("./node.priv", "utf-8") );
+  nodeManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
+  nodeManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
   encryptionEnabled();
 } catch ( err ) {}
 
@@ -31,10 +32,10 @@ if ( !nodeManager.getPublicKey || !nodeManager.getPrivateKey ) {
     const publicDer = key.exportKey('pkcs8-public');
     const privateDer = key.exportKey('pkcs8-private');
 
-    fs.writeFileSync( "./node.pub", publicDer, ( err ) => cli.Panel.debug( err ) );
-    fs.writeFileSync( "./node.priv", privateDer, ( err ) => cli.Panel.debug( err ) );
-    nodeManager.setPublicKey( fs.readFileSync("./node.pub", "utf-8") );
-    nodeManager.setPrivateKey( fs.readFileSync("./node.priv", "utf-8") );
+    fs.writeFileSync( "./.keys/node.pub", publicDer, ( err ) => cli.Panel.debug( err ) );
+    fs.writeFileSync( "./.keys/node.priv", privateDer, ( err ) => cli.Panel.debug( err ) );
+    nodeManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
+    nodeManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
     cli.Panel.security("Keys generated.");
 
     encryptionEnabled();
@@ -52,21 +53,27 @@ function discoverPeers( repeat ) {
   var browser = mdns.createBrowser(mdns.tcp('ashitajs'));
   browser.on('serviceUp', function(service) {
     try {
-      let nodeId = nodeManager.generatePeerId(`${service.addresses[1]}:${service.port}`);
+        if ( nodeManager.getPeers.includes(`${service.addresses[1]}:${service.port}`) ) return false;
+        if ( service.addresses[1] === nodeManager.getNodeHost && service.port === nodeManager.getNodePort ) {
+          return false;
+        } else {
+          nodeManager.connectToNode( service.addresses[1], service.port );
+        }
 
-      if ( nodeId !== nodeManager.getNodeId  && !nodeManager.getNode( nodeId ) ) {
-        nodeManager.connectToNode( service.addresses[1], service.port );
-      }
+        
     } catch ( e ) {}
   });
   browser.on('serviceDown', function(service) {
     try {
-      nodeManager.removeNode( nodeManager.generatePeerId(`${service.addresses[1]}:${service.port}`) );
+      //nodeManager.removeNode( nodeManager.generatePeerId(`${service.addresses[1]}:${service.port}`) );
     } catch ( e ) {}
   });
   browser.start();
 
-  repeat();
+  setTimeout(function(){
+    cli.screens["Log"].setLabel("Log");
+  }, 3000);
+  return repeat();
 }
 
 function encryptionEnabled() {
@@ -78,6 +85,7 @@ function encryptionEnabled() {
 
     (function repeat(){
       setTimeout(function(){
+        cli.screens["Log"].setLabel("Searching for Peers...");
         discoverPeers( repeat );
       }, 10000);
     })();
