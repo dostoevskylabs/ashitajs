@@ -1,7 +1,7 @@
 "use strict";
 const crypto    = require("crypto");
-const client    = require("../../lib/client/main.js");
-const cli       = require("../../lib/ui/main.js");
+const client    = require("../../lib/client");
+const cli       = require("../../lib/ui");
 let username    = "Anonymous";
 let publicKey   = undefined;
 let privateKey  = undefined;

@@ -2,10 +2,10 @@
 const fs                = require("fs");
 const os                = require("os");
 var sleep               = require('sleep');
-const nodeManager       = require("./api/peerManager/main.js");
-const node              = require("./lib/node/main.js");
-const client            = require("./lib/client/main.js");
-const cli               = require("./lib/ui/main.js");
+const nodeManager       = require("./api/peerManager");
+const node              = require("./lib/node");
+const client            = require("./lib/client");
+const cli               = require("./lib/ui");
 const adapter           = process.argv[2];
 
 let interfaces          = os.networkInterfaces();
