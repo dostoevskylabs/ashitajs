@@ -4,36 +4,49 @@ ashitajs [![gplv3](https://img.shields.io/badge/license-GPLv3-red.svg)](LICENSE)
 [![p2p](https://img.shields.io/badge/p2p-enabled-green.svg)](README.md)
 ================================
 
-ashitajs intends to be a fully decentralized P2P network (though not there yet) designed to be deployed anywhere. It's still in its infancy and a lot of work still needs to be done. Currently a PoC so security may be non-existent. Run at your own risk.
+Ashita intends to be a fully decentralized peer-to-peer network without the use of a global DHT, *true* super peers, specific bootstrapping nodes or any centralized elements.
 
-Diagram
+Currently, it's more of a giant proof of concept to learn the algorithms and structures of peer-to-peer systems as I experiment with different research papers I read.
+
+I'm not sure if it will be possible in the end, but it's fun to play with. Currently the discovery mechanism uses mdns and operates best locally. I'm still learning overlay topology and effecient message routing. Until I figure out everything at this stage I won't work on deploying it to the internet.
+
+File Diagram
 ```
-[localhost]
-	\
-	[p2p layer] <------------> [GUI] <----------> [API] <--------> [OS]
-		|
-		[Messages]
-		      |
-		[TCP Layer]
-		      |
-		[Messages]
-		|
-	[p2p layer] <------------> [GUI] <----------> [API] <--------> [OS]
-	/
-[remote host]
+├── middleware
+│   ├── inputParser
+│   │   └── index.js
+│   └── peerManager
+│       └── index.js
+├── config.js
+├── discovery.js
+├── init.js
+├── lib
+│   ├── client
+│   │   └── index.js
+│   ├── node
+│   │   └── index.js
+│   └── ui
+│       ├── color.js
+│       └── index.js
+├── main.js
 ```
 
-![Image](https://i.imgur.com/wBfvnlx.png)
 
 As a test case you can run
 ```bash
 npm install
-nodejs index.js # peer 1 on 8000 (node) / 60000 (gui)
-nodejs index.js # peer 2 on 8001 (node) / 60001 (gui)
+nodejs index.js en0
+nodejs index.js en0
 ```
 
+Preferably from different folders with a separate set of keys in the .keys folder (generated on boot, if they don't exist). This way it can simulate two distinct peers.
 
+Tons of hacky code and bugs, at this point I want to work through the local network only version until it's completely bug-free and has proper implementations for:
+- overlay topology
+- effecient message routing
+- effecient join/leave tracking
+- heartbeats
+- file transfers
+- searching
 
-Then open your browser to http://127.0.0.1:60000/ and http://127.0.0.1:60001/
-
-From the dashboard of ```:60000``` type ```/connect 127.0.0.1 8001```
+This isn't ever intended to be a replacement for any existing technology, so chances are you won't be using this, however if you are interested in learning some of these concepts or have experience already. I would love to hear from you.
