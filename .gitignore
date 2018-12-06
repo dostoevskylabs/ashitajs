@@ -3,4 +3,5 @@ node_modules/
 .vscode/
 npm-debug.log*
 package-lock.json
-.keys/
+.keys/node.pub
+.keys/node.priv
