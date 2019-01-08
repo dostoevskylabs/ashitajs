@@ -23,7 +23,7 @@ function discoverPeers( repeat ) {
 
         if ( !nodeHost ) return false; // no ipv4 discovered in the broadcast
         if ( nodeManager.getActivePeers.includes(`${nodeHost}:${service.port}`) ) return false; // if we already know this peer
-
+        if ( nodeHost === '127.0.0.1' && service.port === nodeManager.getNodePort ) return false; // connecting to ourselves lol
         // if it matches ourself, we shouldn't connect, lol
         if ( nodeHost === nodeManager.getNodeHost && service.port === nodeManager.getNodePort ) {
 
