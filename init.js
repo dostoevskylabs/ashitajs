@@ -53,7 +53,7 @@ class Init {
   }
 
   encryptionEnabled () {
-    //require('./discovery.js'); // begin peer discovery
+    require('./discovery.js'); // begin peer discovery
     new node(); // start listening
     
     // set myself as leader
