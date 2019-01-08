@@ -14,12 +14,9 @@ let activePeers       = [];
 let leaderId    = undefined; // who am i following || null
 let manifest = new Map(); // my direct peers (not distributed)
 
-class nodeManager {
-  static addPeer ( peer ) {
-    if ( !activePeers.includes( peer ) ) activePeers.push( peer );
-  }
+class peerManager {
 
-  static get getPeers () {
+  static get getActivePeers () {
     return activePeers;
   }
 
@@ -51,8 +48,10 @@ class nodeManager {
     return this.generatePeerId( publicKey );
   }
 
-  static connectToNode( host, port ) {
-    new client( host, port, nodeManager );
+  static connectToPeer( host, port ) {
+    if ( host === this.getNodeHost && port == this.getNodePort ) return false;
+    if ( activePeers.includes(`${host}:${port}`) ) return false;
+    new client( host, port, peerManager );
   }
 
   static setPublicKey ( key ) {
@@ -79,22 +78,27 @@ class nodeManager {
     leaderId = id;
   }
 
-  static addNode ( clientInstance ) {
-    if ( this.getNode ( clientInstance.nodeId ) ||
-        clientInstance.nodeId === this.getNodeId ) {
-      return false;
+  static addPeer ( clientInstance ) {
+    if ( !activePeers.includes( `${clientInstance.nodeIp}:${clientInstance.nodePort}` ) ) {
+      activePeers.push( `${clientInstance.nodeIp}:${clientInstance.nodePort}` );
+      if ( this.getPeer ( clientInstance.nodeId ) ||
+          clientInstance.nodeId === this.getNodeId ) {
+        return false;
+      }
+
+      manifest.set( clientInstance.nodeId, clientInstance );
     }
 
-    manifest.set( clientInstance.nodeId, clientInstance );
+    return false;
   }
 
-  static removeNode ( nodeId ) {
-    if ( this.getNode( nodeId ) ) {
-      manifest.delete( nodeId );
+  static removePeer ( peerId ) {
+    if ( this.getPeer( peerId ) ) {
+      manifest.delete( peerId );
     }
   }
 
-  static sendNodeEvent ( event, object ) {
+  static sendPeerEvent ( event, object ) {
     let message = {
       "type"      : event,
       "content"   : object
@@ -114,7 +118,7 @@ class nodeManager {
         let payload   = {
           "type"    : "disconnecting",
           "content" : {
-            "nodeId"   : this.getNodeId
+            "peerId"   : this.getNodeId
           }
         };
 
@@ -177,7 +181,7 @@ class nodeManager {
 
   static sendPrivateMessage( peerId, username, message ) {
     const crypto  = require('crypto');
-    let encrypted = crypto.publicEncrypt( this.getNodeKey( peerId ), Buffer.from( message, 'utf-8') );
+    let encrypted = crypto.publicEncrypt( this.getPeerKey( peerId ), Buffer.from( message, 'utf-8') );
     let payload   = {
       "type"    : "privateMessage",
       "content" : {
@@ -233,7 +237,7 @@ class nodeManager {
     manifest.forEach( ( peerSocket, peer ) => {
       if ( peer !== this.getNodeId ) {
         if ( !peerId.includes(peer) ) {
-          let encrypted = crypto.publicEncrypt( this.getNodeKey( peer ), Buffer.from( message, 'utf-8') );
+          let encrypted = crypto.publicEncrypt( this.getPeerKey( peer ), Buffer.from( message, 'utf-8') );
           let payload = {
             "type"      : "publicMessage",
             "content"   : {
@@ -258,8 +262,8 @@ class nodeManager {
     manifest.get( peerId ).publicKey = publicKey;
   }
 
-  static getNodeKey ( nodeId ) {
-    return manifest.get( nodeId ).publicKey;
+  static getPeerKey ( peerId ) {
+    return manifest.get( peerId ).publicKey;
   }
 
   static getManifest( ) {
@@ -270,16 +274,16 @@ class nodeManager {
     return manifest.get( id );
   }
 
-  static getNodes () {
+  static getPeers () {
     return Array.from( manifest.keys() );
   }
 
-  static getNode ( nodeId ) {
-    if ( manifest.has( nodeId ) ) {
+  static getPeer ( peerId ) {
+    if ( manifest.has( peerId ) ) {
       return true;
     }
     return false;
   }
 }
 
-module.exports = nodeManager;
+module.exports = peerManager;

@@ -17,18 +17,22 @@ class Init {
   }
 
   setupNode () {
+    // define node properties
     nodeManager.setNodeHost( this.nodeHost );
     nodeManager.setNodePort( this.nodePort );  
   }
 
   checkEncryption () {
     try {
+      // read contents of our key files if they already exist
       nodeManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
       nodeManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
-      this.encryptionEnabled();
+
+      this.encryptionEnabled(); // step to encryption enabled actions
     } catch ( err ) {}
 
     if ( !nodeManager.getPublicKey || !nodeManager.getPrivateKey ) {
+      // generate a new keypair as none were found
       cli.Panel.security("Generating KeyPair...");
       setTimeout(() => {
         const NodeRSA = require('node-rsa');
@@ -49,19 +53,20 @@ class Init {
   }
 
   encryptionEnabled () {
-    require('./discovery.js');
+    //require('./discovery.js'); // begin peer discovery
+    new node(); // start listening
+    
+    // set myself as leader
+    nodeManager.setLeader( nodeManager.getNodeId );
 
-    let inputHandler = require ('./middleware/inputParser');
+    let inputHandler = require ('./middleware/inputParser'); // wait for client input
+    cli.Panel.security("Encryption Enabled.");
+    
+    cli.Panel.debug("nodeId: " + nodeManager.getNodeId); //whoami?
 
-      cli.Panel.security("Encryption Enabled.");
-      new node();
-
-      // set myself as leader
-      nodeManager.setLeader( nodeManager.getNodeId );   
-
-      cli.screens["Test"].on("submit", function( message ) {
-        inputHandler( message );
-      });  
+    cli.screens["Test"].on("submit", function( message ) {
+      inputHandler( message );
+    });  
   }
 }
 
