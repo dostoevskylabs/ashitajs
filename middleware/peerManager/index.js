@@ -2,6 +2,7 @@
 const crypto    = require("crypto");
 const client    = require("../../lib/client");
 const cli       = require("../../lib/ui");
+const test      = require("../../lib/manifest");
 let username    = "Anonymous";
 let publicKey   = undefined;
 let privateKey  = undefined;
@@ -119,6 +120,7 @@ class peerManager {
         return false;
       }
 
+      test.addEntry( clientInstance.nodeId, clientInstance.publicKey );
       manifest.set( clientInstance.nodeId, clientInstance );
     }
 

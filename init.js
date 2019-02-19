@@ -5,6 +5,7 @@ const nodeManager       = require("./middleware/peerManager");
 const node              = require("./lib/node");
 const client            = require("./lib/client");
 const cli               = require("./lib/ui");
+const manifest          = require("./lib/manifest");
 
 class Init {
   setup ( adapter, nodeHost, nodePort ) {
@@ -21,7 +22,7 @@ class Init {
     // define node properties
     nodeManager.setNodeHost( this.nodeHost );
     nodeManager.setNodePort( this.nodePort );
-    nodeManager.setInterface( this.adapter ); 
+    nodeManager.setInterface( this.adapter );
   }
 
   checkEncryption () {
@@ -55,9 +56,9 @@ class Init {
   }
 
   encryptionEnabled () {
-    require('./discovery.js'); // begin peer discovery
     new node(); // start listening
-    
+    manifest.addEntry( nodeManager.getNodeId, nodeManager.getPublicKey );
+    require('./discovery.js'); // begin peer discovery    
     // set myself as leader
     nodeManager.setLeader( nodeManager.getNodeId );
 
