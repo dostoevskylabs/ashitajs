@@ -1,12 +1,11 @@
 const nodeManager       = require("./middleware/peerManager");
 const mdns              = require('mdns');
-const ad                = mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, { networkInterface: nodeManager.getInterface });
 
 const cli               = require("./lib/ui");
 
 function discoverPeers( repeat ) {
     // watch all http servers
-    ad.start();
+    const ad                = mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, { networkInterface: nodeManager.getInterface }).start();
     var browser = mdns.createBrowser(mdns.tcp('ashitajs'));
     browser.on('serviceUp', function(service) {
           /**
