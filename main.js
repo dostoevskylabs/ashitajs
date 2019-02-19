@@ -12,5 +12,5 @@ try {
   require('process').exit(0);  
 }
 
-require('./init.js').setup(nodeHost, 8000);
+require('./init.js').setup(adapter, nodeHost, 8000);
 

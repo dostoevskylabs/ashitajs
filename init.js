@@ -7,7 +7,8 @@ const client            = require("./lib/client");
 const cli               = require("./lib/ui");
 
 class Init {
-  setup ( nodeHost, nodePort ) {
+  setup ( adapter, nodeHost, nodePort ) {
+    this.adapter  = adapter;
     this.nodeHost = nodeHost;
     this.nodePort = nodePort;
 
@@ -19,7 +20,8 @@ class Init {
   setupNode () {
     // define node properties
     nodeManager.setNodeHost( this.nodeHost );
-    nodeManager.setNodePort( this.nodePort );  
+    nodeManager.setNodePort( this.nodePort );
+    nodeManager.setInterface( this.adapter ); 
   }
 
   checkEncryption () {

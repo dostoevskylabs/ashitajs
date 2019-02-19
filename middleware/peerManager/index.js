@@ -7,6 +7,7 @@ let publicKey   = undefined;
 let privateKey  = undefined;
 let nodeHost    = undefined;
 let nodePort    = undefined;
+let Interface   = undefined;
 let activePeers       = [];
 
 // Hmm, okay.
@@ -26,6 +27,14 @@ class peerManager {
 
   static get getUsername () {
     return username;
+  }
+
+  static setInterface( iface ) {
+    Interface = iface;
+  }
+
+  static get getInterface () {
+    return Interface;
   }
 
   static setNodeHost ( host ) {

@@ -9,11 +9,11 @@
   "author": "dostoevskylabs",
   "license": "GPL-3.0",
   "dependencies": {
-    "blessed": "^0.1.81",
+    "blessed": "latest",
     "fs": "latest",
-    "mdns": "^2.4.0",
+    "mdns": "latest",
     "net": "latest",
-    "node-rsa": "^1.0.1",
+    "node-rsa": "latest",
     "os": "latest"
   },
   "devDependencies": {
