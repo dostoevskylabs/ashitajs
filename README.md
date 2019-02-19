@@ -34,6 +34,7 @@ File Diagram
 
 As a test case you can run
 ```bash
+sudo apt-get install libavahi-compat-libdnssd-dev
 npm install
 nodejs index.js en0
 nodejs index.js en0
@@ -50,8 +51,3 @@ Tons of hacky code and bugs, at this point I want to work through the local netw
 - searching
 
 This isn't ever intended to be a replacement for any existing technology, so chances are you won't be using this, however if you are interested in learning some of these concepts or have experience already. I would love to hear from you.
-
-Todo
-----
-RUN npm install -g --unsafe-perm homebridge
-CMD service dbus start && service avahi-daemon start
