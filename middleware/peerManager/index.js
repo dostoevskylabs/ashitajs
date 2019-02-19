@@ -15,6 +15,30 @@ let activePeers       = [];
 let leaderId    = undefined; // who am i following || null
 let manifest = new Map(); // my direct peers (not distributed)
 
+/**
+ *  getManifest from other nodes
+ *  ie: query peers, ask for manifest
+ *  recieve manifest from first available or all peers?
+ *  
+ *  adding to manifest propogates thru all peers?
+ *
+ * how do we verify integrity of the manifest? well we have the public keys of our peers so a connection already verifies identity
+ * however, how will we know its who they say they are? verify identity via keybase?
+ * 
+ * onboarding:
+ * client sends packet to node
+ * node checks if client can join
+ * client can join
+ * verify client
+ * connection successful
+ * add client to local manifest
+ * send manifest to client
+ * propogate new manifest to network
+ *
+ * we should track our peers, and the global manifest separately!!
+ * damn so much coding to do, not to mention all the error handling im missing because im dumb :(
+ */
+
 class peerManager {
 
   static get getActivePeers () {
