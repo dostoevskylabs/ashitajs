@@ -14,7 +14,9 @@
     "mdns": "latest",
     "net": "latest",
     "node-rsa": "latest",
-    "os": "latest"
+    "os": "latest",
+    "shortid": "latest",
+    "bonjour": "latest"
   },
   "devDependencies": {
     "eslint": "latest"
