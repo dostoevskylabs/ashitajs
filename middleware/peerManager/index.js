@@ -11,6 +11,7 @@ let nodePort    = undefined;
 let Interface   = undefined;
 let activePeers       = [];
 
+
 // Hmm, okay.
 
 let leaderId    = undefined; // who am i following || null
@@ -288,6 +289,63 @@ class peerManager {
       }
     });
   }
+
+  static whoHasAnswer ( peerId, requestorIds, route ) {
+    manifest.get(requestorIds[requestorIds.length - 1]).write(JSON.stringify({
+      "type": "whoHasAnswer",
+      "content": {
+        "peerId" : peerId,              // who was found
+        "requestorIds" : requestorIds,  // chain to reverse
+        "route": route                  // route to peer
+      }
+    }));
+  }
+
+  static whoHas( peerId ) {
+    if ( peerManager.getPeer ( peerId ) ) return true;
+    let requestorIds = [peerManager.getNodeId];
+    manifest.forEach( ( peerSocket, peer ) => {
+        if ( peer !== this.getNodeId ) {
+          if ( !requestorIds.includes(peer) ) {
+            let payload = {
+              "type"      : "whoHas",
+              "content"   : {
+                "requestorIds"  : requestorIds, // who is asking
+                "peerId"        : peerId      // to be located
+              }
+            };
+
+            payload = JSON.stringify( payload );
+            peerSocket.write( payload );
+          }
+        }
+      });
+
+    return false;
+  }
+
+  static whoHasRelay( requestorIds, peerId ) {
+    if ( peerManager.getPeer ( peerId ) ) return true;
+
+    manifest.forEach( ( peerSocket, peer ) => {
+        if ( peer !== this.getNodeId ) {
+          if ( !requestorIds.includes(peer) ) {
+            let payload = {
+              "type"      : "whoHas",
+              "content"   : {
+                "requestorIds"  : requestorIds, // who has requested
+                "peerId"        : peerId        // to be located
+              }
+            };
+
+            payload = JSON.stringify( payload );
+            peerSocket.write( payload );
+          }
+        }
+      });
+
+    return false;
+  }  
 
   static generatePeerId ( key ) {
     return crypto.createHmac("sha256", key).digest("hex");
