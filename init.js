@@ -58,15 +58,17 @@ class Init {
   encryptionEnabled () {
     new node(); // start listening
     manifest.addEntry( nodeManager.getNodeId, nodeManager.getPublicKey );
-    require('./discovery.js'); // begin peer discovery    
+       
     // set myself as leader
     nodeManager.setLeader( nodeManager.getNodeId );
-
+    
+    
     let inputHandler = require ('./middleware/inputParser'); // wait for client input
     cli.Panel.security("Encryption Enabled.");
     
     cli.Panel.debug("nodeId: " + nodeManager.getNodeId); //whoami?
 
+    require('./discovery.js'); // begin peer discovery 
     cli.screens["Test"].on("submit", function( message ) {
       inputHandler( message );
     });  

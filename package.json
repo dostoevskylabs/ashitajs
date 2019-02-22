@@ -11,7 +11,6 @@
   "dependencies": {
     "blessed": "latest",
     "fs": "latest",
-    "mdns": "latest",
     "net": "latest",
     "node-rsa": "latest",
     "os": "latest",
