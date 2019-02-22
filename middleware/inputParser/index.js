@@ -22,6 +22,13 @@ function handleInput( input ) {
       cli.screens["Test"].focus();    
     break;
 
+    case "/whohas":
+      nodeManager.whoHas( commands[1] );
+
+      cli.screens["Test"].clearValue();
+      cli.screens["Test"].focus();        
+    break;
+
     case "/join":
       nodeManager.connectToPeer(commands[1], commands[2]);
 
