@@ -11,7 +11,7 @@ if ( v1 ) {
   mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, {networkInterface: nodeManager.getInterface}).start();
 } else {
   bonjour           = require('bonjour')({multicast:true});
-  let broadcast = bonjour.publish({ name: `hostname`, type: 'ashitajs', port: nodeManager.getNodePort });
+  let broadcast = bonjour.publish({ name: `hostname-${require('shortid').generate()}`, type: 'ashitajs', port: nodeManager.getNodePort });
   broadcast.on('up', function(){
     cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
   });  
