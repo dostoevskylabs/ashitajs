@@ -10,12 +10,13 @@
   "license": "GPL-3.0",
   "dependencies": {
     "blessed": "latest",
+    "bonjour": "latest",
     "fs": "latest",
+    "mdns": "^2.4.0",
     "net": "latest",
     "node-rsa": "latest",
     "os": "latest",
-    "shortid": "latest",
-    "bonjour": "latest"
+    "shortid": "latest"
   },
   "devDependencies": {
     "eslint": "latest"

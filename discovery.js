@@ -1,35 +1,67 @@
 const nodeManager       = require("./middleware/peerManager");
-//const mdns              = require('mdns');
+const mdns              = require('mdns');
 const bonjour		= require('bonjour')();
 const cli               = require("./lib/ui");
+let v1 = false;
 
-let broadcast = bonjour.publish({ name: `ashitajs-${require('shortid').generate()}`, type: 'http', port: nodeManager.getNodePort });
-broadcast.on('up', function(){
-  cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
-});
+if ( process.platform === 'darwin' ) v1 = true;
+
+if ( v1 ) {
+  mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, { networkInterface: nodeManager.getInterface }).start();
+} else {
+  let broadcast = bonjour.publish({ name: `ashitajs-${require('shortid').generate()}`, type: 'ashitajs', port: nodeManager.getNodePort });
+  broadcast.on('up', function(){
+    cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
+  });  
+}
+
+function parseService ( service ) {
+      let nodeHost = null;
+      if ( v1 ) {
+          nodeHost = (function getIPv4 ( ind ){
+            if ( service.addresses[ind].includes(':') ) return getIPv4( ind + 1 );
+            return service.addresses[ind]; 
+          })( 0 );
+      } else {
+          nodeHost = service.referer.address;
+      }
+      cli.Panel.debug(service);
+      if ( !nodeHost ) return false; // no ipv4 discovered in the broadcast
+      if ( nodeManager.getActivePeers.includes(`${nodeHost}:${service.port}`) ) return false; // if we already know this peer
+      if ( nodeHost === '127.0.0.1' && service.port === nodeManager.getNodePort ) return false; // connecting to ourselves lol
+      // if it matches ourself, we shouldn't connect, lol
+      if ( nodeHost === nodeManager.getNodeHost && service.port === nodeManager.getNodePort ) {
+        return false;
+      } else {
+        // in this case we are connecting, debug information logged
+        cli.Panel.debug('Discovered node: ' + nodeHost + ':' + service.port);
+        nodeManager.connectToPeer( nodeHost, service.port );
+      }
+}
 
 function discoverPeers( repeat ) {
     // watch all http servers
+    let browser;
     try {
-  	  let browser = bonjour.findOne({ type: 'http' }, (service) => {
-        let nodeHost = service.referer.address;
-        cli.Panel.debug(service);
-        if ( !nodeHost ) return false; // no ipv4 discovered in the broadcast
-        if ( nodeManager.getActivePeers.includes(`${nodeHost}:${service.port}`) ) return false; // if we already know this peer
-        if ( nodeHost === '127.0.0.1' && service.port === nodeManager.getNodePort ) return false; // connecting to ourselves lol
-        // if it matches ourself, we shouldn't connect, lol
-        if ( nodeHost === nodeManager.getNodeHost && service.port === nodeManager.getNodePort ) {
-          return false;
-        } else {
-          // in this case we are connecting, debug information logged
-          cli.Panel.debug('Discovered node: ' + nodeHost + ':' + service.port);
-          nodeManager.connectToPeer( nodeHost, service.port );
-        }     
-      });
+      
+      if ( v1 ) {
+        browser = mdns.createBrowser(mdns.tcp('ashitajs'));
+        browser.on('serviceUp', function(service) {
+          parseService( service );
+        });
+      } else {
+        browser = bonjour.findOne({ type: 'ashitajs' }, (service) => {
+          parseService( service );
+        });
+      }
+    
+    // 
+
     } catch ( e ) {}
     setTimeout(function(){
       cli.screens["Log"].setLabel("Log"); // hack-o!
     }, 3000);
+    browser.start();
     return repeat(); // repeat-o!
 }
 
