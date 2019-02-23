@@ -8,9 +8,9 @@ if ( process.platform === 'darwin' ) v1 = true;
 
 if ( v1 ) {
   mdns              = require('mdns');
-  mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort).start();
+  mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, networkInterface: nodeManager.getNodeHost).start();
 } else {
-  bonjour           = require('bonjour')();
+  bonjour           = require('bonjour')({interface: nodeManager.getNodeHost});
   let broadcast = bonjour.publish({ name: `hostname`, type: 'ashitajs', port: nodeManager.getNodePort });
   broadcast.on('up', function(){
     cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
