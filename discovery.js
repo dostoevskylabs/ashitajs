@@ -1,14 +1,16 @@
 const nodeManager       = require("./middleware/peerManager");
-const mdns              = require('mdns');
-const bonjour		= require('bonjour')();
+let mdns;
+let bonjour;
 const cli               = require("./lib/ui");
 let v1 = false;
 
 if ( process.platform === 'darwin' ) v1 = true;
 
 if ( v1 ) {
+  mdns              = require('mdns');
   mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, { networkInterface: nodeManager.getInterface }).start();
 } else {
+  bonjour           = require('bonjour')();
   let broadcast = bonjour.publish({ name: `ashitajs-${require('shortid').generate()}`, type: 'ashitajs', port: nodeManager.getNodePort });
   broadcast.on('up', function(){
     cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
