@@ -8,7 +8,7 @@ if ( process.platform === 'darwin' ) v1 = true;
 
 if ( v1 ) {
   mdns              = require('mdns');
-  mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, networkInterface: nodeManager.getNodeHost).start();
+  mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, {networkInterface: nodeManager.getNodeHost}).start();
 } else {
   bonjour           = require('bonjour')({interface: nodeManager.getNodeHost});
   let broadcast = bonjour.publish({ name: `hostname`, type: 'ashitajs', port: nodeManager.getNodePort });
