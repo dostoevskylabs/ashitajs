@@ -11,7 +11,7 @@ if ( v1 ) {
   mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, { networkInterface: nodeManager.getInterface }).start();
 } else {
   bonjour           = require('bonjour')();
-  let broadcast = bonjour.publish({ name: `ashitajs`, type: 'tcp', port: nodeManager.getNodePort });
+  let broadcast = bonjour.publish({ name: `ashitajs`, type: 'ashitajs', port: nodeManager.getNodePort });
   broadcast.on('up', function(){
     cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
   });  
@@ -52,7 +52,7 @@ function discoverPeers( repeat ) {
           parseService( service );
         });
       } else {
-        browser = bonjour.find({ type: 'ashitajs' }, (service) => {
+        browser = bonjour.findOne({ type: 'ashitajs' }, (service) => {
           parseService( service );
         });
       }
