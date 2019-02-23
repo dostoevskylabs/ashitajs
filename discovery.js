@@ -52,7 +52,7 @@ function discoverPeers( repeat ) {
           parseService( service );
         });
       } else {
-        browser = bonjour.findOne({ type: 'ashitajs' }, (service) => {
+        browser = bonjour.find({ type: 'ashitajs' }, (service) => {
           parseService( service );
         });
       }
