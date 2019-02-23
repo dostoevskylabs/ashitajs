@@ -11,7 +11,7 @@ broadcast.on('up', function(){
 function discoverPeers( repeat ) {
     // watch all http servers
     try {
-  	  let browser = bonjour.find({ type: 'http' }, (service) => {
+  	  let browser = bonjour.findOne({ type: 'http' }, (service) => {
         let nodeHost = service.referer.address;
         cli.Panel.debug(service);
         if ( !nodeHost ) return false; // no ipv4 discovered in the broadcast
@@ -24,7 +24,6 @@ function discoverPeers( repeat ) {
           // in this case we are connecting, debug information logged
           cli.Panel.debug('Discovered node: ' + nodeHost + ':' + service.port);
           nodeManager.connectToPeer( nodeHost, service.port );
-          this.stop();
         }     
       });
     } catch ( e ) {}
