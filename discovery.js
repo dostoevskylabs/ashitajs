@@ -2,7 +2,7 @@ const nodeManager       = require("./middleware/peerManager");
 const cli               = require("./lib/ui");
 let mdns;
 let bonjour;
-let v1 = false;
+let v1 = true;
 
 if ( process.platform === 'darwin' ) v1 = true;
 
