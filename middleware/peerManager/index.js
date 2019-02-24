@@ -3,6 +3,7 @@ const crypto    = require("crypto");
 const client    = require("../../lib/client");
 const cli       = require("../../lib/ui");
 const manifest  = require("../../lib/manifest");
+//const messages  = require("../messageHandler");
 let username    = "Anonymous";
 let publicKey   = undefined;
 let privateKey  = undefined;
@@ -10,7 +11,39 @@ let peerIp      = undefined;
 let peerPort    = undefined;
 let Interface   = undefined;
 let activePeers       = [];
+let disconnectedPeers = {
 
+};
+
+// routes:
+// messages
+/*
+= [
+  'id1',
+  'id2',
+]
+
+if recievedMessage is in messages and none of my peers need it either, tell peer that sent it to blacklist me
+my peers will tell me who to blacklist, this is how i will know if anyone needs the message
+
+
+*/
+/*
+  let blacklist = {
+    'originatingPeer': [ 'peerIdNotToSendTo' ]
+  }
+
+  let pmRoute = {
+    'peerIdToSendTo' : 'peerIdToSendThrough'
+  }
+
+*/
+// cache:
+/*
+  let disconnectedPeers = [
+    'peerId'
+  ]
+*/
 //todo: define message types and standardize
 //todo: split this up?
 //todo: bootstrapping
@@ -152,88 +185,12 @@ class peerManager {
   static removePeer ( peerId ) {
     if ( peerManager.getPeer( peerId ) ) {
       pSockets.delete( peerId );
+      disconnectedPeers[peerId] = true;
     }
   }
 
-  static sendPeerEvent ( event, object ) {
-    let message = {
-      "type"      : event,
-      "content"   : object
-    };
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId && peer !== object.peerId ) {
-        message = JSON.stringify( message );
-        peerSocket.write( message );
-      }
-    });
-  }
-
-  static sendEndEvent() {
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId ) {
-        let payload   = {
-          "type"    : "disconnecting",
-          "content" : {
-            "peerId"   : peerManager.getPeerId
-          }
-        };
-
-        payload = JSON.stringify( payload );
-        peerSocket.write(payload);
-      }
-    });
-  }
-
-  static sendNewPeerMessage ( peerId ) {
-    let peers = [peerManager.getPeerId];
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId && peer !== peerId ) {
-        peers.push( peer );
-      }
-    });
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId && peer !== peerId ) {
-        let payload = {
-          "type"      : "peerJoined",
-          "content"   : {
-            "peers"   : peers,
-            "peerId"   : peerId
-          }
-        };
-
-        payload = JSON.stringify( payload );
-        peerSocket.write( payload );
-      }
-    });
-  }
-
-  static relayNewPeerMessage( peerId, peerArray ) {
-    let peers = peerArray.slice();
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId && !peers.includes( peer ) ) {
-        peers.push( peer );
-      }
-    });
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId ) {
-        if ( !peerArray.includes( peer ) ) {
-          let payload = {
-            "type"      : "peerJoined",
-            "content"   : {
-              "peers"   : peers,
-              "peerId"  : peerId
-            }
-          };
-
-          payload = JSON.stringify( payload );
-          peerSocket.write( payload );
-        }
-      }
-    });    
+  static isDisconnected( peerId ) {
+    return disconnectedPeers[peerId];
   }
 
   // todo: handle dc'd during, probably easily handled by routing thru network
@@ -349,6 +306,9 @@ class peerManager {
   static whoHasRelay( requestorIds, peerId ) {
     if ( peerManager.getPeer ( peerId ) ) return true;
 
+    //messages.addToQueue( messageObject );
+    //sendmessages.sendQueue();
+
     pSockets.forEach( ( peerSocket, peer ) => {
         if ( peer !== peerManager.getPeerId ) {
           if ( !requestorIds.includes(peer) ) {
@@ -375,6 +335,10 @@ class peerManager {
 
   static getPeerEntry( id ) {
     return pSockets.get( id );
+  }
+
+  static getPeerSockets () {
+    return pSockets;
   }
 
   static getPeers () {

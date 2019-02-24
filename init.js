@@ -68,7 +68,7 @@ class Init {
     
     //cli.Panel.debug("peerId: " + peerManager.getPeerId); //whoami?
 
-    require('./discovery.js'); // begin peer discovery 
+    //require('./discovery.js'); // begin peer discovery 
     cli.screens["Test"].on("submit", function( message ) {
       inputHandler( message );
     });  

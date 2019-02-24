@@ -1,4 +1,5 @@
 const peerManager       = require("../peerManager");
+const messages          = require("../messageHandler");
 const cli               = require("../../lib/ui");
 let state               = 'public';
 let peerId              = '';
@@ -9,7 +10,7 @@ function handleInput( input ) {
 
   switch ( commands[0] ) {
     case "/exit":
-      peerManager.sendEndEvent();
+      messages.sendPeerDisconnectMessage( peerManager.getPeerId );
       process.exit(0);
     break;
 
