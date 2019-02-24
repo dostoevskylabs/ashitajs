@@ -1,17 +1,17 @@
 "use strict";
 const fs                = require("fs");
 const os                = require("os");
-const nodeManager       = require("./middleware/peerManager");
+const peerManager       = require("./middleware/peerManager");
 const node              = require("./lib/node");
 const client            = require("./lib/client");
 const cli               = require("./lib/ui");
 const manifest          = require("./lib/manifest");
 
 class Init {
-  setup ( adapter, nodeHost, nodePort ) {
+  setup ( adapter, peerIp, peerPort ) {
     this.adapter  = adapter;
-    this.nodeHost = nodeHost;
-    this.nodePort = nodePort;
+    this.peerIp   = peerIp;
+    this.peerPort = peerPort;
 
     this.setupNode();
     this.checkEncryption();
@@ -20,21 +20,21 @@ class Init {
 
   setupNode () {
     // define node properties
-    nodeManager.setNodeHost( this.nodeHost );
-    nodeManager.setNodePort( this.nodePort );
-    nodeManager.setInterface( this.adapter );
+    peerManager.setPeerIp( this.peerIp );
+    peerManager.setPeerPort( this.peerPort );
+    peerManager.setInterface( this.adapter );
   }
 
   checkEncryption () {
     try {
       // read contents of our key files if they already exist
-      nodeManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
-      nodeManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
+      peerManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
+      peerManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
 
       this.encryptionEnabled(); // step to encryption enabled actions
     } catch ( err ) {}
 
-    if ( !nodeManager.getPublicKey || !nodeManager.getPrivateKey ) {
+    if ( !peerManager.getPublicKey || !peerManager.getPrivateKey ) {
       // generate a new keypair as none were found
       cli.Panel.security("Generating KeyPair...");
       setTimeout(() => {
@@ -46,8 +46,8 @@ class Init {
 
         fs.writeFileSync( "./.keys/node.pub", publicDer, ( err ) => cli.Panel.debug( err ) );
         fs.writeFileSync( "./.keys/node.priv", privateDer, ( err ) => cli.Panel.debug( err ) );
-        nodeManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
-        nodeManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
+        peerManager.setPublicKey( fs.readFileSync("./.keys/node.pub", "utf-8") );
+        peerManager.setPrivateKey( fs.readFileSync("./.keys/node.priv", "utf-8") );
         cli.Panel.security("Keys generated.");
 
         this.encryptionEnabled();
@@ -57,16 +57,16 @@ class Init {
 
   encryptionEnabled () {
     new node(); // start listening
-    manifest.addEntry( nodeManager.getNodeId, nodeManager.getPublicKey );
+    manifest.addEntry( peerManager.getPeerId, peerManager.getPublicKey );
        
     // set myself as leader
-    nodeManager.setLeader( nodeManager.getNodeId );
+    peerManager.setLeader( peerManager.getPeerId );
     
     
     let inputHandler = require ('./middleware/inputParser'); // wait for client input
     cli.Panel.security("Encryption Enabled.");
     
-    cli.Panel.debug("nodeId: " + nodeManager.getNodeId); //whoami?
+    //cli.Panel.debug("peerId: " + peerManager.getPeerId); //whoami?
 
     require('./discovery.js'); // begin peer discovery 
     cli.screens["Test"].on("submit", function( message ) {

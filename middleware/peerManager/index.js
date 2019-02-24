@@ -2,23 +2,44 @@
 const crypto    = require("crypto");
 const client    = require("../../lib/client");
 const cli       = require("../../lib/ui");
-const test      = require("../../lib/manifest");
+const manifest  = require("../../lib/manifest");
 let username    = "Anonymous";
 let publicKey   = undefined;
 let privateKey  = undefined;
-let nodeHost    = undefined;
-let nodePort    = undefined;
+let peerIp      = undefined;
+let peerPort    = undefined;
 let Interface   = undefined;
 let activePeers       = [];
 
+//todo: define message types and standardize
+//todo: split this up?
+//todo: bootstrapping
+//todo: routing
+//todo: disconnected 'cache'
+//todo: rejoin to network
+//todo: purge caches
+//todo: heartbeats
+//todo: acl
+//todo: username unique check
+//todo: join vote?
+//todo: privatemessage routing
+//todo: ui fixes
+/*
+let niceNames = {
+  'Bob' : 'peerId'
+}
 
+if ( peerId !== niceNames[Username]){
+  send('invalid');
+}
+*/
 // Hmm, okay.
 
 let leaderId    = undefined; // who am i following || null
-let manifest = new Map(); // my direct peers (not distributed)
+let pSockets = new Map(); // my direct peers (not distributed)
 
 /**
- *  getManifest from other nodes
+ *  getManifest from other peers
  *  ie: query peers, ask for manifest
  *  recieve manifest from first available or all peers?
  *  
@@ -28,8 +49,8 @@ let manifest = new Map(); // my direct peers (not distributed)
  * however, how will we know its who they say they are? verify identity via keybase?
  * 
  * onboarding:
- * client sends packet to node
- * node checks if client can join
+ * client sends packet to peer
+ * peer checks if client can join
  * client can join
  * verify client
  * connection successful
@@ -63,30 +84,30 @@ class peerManager {
     return Interface;
   }
 
-  static setNodeHost ( host ) {
-    nodeHost = host;
+  static setPeerIp ( ip ) {
+    peerIp = ip;
   }
 
-  static get getNodeHost () {
-    return nodeHost;
+  static get getPeerIp () {
+    return peerIp;
   }
 
-  static setNodePort ( port ) {
-    nodePort = port;
+  static setPeerPort ( port ) {
+    peerPort = port;
   }
 
-  static get getNodePort () {
-    return nodePort;
+  static get getPeerPort () {
+    return peerPort;
   }
 
-  static get getNodeId () {
-    return this.generatePeerId( publicKey );
+  static get getPeerId () {
+    return peerManager.generatePeerId( publicKey );
   }
 
-  static connectToPeer( host, port ) {
-    if ( host === this.getNodeHost && port == this.getNodePort ) return false;
-    if ( activePeers.includes(`${host}:${port}`) ) return false;
-    new client( host, port, peerManager );
+  static connectToPeer( ip, port ) {
+    if ( ip === peerManager.getPeerIp && port == peerManager.getPeerPort ) return false;
+    if ( activePeers.includes(`${ip}:${port}`) ) return false;
+    new client( ip, port, peerManager );
   }
 
   static setPublicKey ( key ) {
@@ -114,23 +135,23 @@ class peerManager {
   }
 
   static addPeer ( clientInstance ) {
-    if ( !activePeers.includes( `${clientInstance.nodeIp}:${clientInstance.nodePort}` ) ) {
-      activePeers.push( `${clientInstance.nodeIp}:${clientInstance.nodePort}` );
-      if ( this.getPeer ( clientInstance.nodeId ) ||
-          clientInstance.nodeId === this.getNodeId ) {
+    if ( !activePeers.includes( `${clientInstance.peerIp}:${clientInstance.peerPort}` ) ) {
+      activePeers.push( `${clientInstance.peerIp}:${clientInstance.peerPort}` );
+      if ( peerManager.getPeer ( clientInstance.peerId ) ||
+          clientInstance.peerId === peerManager.getPeerId ) {
         return false;
       }
 
-      test.addEntry( clientInstance.nodeId, clientInstance.publicKey );
-      manifest.set( clientInstance.nodeId, clientInstance );
+      manifest.addEntry( clientInstance.peerId, clientInstance.publicKey );
+      pSockets.set( clientInstance.peerId, clientInstance );
     }
 
     return false;
   }
 
   static removePeer ( peerId ) {
-    if ( this.getPeer( peerId ) ) {
-      manifest.delete( peerId );
+    if ( peerManager.getPeer( peerId ) ) {
+      pSockets.delete( peerId );
     }
   }
 
@@ -140,8 +161,8 @@ class peerManager {
       "content"   : object
     };
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId && peer !== object.nodeId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId && peer !== object.peerId ) {
         message = JSON.stringify( message );
         peerSocket.write( message );
       }
@@ -149,12 +170,12 @@ class peerManager {
   }
 
   static sendEndEvent() {
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId ) {
         let payload   = {
           "type"    : "disconnecting",
           "content" : {
-            "peerId"   : this.getNodeId
+            "peerId"   : peerManager.getPeerId
           }
         };
 
@@ -165,15 +186,15 @@ class peerManager {
   }
 
   static sendNewPeerMessage ( peerId ) {
-    let peers = [this.getNodeId];
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId && peer !== peerId ) {
+    let peers = [peerManager.getPeerId];
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId && peer !== peerId ) {
         peers.push( peer );
       }
     });
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId && peer !== peerId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId && peer !== peerId ) {
         let payload = {
           "type"      : "peerJoined",
           "content"   : {
@@ -191,14 +212,14 @@ class peerManager {
   static relayNewPeerMessage( peerId, peerArray ) {
     let peers = peerArray.slice();
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId && !peers.includes( peer ) ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId && !peers.includes( peer ) ) {
         peers.push( peer );
       }
     });
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId ) {
         if ( !peerArray.includes( peer ) ) {
           let payload = {
             "type"      : "peerJoined",
@@ -215,34 +236,35 @@ class peerManager {
     });    
   }
 
+  // todo: handle dc'd during, probably easily handled by routing thru network
   static sendPrivateMessage( peerId, username, message ) {
     const crypto  = require('crypto');
-    let encrypted = crypto.publicEncrypt( this.getPeerKey( peerId ), Buffer.from( message, 'utf-8') );
+    let encrypted = crypto.publicEncrypt( manifest.getPublicKeyOfPeer( peerId ), Buffer.from( message, 'utf-8') );
     let payload   = {
       "type"    : "privateMessage",
       "content" : {
-        "peerId"   : this.getNodeId,
+        "peerId"   : peerManager.getPeerId,
         "username" : username,
         "message"  : encrypted
       }
     };
 
     payload = JSON.stringify( payload );
-    manifest.get( peerId ).write( payload );   
+    pSockets.get( peerId ).write( payload );   
   }
 
   static sendPublicMessage( username, message ) {
     const crypto = require('crypto');
 
-    let peers = [this.getNodeId];
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId ) {
+    let peers = [peerManager.getPeerId];
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId ) {
         peers.push( peer );
       }
     });
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId ) {
         let encrypted = crypto.privateEncrypt( privateKey, Buffer.from( message, 'utf-8') );
         let payload = {
           "type"      : "publicMessage",
@@ -264,16 +286,16 @@ class peerManager {
     const crypto = require('crypto');
     let peers = peerId.slice();
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId && !peers.includes( peer ) ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId && !peers.includes( peer ) ) {
         peers.push( peer );
       }
     });
 
-    manifest.forEach( ( peerSocket, peer ) => {
-      if ( peer !== this.getNodeId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+      if ( peer !== peerManager.getPeerId ) {
         if ( !peerId.includes(peer) ) {
-          let encrypted = crypto.publicEncrypt( this.getPeerKey( peer ), Buffer.from( message, 'utf-8') );
+          let encrypted = crypto.publicEncrypt( manifest.getPublicKeyOfPeer( peer ), Buffer.from( message, 'utf-8') );
           let payload = {
             "type"      : "publicMessage",
             "content"   : {
@@ -291,7 +313,7 @@ class peerManager {
   }
 
   static whoHasAnswer ( peerId, requestorIds, route ) {
-    manifest.get(requestorIds[requestorIds.length - 1]).write(JSON.stringify({
+    pSockets.get(requestorIds[requestorIds.length - 1]).write(JSON.stringify({
       "type": "whoHasAnswer",
       "content": {
         "peerId" : peerId,              // who was found
@@ -303,9 +325,9 @@ class peerManager {
 
   static whoHas( peerId ) {
     if ( peerManager.getPeer ( peerId ) ) return true;
-    let requestorIds = [peerManager.getNodeId];
-    manifest.forEach( ( peerSocket, peer ) => {
-        if ( peer !== this.getNodeId ) {
+    let requestorIds = [peerManager.getPeerId];
+    pSockets.forEach( ( peerSocket, peer ) => {
+        if ( peer !== peerManager.getPeerId ) {
           if ( !requestorIds.includes(peer) ) {
             let payload = {
               "type"      : "whoHas",
@@ -327,8 +349,8 @@ class peerManager {
   static whoHasRelay( requestorIds, peerId ) {
     if ( peerManager.getPeer ( peerId ) ) return true;
 
-    manifest.forEach( ( peerSocket, peer ) => {
-        if ( peer !== this.getNodeId ) {
+    pSockets.forEach( ( peerSocket, peer ) => {
+        if ( peer !== peerManager.getPeerId ) {
           if ( !requestorIds.includes(peer) ) {
             let payload = {
               "type"      : "whoHas",
@@ -351,28 +373,16 @@ class peerManager {
     return crypto.createHmac("sha256", key).digest("hex");
   }
 
-  static addKeyToChain ( peerId, publicKey ) {
-    manifest.get( peerId ).publicKey = publicKey;
-  }
-
-  static getPeerKey ( peerId ) {
-    return manifest.get( peerId ).publicKey;
-  }
-
-  static getManifest( ) {
-    return manifest;
-  }
-
-  static getManifestEntry( id ) {
-    return manifest.get( id );
+  static getPeerEntry( id ) {
+    return pSockets.get( id );
   }
 
   static getPeers () {
-    return Array.from( manifest.keys() );
+    return Array.from( pSockets.keys() );
   }
 
   static getPeer ( peerId ) {
-    if ( manifest.has( peerId ) ) {
+    if ( pSockets.has( peerId ) ) {
       return true;
     }
     return false;

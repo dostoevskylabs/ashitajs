@@ -1,4 +1,4 @@
-const nodeManager       = require("../peerManager");
+const peerManager       = require("../peerManager");
 const cli               = require("../../lib/ui");
 let state               = 'public';
 let peerId              = '';
@@ -9,12 +9,12 @@ function handleInput( input ) {
 
   switch ( commands[0] ) {
     case "/exit":
-      nodeManager.sendEndEvent();
+      peerManager.sendEndEvent();
       process.exit(0);
     break;
 
     case "/peers":
-      let peers = nodeManager.getPeers();
+      let peers = peerManager.getPeers();
       cli.Panel.debug(`Active Peer Sessions\n${peers.join('\n')}`)
 
       
@@ -23,28 +23,28 @@ function handleInput( input ) {
     break;
 
     case "/whohas":
-      nodeManager.whoHas( commands[1] );
+      peerManager.whoHas( commands[1] );
 
       cli.screens["Test"].clearValue();
       cli.screens["Test"].focus();        
     break;
 
     case "/join":
-      nodeManager.connectToPeer(commands[1], commands[2]);
+      peerManager.connectToPeer(commands[1], commands[2]);
 
       cli.screens["Test"].clearValue();
       cli.screens["Test"].focus();  
     break;
 
     case "/username":
-      nodeManager.setUsername( commands[1] );
+      peerManager.setUsername( commands[1] );
 
       cli.screens["Test"].clearValue();
       cli.screens["Test"].focus();       
     break;
 
     case "/pm":
-      let peer = nodeManager.getManifestEntry( commands[1] );
+      let peer = peerManager.getPeerEntry( commands[1] );
       if ( peer ) {
         cli.Panel.notice( `Opened channel with ${commands[1]}` );
 
@@ -75,11 +75,11 @@ function handleInput( input ) {
       } else {
         // an actual message
         if ( state === 'public' ) {
-          cli.Panel.publicMessage( nodeManager.getNodeId, nodeManager.getUsername, input );
-          nodeManager.sendPublicMessage( nodeManager.getUsername, input);
+          cli.Panel.publicMessage( peerManager.getPeerId, peerManager.getUsername, input );
+          peerManager.sendPublicMessage( peerManager.getUsername, input);
         } else {
-          cli.Panel.privateMessage( peerId, nodeManager.getUsername, input );
-          nodeManager.sendPrivateMessage( peerId, nodeManager.getUsername, input);
+          cli.Panel.privateMessage( peerId, peerManager.getUsername, input );
+          peerManager.sendPrivateMessage( peerId, peerManager.getUsername, input);
         }        
       }
       

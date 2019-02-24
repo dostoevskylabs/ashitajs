@@ -1,43 +1,43 @@
-const nodeManager       = require("./middleware/peerManager");
+const peerManager       = require("./middleware/peerManager");
 const cli               = require("./lib/ui");
 let mdns;
 let bonjour;
 let v1 = true;
 
-if ( process.platform === 'darwin' ) v1 = true;
+//if ( process.platform === 'darwin' ) v1 = true;
 
 if ( v1 ) {
   mdns = require('mdns');
-  mdns.createAdvertisement(mdns.tcp('ashitajs'), nodeManager.getNodePort, {networkInterface: nodeManager.getInterface}).start();
+  mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {networkInterface: peerManager.getInterface}).start();
 } else {
   bonjour = require('bonjour')();
-  let broadcast = bonjour.publish({ name: `hostname-${require('shortid').generate()}`, type: 'ashitajs', port: nodeManager.getNodePort });
+  let broadcast = bonjour.publish({ name: `hostname-${require('shortid').generate()}`, type: 'ashitajs', port: peerManager.getPeerPort });
   broadcast.on('up', function(){
-    cli.Panel.debug("Broadcasting: ", nodeManager.getNodePort);
+    cli.Panel.debug("Broadcasting: ", peerManager.getPeerPort);
   });  
 }
 
 function parseService ( service ) {
-      let nodeHost = null;
+      let peerIp = null;
       if ( v1 ) {
-          nodeHost = (function getIPv4 ( ind ){
+          peerIp = (function getIPv4 ( ind ){
             if ( service.addresses[ind].includes(':') ) return getIPv4( ind + 1 );
             return service.addresses[ind]; 
           })( 0 );
       } else {
-          nodeHost = service.referer.address;
+          peerIp = service.referer.address;
       }
-      cli.Panel.debug(service);
-      if ( !nodeHost ) return false; // no ipv4 discovered in the broadcast
-      if ( nodeManager.getActivePeers.includes(`${nodeHost}:${service.port}`) ) return false; // if we already know this peer
-      if ( nodeHost === '127.0.0.1' && service.port === nodeManager.getNodePort ) return false; // connecting to ourselves lol
+      //cli.Panel.debug(service);
+      if ( !peerIp ) return false; // no ipv4 discovered in the broadcast
+      if ( peerManager.getActivePeers.includes(`${peerIp}:${service.port}`) ) return false; // if we already know this peer
+      if ( peerIp === '127.0.0.1' && service.port === peerManager.getPeerPort ) return false; // connecting to ourselves lol
       // if it matches ourself, we shouldn't connect, lol
-      if ( nodeHost === nodeManager.getNodeHost && service.port === nodeManager.getNodePort ) {
+      if ( peerIp === peerManager.getPeerIp && service.port === peerManager.getPeerPort ) {
         return false;
       } else {
         // in this case we are connecting, debug information logged
-        cli.Panel.debug('Discovered node: ' + nodeHost + ':' + service.port);
-        nodeManager.connectToPeer( nodeHost, service.port );
+        cli.Panel.debug('Discovered peer: ' + peerIp + ':' + service.port);
+        peerManager.connectToPeer( peerIp, service.port );
       }
 }
 
