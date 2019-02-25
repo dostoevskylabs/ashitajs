@@ -77,7 +77,7 @@ function handleInput( input ) {
         // an actual message
         if ( state === 'public' ) {
           cli.Panel.publicMessage( peerManager.getPeerId, peerManager.getUsername, input );
-          peerManager.sendPublicMessage( peerManager.getUsername, input);
+          messages.sendPublicMessage( peerManager.getPeerId, peerManager.getPeerId, peerManager.getUsername, input);
         } else {
           cli.Panel.privateMessage( peerId, peerManager.getUsername, input );
           peerManager.sendPrivateMessage( peerId, peerManager.getUsername, input);

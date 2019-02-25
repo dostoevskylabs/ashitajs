@@ -210,65 +210,6 @@ class peerManager {
     pSockets.get( peerId ).write( payload );   
   }
 
-  static sendPublicMessage( username, message ) {
-    const crypto = require('crypto');
-
-    let peers = [peerManager.getPeerId];
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId ) {
-        peers.push( peer );
-      }
-    });
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId ) {
-        let encrypted = crypto.privateEncrypt( privateKey, Buffer.from( message, 'utf-8') );
-        let payload = {
-          "type"      : "publicMessage",
-          "content"   : {
-            "peerId"   : peers,
-            "username" : username,
-            "message"  : encrypted
-          }
-        };
-
-        payload = JSON.stringify( payload );
-        peerSocket.write( payload );
-      }
-    });
-
-  }
-
-  static relayPublicMessage( peerId, username, message ) {
-    const crypto = require('crypto');
-    let peers = peerId.slice();
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId && !peers.includes( peer ) ) {
-        peers.push( peer );
-      }
-    });
-
-    pSockets.forEach( ( peerSocket, peer ) => {
-      if ( peer !== peerManager.getPeerId ) {
-        if ( !peerId.includes(peer) ) {
-          let encrypted = crypto.publicEncrypt( manifest.getPublicKeyOfPeer( peer ), Buffer.from( message, 'utf-8') );
-          let payload = {
-            "type"      : "publicMessage",
-            "content"   : {
-              "peerId"   : peers,
-              "username" : username,
-              "message"  : encrypted
-            }
-          };
-
-          payload = JSON.stringify( payload );
-          peerSocket.write( payload );
-        }
-      }
-    });
-  }
-
   static whoHasAnswer ( peerId, requestorIds, route ) {
     pSockets.get(requestorIds[requestorIds.length - 1]).write(JSON.stringify({
       "type": "whoHasAnswer",
