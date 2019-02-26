@@ -193,23 +193,6 @@ class peerManager {
     return disconnectedPeers[peerId];
   }
 
-  // todo: handle dc'd during, probably easily handled by routing thru network
-  static sendPrivateMessage( peerId, username, message ) {
-    const crypto  = require('crypto');
-    let encrypted = crypto.publicEncrypt( manifest.getPublicKeyOfPeer( peerId ), Buffer.from( message, 'utf-8') );
-    let payload   = {
-      "type"    : "privateMessage",
-      "content" : {
-        "peerId"   : peerManager.getPeerId,
-        "username" : username,
-        "message"  : encrypted
-      }
-    };
-
-    payload = JSON.stringify( payload );
-    pSockets.get( peerId ).write( payload );   
-  }
-
   static whoHasAnswer ( peerId, requestorIds, route ) {
     pSockets.get(requestorIds[requestorIds.length - 1]).write(JSON.stringify({
       "type": "whoHasAnswer",

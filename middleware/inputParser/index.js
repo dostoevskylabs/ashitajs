@@ -1,5 +1,6 @@
 const peerManager       = require("../peerManager");
 const messages          = require("../messageHandler");
+const manifest          = require("../../lib/manifest");
 const cli               = require("../../lib/ui");
 let state               = 'public';
 let peerId              = '';
@@ -45,8 +46,8 @@ function handleInput( input ) {
     break;
 
     case "/pm":
-      let peer = peerManager.getPeerEntry( commands[1] );
-      if ( peer ) {
+      let hasPeer = manifest.hasPeer( commands[1] );
+      if ( hasPeer ) {
         cli.Panel.notice( `Opened channel with ${commands[1]}` );
 
         state = 'private';
@@ -80,7 +81,7 @@ function handleInput( input ) {
           messages.sendPublicMessage( peerManager.getPeerId, peerManager.getPeerId, peerManager.getUsername, input);
         } else {
           cli.Panel.privateMessage( peerId, peerManager.getUsername, input );
-          peerManager.sendPrivateMessage( peerId, peerManager.getUsername, input);
+          messages.sendPrivateMessage( peerManager.getPeerId, peerManager.getPeerId, peerId, peerManager.getUsername, input);
         }        
       }
       

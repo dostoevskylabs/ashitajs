@@ -1,6 +1,7 @@
 const peerManager = require('../peerManager');
 const crypto      = require('crypto');
 const cli         = require('../../lib/ui');
+const manifest    = require('../../lib/manifest');
 let messages = [];
 let queue = [];
 
@@ -22,16 +23,17 @@ class Messages {
     return false;
   }
 
+  static get getMessages () {
+    return messages;
+  }
+
   static sendMessage ( messageObject ) {
     switch ( messageObject['type'] ) {
       case 'peerJoined':
       case 'publicMessage':
       case 'disconnecting':
-        Messages.sendNetworkMessage( messageObject );
-      break;
-
       case 'privateMessage':
-        Messages.sendDirectMessage( messageObject );
+        Messages.sendNetworkMessage( messageObject );
       break;
 
       default:
@@ -39,12 +41,12 @@ class Messages {
     }
   }
 
-  static sendPeerJoinMessage ( peerId, originatingPeerId ) {
+  static sendPeerJoinMessage ( peerId, originatingPeerId, relayingPeerId ) {
     Messages.addToQueue({
       "type": "peerJoined",
       "content": {
         "originatingPeerId": originatingPeerId,
-        "relayingPeerId": peerManager.getPeerId,
+        "relayingPeerId": relayingPeerId,
         "newPeerId": peerId
       }
     });
@@ -59,7 +61,7 @@ class Messages {
       "type": "disconnecting",
       "content": {
         "originatingPeerId": peerId,
-        "relayingPeerId": peerManager.getPeerId,
+        "relayingPeerId": peerId,
         "peerId": peerId
       }
     });
@@ -88,6 +90,27 @@ class Messages {
     Messages.sendQueue();  
   }
 
+  static sendPrivateMessage ( originatingPeerId, relayingPeerId, destinationPeerId, username, message, messageId = null ) {
+    const crypto  = require('crypto');
+    let encrypted = message;
+
+    if ( originatingPeerId === relayingPeerId ) encrypted = crypto.publicEncrypt( manifest.getPublicKeyOfPeer( destinationPeerId ), Buffer.from( message, 'utf-8') );
+
+    Messages.addToQueue({
+      "messageId": messageId,
+      "type"    : "privateMessage",
+      "content" : {
+        "originatingPeerId": originatingPeerId,
+        "relayingPeerId": relayingPeerId,
+        "destinationPeerId": destinationPeerId,
+        "username" : username,
+        "message"  : encrypted
+      }
+    });
+    
+    Messages.sendQueue();     
+  }
+
   static sendFindRouteToPeerMessage () {}
   static sendFoundRouteToPeerMessage () {}
 
@@ -99,10 +122,11 @@ class Messages {
     peerManager.getPeerSockets().forEach( ( peerSocket, peerId ) => {
         // don't send it back to the peer who sent it to us
         // or the peer who created the message
+
         if ( messageObject['content']['originatingPeerId'] === peerId ) return false;
         if ( messageObject['content']['relayingPeerId'] === peerId ) return false;
         if ( peerId === peerManager.getPeerId ) return false;
-
+        cli.Panel.debug('sending to: ', peerId);
         // send it to everyone else
         const messagePayload = JSON.stringify( messageObject );
         peerSocket.write( messagePayload );
