@@ -16,11 +16,7 @@ class Messages {
     if ( messages.includes( messageId ) ) return false;
     messageObject['messageId'] = messageId;
     if ( messages.length > 1000 ) messages.shift();
-    messages.push( mess​
-21
-sending:
-22
-  if Router.getRoute( originatingPeerId ).includes(peerId) exitageId );
+    messages.push( messageObject['messageId']);
     queue.push( messageObject );
   }
 
