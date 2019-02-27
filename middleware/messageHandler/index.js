@@ -2,6 +2,7 @@ const peerManager = require('../peerManager');
 const crypto      = require('crypto');
 const cli         = require('../../lib/ui');
 const manifest    = require('../../lib/manifest');
+const router      = require('../router');
 let messages = [];
 let queue = [];
 
@@ -15,7 +16,11 @@ class Messages {
     if ( messages.includes( messageId ) ) return false;
     messageObject['messageId'] = messageId;
     if ( messages.length > 1000 ) messages.shift();
-    messages.push( messageId );
+    messages.push( mess​
+21
+sending:
+22
+  if Router.getRoute( originatingPeerId ).includes(peerId) exitageId );
     queue.push( messageObject );
   }
 
@@ -123,10 +128,11 @@ class Messages {
     peerManager.getPeerSockets().forEach( ( peerSocket, peerId ) => {
         // don't send it back to the peer who sent it to us
         // or the peer who created the message
-
+        if ( router.getRoute( originatingPeerId ).includes( peerId ) ) return false;
         if ( messageObject['content']['originatingPeerId'] === peerId ) return false;
         if ( messageObject['content']['relayingPeerId'] === peerId ) return false;
         if ( peerId === peerManager.getPeerId ) return false;
+        cli.Panel.debug('sending to ', peerId);
         // send it to everyone else
         const messagePayload = JSON.stringify( messageObject );
         peerSocket.write( messagePayload );
