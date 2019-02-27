@@ -9,7 +9,7 @@ let v1 = true;
 if ( v1 ) {
   mdns = require('mdns');
   cli.Panel.debug(peerManager.getPeerPort);
-  mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {name: require('shortid').generate(), networkInterface: peerManager.getInterface}, function(error, service){
+  mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {name: require('shortid').generate(), networkInterface: peerManager.getPeerIp}, function(error, service){
     cli.Panel.debug(error, service);
   }).start();
 } else {
@@ -52,7 +52,7 @@ function parseService ( service ) {
           mdns.rst.DNSServiceResolve()
         , mdns.rst.DNSServiceGetAddrInfo({families: [4] })
       ];
-      browser = mdns.createBrowser(mdns.tcp('ashitajs'), {networkInterface: peerManager.getInterface});
+      browser = mdns.createBrowser(mdns.tcp('ashitajs'), {networkInterface: peerManager.getPeerIp});
       browser.on('serviceUp', function(service) {
         cli.Panel.debug(service);
         parseService( service );
