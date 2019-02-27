@@ -126,7 +126,6 @@ class Messages {
         if ( messageObject['content']['originatingPeerId'] === peerId ) return false;
         if ( messageObject['content']['relayingPeerId'] === peerId ) return false;
         if ( peerId === peerManager.getPeerId ) return false;
-        cli.Panel.debug('sending to: ', peerId);
         // send it to everyone else
         const messagePayload = JSON.stringify( messageObject );
         peerSocket.write( messagePayload );
