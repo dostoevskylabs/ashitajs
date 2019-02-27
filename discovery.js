@@ -8,7 +8,6 @@ let v1 = true;
 
 if ( v1 ) {
   mdns = require('mdns');
-  cli.Panel.debug(peerManager.getPeerPort);
   mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {name: require('shortid').generate(), networkInterface: peerManager.getPeerIp}, function(error, service){
     cli.Panel.debug("Broadcasting mDNS Advertisement for port: ", peerManager.getPeerPort);
   }).start();
