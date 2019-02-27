@@ -10,6 +10,15 @@ class Router {
     return routes[originatingPeerId];  
   }
   
+  static isBlocked ( originatingPeerId, peerId ) {
+   if ( routes[originatingPeerId] ) {
+     if ( routes[originatingPeerId].includes( peerId ) ) {
+      return true; 
+     }
+   }
+   return false;
+  }
+  
   static removeRoute () {
     // todo
   }
