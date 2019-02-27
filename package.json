@@ -12,7 +12,7 @@
     "blessed": "latest",
     "bonjour": "latest",
     "fs": "latest",
-    "mdns": "latest",
+    "mdns": "^2.4.0",
     "net": "latest",
     "node-rsa": "latest",
     "os": "latest",

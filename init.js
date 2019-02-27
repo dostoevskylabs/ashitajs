@@ -67,8 +67,10 @@ class Init {
     cli.Panel.security("Encryption Enabled.");
     
     //cli.Panel.debug("peerId: " + peerManager.getPeerId); //whoami?
-
-    require('./discovery.js'); // begin peer discovery 
+    setTimeout( function(){
+      require('./discovery.js'); // begin peer discovery 
+    }, 5000);
+    
     cli.screens["Test"].on("submit", function( message ) {
       inputHandler( message );
     });  

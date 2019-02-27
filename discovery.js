@@ -8,7 +8,10 @@ let v1 = true;
 
 if ( v1 ) {
   mdns = require('mdns');
-  mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {networkInterface: peerManager.getInterface}).start();
+  cli.Panel.debug(peerManager.getPeerPort);
+  mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {name: require('shortid').generate(), networkInterface: peerManager.getInterface}, function(error, service){
+    cli.Panel.debug(error, service);
+  }).start();
 } else {
   bonjour = require('bonjour')();
   let broadcast = bonjour.publish({ name: `hostname-${require('shortid').generate()}`, type: 'ashitajs', port: peerManager.getPeerPort });
@@ -41,30 +44,36 @@ function parseService ( service ) {
       }
 }
 
-function discoverPeers( repeat ) {
-    // watch all http servers
-    let browser;
-    try {
-      
-      if ( v1 ) {
-        browser = mdns.createBrowser(mdns.tcp('ashitajs'));
-        browser.on('serviceUp', function(service) {
-          parseService( service );
-        });
-      } else {
-        browser = bonjour.find({ type: 'ashitajs' }, (service) => {
-          parseService( service );
-        });
-      }
+  // watch all http servers
+  let browser;
+  try {
+    if ( v1 ) {
+      var sequence = [
+          mdns.rst.DNSServiceResolve()
+        , mdns.rst.DNSServiceGetAddrInfo({families: [4] })
+      ];
+      browser = mdns.createBrowser(mdns.tcp('ashitajs'), {networkInterface: peerManager.getInterface});
+      browser.on('serviceUp', function(service) {
+        cli.Panel.debug(service);
+        parseService( service );
+      });
+    } else {
+      browser = bonjour.find({ type: 'ashitajs' }, (service) => {
+        parseService( service );
+      });
+    }
     
     // 
 
-    } catch ( e ) {}
+  } catch ( e ) {}
+  browser.start();
+
+function discoverPeers ( repeat ) {
     setTimeout(function(){
       cli.screens["Log"].setLabel("Log"); // hack-o!
-    }, 3000);
-    browser.start();
-    return repeat(); // repeat-o!
+      return repeat();
+    }, 5000);
+    
 }
 
 (function repeat(){
