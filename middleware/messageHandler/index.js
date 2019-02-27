@@ -14,6 +14,7 @@ class Messages {
     
     if ( messages.includes( messageId ) ) return false;
     messageObject['messageId'] = messageId;
+    if ( messages.length > 1000 ) messages.shift();
     messages.push( messageId );
     queue.push( messageObject );
   }
