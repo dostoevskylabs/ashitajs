@@ -34,7 +34,7 @@ File Diagram
 
 As a test case you can run
 ```bash
-sudo apt-get install libavahi-compat-libdnssd-dev
+sudo apt-get install avahi-daemon avahi-discover libnss-mdns libavahi-compat-libdnssd-dev
 npm install
 nodejs index.js en0
 nodejs index.js en0
