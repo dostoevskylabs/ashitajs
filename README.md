@@ -36,8 +36,8 @@ As a test case you can run
 ```bash
 sudo apt-get install avahi-daemon avahi-discover libnss-mdns libavahi-compat-libdnssd-dev
 npm install
-nodejs index.js en0
-nodejs index.js en0
+nodejs index.js en0 2>/dev/null
+nodejs index.js en0 2>/dev/null
 ```
 
 Preferably from different folders with a separate set of keys in the .keys folder (generated on boot, if they don't exist). This way it can simulate two distinct peers.
