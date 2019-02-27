@@ -124,7 +124,7 @@ class Messages {
     peerManager.getPeerSockets().forEach( ( peerSocket, peerId ) => {
         // don't send it back to the peer who sent it to us
         // or the peer who created the message
-        if ( router.getRoute( originatingPeerId ).includes( peerId ) ) return false;
+        if ( router.getRoute( messageObject['content']['originatingPeerId'] ).includes( peerId ) ) return false;
         if ( messageObject['content']['originatingPeerId'] === peerId ) return false;
         if ( messageObject['content']['relayingPeerId'] === peerId ) return false;
         if ( peerId === peerManager.getPeerId ) return false;
