@@ -10,13 +10,13 @@ if ( v1 ) {
   mdns = require('mdns');
   cli.Panel.debug(peerManager.getPeerPort);
   mdns.createAdvertisement(mdns.tcp('ashitajs'), peerManager.getPeerPort, {name: require('shortid').generate(), networkInterface: peerManager.getPeerIp}, function(error, service){
-    cli.Panel.debug(error, service);
+    cli.Panel.debug("Broadcasting mDNS Advertisement for port: ", peerManager.getPeerPort);
   }).start();
 } else {
   bonjour = require('bonjour')();
   let broadcast = bonjour.publish({ name: `hostname-${require('shortid').generate()}`, type: 'ashitajs', port: peerManager.getPeerPort });
   broadcast.on('up', function(){
-    cli.Panel.debug("Broadcasting: ", peerManager.getPeerPort);
+    cli.Panel.debug("Broadcasting mDNS Advertisement for port: ", peerManager.getPeerPort);
   });  
 }
 
@@ -54,7 +54,6 @@ function parseService ( service ) {
       ];
       browser = mdns.createBrowser(mdns.tcp('ashitajs'), {networkInterface: peerManager.getPeerIp});
       browser.on('serviceUp', function(service) {
-        cli.Panel.debug(service);
         parseService( service );
       });
     } else {
