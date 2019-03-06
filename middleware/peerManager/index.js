@@ -1,9 +1,8 @@
 "use strict";
 const crypto    = require("crypto");
-const client    = require("../../lib/client");
 const cli       = require("../../lib/ui");
+const client    = require("../../lib/client");
 const manifest  = require("../../lib/manifest");
-//const messages  = require("../messageHandler");
 let username    = "Anonymous";
 let publicKey   = undefined;
 let privateKey  = undefined;
@@ -189,10 +188,29 @@ class peerManager {
     return false;
   }
 
-  static removePeer ( peerId ) {
+  static removePeer ( peerId, relayingPeerId = null ) {
+    if ( disconnectedPeers[peerId] ) return true;
+    cli.Panel.alert(`${peerId} disconnected.`);
     if ( peerManager.getPeer( peerId ) ) {
       pSockets.delete( peerId );
       disconnectedPeers[peerId] = true;
+      if ( relayingPeerId === null ) return true;
+
+      pSockets.forEach( ( peerSocket, peer ) => {
+        if ( peer !== peerManager.getPeerId ) {
+          let payload = {
+            "type": "disconnecting",
+            "content": {
+              "originatingPeerId": peerId,
+              "relayingPeerId": relayingPeerId,
+              "peerId": peerId
+            }
+          };
+
+          payload = JSON.stringify( payload );
+          peerSocket.write( payload );
+        }
+      });
     }
   }
 

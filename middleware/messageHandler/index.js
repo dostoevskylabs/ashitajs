@@ -83,27 +83,28 @@ class Messages {
     }
   }
 
-  static sendPeerJoinMessage ( peerId, originatingPeerId, relayingPeerId ) {
+  static sendPeerJoinMessage ( peerId, originatingPeerId, relayingPeerId, publicKey ) {
     Messages.addToQueue({
       "type": "peerJoined",
       "content": {
         "originatingPeerId": originatingPeerId,
         "relayingPeerId": relayingPeerId,
-        "newPeerId": peerId
+        "newPeerId": peerId,
+        "publicKey": publicKey
       }
     });
 
     Messages.sendQueue();
   }
 
-  static sendPeerDisconnectMessage ( peerId ) {
+  static sendPeerDisconnectMessage ( peerId, relayingPeerId ) {
     //if ( peerId === peerManager.getPeerId ) return false;
-
+    if ( relayingPeerId === peerManager.getPeerId ) return false;
     Messages.addToQueue({
       "type": "disconnecting",
       "content": {
         "originatingPeerId": peerId,
-        "relayingPeerId": peerId,
+        "relayingPeerId": relayingPeerId,
         "peerId": peerId
       }
     });
