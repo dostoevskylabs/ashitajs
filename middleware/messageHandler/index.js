@@ -10,19 +10,59 @@ class Messages {
 
   static addToQueue ( messageObject ) {
     let messageId = messageObject['messageId'];
-    
     if ( !messageId ) messageId = crypto.createHmac("sha256", peerManager.getPeerId + Date.now() ).digest("hex");
     
-    if ( messages.includes( messageId ) ) return false;
+    //if ( messages.includes( messageId ) ) return false;
     messageObject['messageId'] = messageId;
-    if ( messages.length > 1000 ) messages.shift();
-    messages.push( messageObject['messageId']);
+    if ( messageObject['content']['originatingPeerId'] === peerManager.getPeerId ) {
+      messages.push( {
+        messageId,
+        relayingPeerId: messageObject['content']['relayingPeerId'],
+        originatingPeerId: messageObject['content']['originatingPeerId']
+      } );
+    }
     queue.push( messageObject );
+
   }
 
-  static hasMessage( messageId ) {
-    if ( messages.includes( messageId ) ) return true;
+  static checkBadRoutes () {
+    let validRoutes = [];
+    for ( let i = 0; i < messages.length; i++ ) {
+      try {
+        if ( validRoutes.includes( messages[i].messageId ) ) {
+          // this is invalid now
+            peerManager.getPeerEntry( messages[i]['relayingPeerId'] ).write(JSON.stringify({
+              "type": "alreadyRouted",
+              "content": {
+                "peerId": peerManager.getPeerId,
+                "originatingPeerId": messages[i]['originatingPeerId']
+              }
+            }));
+        } else {
+          validRoutes.push( messages[i].messageId );
+        }
+      } catch ( e ) {}
+    }
+
+    Messages.clearMessages();
+  }
+
+  static hasMessage ( messageId ) {
+    for ( let i = 0; i < messages.length; i++ ) {
+      if ( messages[i].messageId === messageId ) {
+        return true;
+      }
+
+    }
     return false;
+  }
+
+  static addMessage ( messageObject ) {
+    messages.push( messageObject );
+  }
+
+  static clearMessages () {
+    messages = [];
   }
 
   static get getMessages () {
@@ -128,10 +168,15 @@ class Messages {
         if ( messageObject['content']['originatingPeerId'] === peerId ) return false;
         if ( messageObject['content']['relayingPeerId'] === peerId ) return false;
         if ( peerId === peerManager.getPeerId ) return false;
-        cli.Panel.debug('sending to ', peerId);
+        messageObject['content']['relayingPeerId'] = peerManager.getPeerId;
+
+
+        cli.Panel.debug('sending to: ' + peerId);
+
         // send it to everyone else
         const messagePayload = JSON.stringify( messageObject );
         peerSocket.write( messagePayload );
+        
     });
   }
 
@@ -161,5 +206,7 @@ class Messages {
     }
   }
 }
+
+setInterval( Messages.checkBadRoutes, 30000 );
 
 module.exports = Messages;

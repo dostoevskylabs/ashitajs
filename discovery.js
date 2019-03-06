@@ -39,7 +39,10 @@ function parseService ( service ) {
       } else {
         // in this case we are connecting, debug information logged
         cli.Panel.debug('Discovered peer: ' + peerIp + ':' + service.port);
-        peerManager.connectToPeer( peerIp, service.port );
+        setTimeout( function(){
+          peerManager.connectToPeer( peerIp, service.port );
+        }, 5000);
+        
       }
 }
 

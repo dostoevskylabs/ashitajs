@@ -6,6 +6,10 @@ class Router {
     routes[originatingPeerId].push( peerId );
   }
   
+  static get getRoutes () {
+    return routes;
+  }
+
   static getRoute ( originatingPeerId ) {
     return routes[originatingPeerId];  
   }
