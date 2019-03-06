@@ -171,7 +171,6 @@ class Messages {
         messageObject['content']['relayingPeerId'] = peerManager.getPeerId;
 
 
-        cli.Panel.debug('sending to: ' + peerId);
 
         // send it to everyone else
         const messagePayload = JSON.stringify( messageObject );

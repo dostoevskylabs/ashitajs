@@ -138,9 +138,16 @@ class peerManager {
   }
 
   static connectToPeer( ip, port ) {
-    if ( ip === peerManager.getPeerIp && port == peerManager.getPeerPort ) return false;
-    if ( activePeers.includes(`${ip}:${port}`) ) return false;
-    new client( ip, port, peerManager );
+    (function retryConnect(iter){
+      setTimeout(function(){
+        if ( ip === peerManager.getPeerIp && port == peerManager.getPeerPort ) return false;
+        if ( activePeers.includes(`${ip}:${port}`) ) return false;
+        if ( !iter ) return false;
+        new client( ip, port, peerManager );
+        iter--;
+        return retryConnect( iter );
+      }, 3000);
+    })(5);
   }
 
   static setPublicKey ( key ) {
